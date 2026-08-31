@@ -1,0 +1,46 @@
+# OS / Editor
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/
+*.code-workspace
+
+# Claude / AI local state
+.claude/settings.local.json
+.claude/history/
+*.log
+tmp/
+.cache/
+
+# Secrets & env
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials*
+
+# Node / Python (if you expand later)
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+dist/
+build/
+
+# Worktrees & experimental runs
+worktrees/
+runs/
+*.tmp
+coverage/
+.nyc_output/
+
+# Large artifacts
+*.zip
+*.tar.gz
+*.mp4
+*.png
+!docs/**/*.png
