@@ -48,6 +48,10 @@ data class Tender(
 
     val deadline: Instant? = null,
 
+    val externalTenderId: String? = null,
+
+    val currency: String? = null,
+
     @ElementCollection
     @CollectionTable(name = "tender_keywords")
     val keywords: MutableSet<String> = mutableSetOf(),

@@ -86,4 +86,27 @@ class MatchingServiceTest {
         )
         assertTrue(matching.matches(sampleTender(), openProfile))
     }
+
+    @Test
+    fun `matches tender without deadline`() {
+        val tenderNoDeadline = sampleTender().copy(deadline = null)
+        assertTrue(matching.matches(tenderNoDeadline, sampleProfile()))
+    }
+
+    @Test
+    fun `maps ZW tender with external ID and currency`() {
+        val zwTender = sampleTender(
+            title = "Supply and Delivery of Computer Consumables",
+            authority = "Ministry of Finance, Economic Development and Investment Promotion",
+            region = "Harare",
+            keywords = setOf("GC006", "computers", "printers")
+        ).copy(
+            externalTenderId = "TR22053",
+            currency = "USD"
+        )
+
+        assertEquals("TR22053", zwTender.externalTenderId)
+        assertEquals("USD", zwTender.currency)
+        assertTrue(zwTender.keywords.contains("GC006"))
+    }
 }
