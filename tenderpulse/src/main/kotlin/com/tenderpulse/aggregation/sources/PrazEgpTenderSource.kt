@@ -5,6 +5,7 @@ import com.tenderpulse.domain.Sector
 import com.tenderpulse.domain.Tender
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
@@ -82,8 +83,8 @@ class PrazEgpTenderSource(
         val tenders = mutableListOf<Tender>()
 
         // Select all rows from the bulletin table (adjust selector based on actual HTML structure)
-        // The e-GP site uses a table with class or ID for the bulletin board
-        val rows = doc.select("table tbody tr, table.bulletin-table tr, div.tender-row, tr[data-tender-id]")
+        // Use tbody tr to avoid matching header rows (which are in thead)
+        val rows = doc.select("table tbody tr, div.tender-row, tr[data-tender-id]")
 
         if (rows.isEmpty()) {
             log.warn("No tender rows found in PRAZ e-GP bulletin. HTML structure may have changed.")
@@ -92,7 +93,7 @@ class PrazEgpTenderSource(
 
         for (row in rows) {
             try {
-                val tender = parseTenderRow(row.html())
+                val tender = parseTenderRow(row)
                 if (tender != null) {
                     tenders.add(tender)
                 }
@@ -119,14 +120,10 @@ class PrazEgpTenderSource(
      *   <td><a href="...">View / Details link</a></td>
      * </tr>
      *
-     * @param rowHtml HTML content of a single row
+     * @param row Row element (TR or DIV)
      * @return Parsed Tender, or null if parsing fails
      */
-    private fun parseTenderRow(rowHtml: String): Tender? {
-        val row = Jsoup.parse(rowHtml).selectFirst("tr")
-            ?: Jsoup.parse(rowHtml).selectFirst("div")
-            ?: return null
-
+    private fun parseTenderRow(row: Element): Tender? {
         val cells = row.select("td, div.tender-cell, [data-cell]")
         if (cells.size < 5) {
             return null // Insufficient columns
@@ -137,7 +134,9 @@ class PrazEgpTenderSource(
             val tenderIdOrRef = cells.getOrNull(0)?.text()?.trim() ?: return null
             val title = cells.getOrNull(1)?.text()?.trim() ?: return null
             val issuingAuthority = cells.getOrNull(2)?.text()?.trim() ?: return null
-            val categoryCode = cells.getOrNull(3)?.text()?.trim() ?: ""
+            val categoryCodeFull = cells.getOrNull(3)?.text()?.trim() ?: ""
+            // Extract just the code part (e.g., "GC006" from "GC006 - Computers and Networking Equipment")
+            val categoryCode = categoryCodeFull.split("-")[0].trim()
             val publishDateStr = cells.getOrNull(4)?.text()?.trim() ?: ""
             val deadlineStr = cells.getOrNull(5)?.text()?.trim() ?: ""
 
@@ -210,8 +209,10 @@ class PrazEgpTenderSource(
      * Common codes (from PRAZ docs):
      * - GC001: Professional services
      * - GC002: IT Services
+     * - GC003: Books and Publications (Education)
      * - GC006: Computers, Networking
      * - GC008: Construction
+     * - GC009: Agricultural Equipment
      *
      * @param categoryCode e-GP category code (e.g., "GC006")
      * @return Mapped Sector, or OTHER if unknown
@@ -220,11 +221,11 @@ class PrazEgpTenderSource(
         return when {
             categoryCode.contains("GC006", ignoreCase = true) || categoryCode.contains("IT", ignoreCase = true) -> Sector.IT
             categoryCode.contains("GC008", ignoreCase = true) || categoryCode.contains("construction", ignoreCase = true) -> Sector.CONSTRUCTION
+            categoryCode.contains("GC003", ignoreCase = true) || categoryCode.contains("books", ignoreCase = true) || categoryCode.contains("education", ignoreCase = true) -> Sector.EDUCATION
+            categoryCode.contains("GC009", ignoreCase = true) || categoryCode.contains("agriculture", ignoreCase = true) -> Sector.AGRICULTURE
             categoryCode.contains("health", ignoreCase = true) -> Sector.HEALTHCARE
-            categoryCode.contains("education", ignoreCase = true) -> Sector.EDUCATION
             categoryCode.contains("transport", ignoreCase = true) -> Sector.TRANSPORT
             categoryCode.contains("energy", ignoreCase = true) -> Sector.ENERGY
-            categoryCode.contains("agriculture", ignoreCase = true) -> Sector.AGRICULTURE
             else -> Sector.OTHER
         }
     }
