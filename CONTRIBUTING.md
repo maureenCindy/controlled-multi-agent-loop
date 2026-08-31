@@ -8,7 +8,7 @@ Thanks for helping build TenderPulse. This doc is the shared contract for **huma
 
 1. **Issues are the source of truth** for scope (acceptance criteria + test cases).  
 2. **Code reaches `main` only via pull request** (see exception below).  
-3. **CI must be green** before merge when workflows exist.  
+3. **CI must be green** before merge.  
 4. **Evidence before review** — show how acceptance criteria are met.  
 5. **One focused PR per issue** where practical (`Closes #N`).
 
@@ -53,7 +53,7 @@ Branch from latest `main`.
 ### 4. Before you open the PR
 
 - [ ] Branch is up to date with `main`  
-- [ ] Tests pass locally (`./gradlew test` in `tenderpulse/` when applicable)  
+- [ ] Tests pass locally (`gradle test` or `./gradlew test` in `tenderpulse/`)  
 - [ ] Lint/format clean when configured  
 - [ ] No secrets committed  
 - [ ] PR body drafted with **evidence** (see template)  
@@ -67,7 +67,7 @@ Branch from latest `main`.
 
 ### 6. Merge and close
 
-- Merge when CI is green and review is satisfied.  
+- Merge when **CI is green** and review is satisfied.  
 - Prefer **squash merge** for tidy history on small tasks.  
 - Issue closes automatically if the PR body contains `Closes #N`.
 
@@ -102,17 +102,24 @@ Do not expand into Phase 2 features.
 
 ---
 
-## CI (target)
+## CI
 
-When GitHub Actions are enabled for `tenderpulse/`:
+Workflow: [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
 
-| Check | Required to merge |
-|-------|-------------------|
-| Compile / unit tests | Yes |
-| Lint / format (e.g. ktlint) | Yes when configured |
-| Integration tests | As added |
+| Trigger | Paths |
+|---------|--------|
+| Push to `main` | `tenderpulse/**`, workflow file |
+| Pull request → `main` | same |
 
-Until CI exists, authors must report **local** test results in the PR.
+| Job | What it runs |
+|-----|----------------|
+| **Build & test** | JDK 21 (Temurin), Gradle 8.11.1, `build -x test`, then `test` |
+
+- Test result XML is uploaded as an artifact.  
+- On failure, HTML test reports are uploaded.  
+- **Do not merge** a PR that changes `tenderpulse/` if CI is red.
+
+Optional later: ktlint, branch protection requiring the `CI` status check.
 
 ---
 
