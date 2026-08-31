@@ -35,6 +35,7 @@ Suggested minimal task prompt (process is already required by this file):
 
 - **Builder** (`.claude/agents/builder.md`): Implements and fixes code. Never judges its own work.
 - **Checker** (`.claude/agents/checker.md`): Independently verifies. Never writes production code.
+- **Reviewer** (`.claude/agents/reviewer.md`): External quality gate for P0/critical-path tasks. Triggered conditionally.
 - **Orchestrator** (`/loop` command): Drives the cycle, enforces stop conditions, and escalates.
 
 ## Hard Stop Rules (non-negotiable)
@@ -83,6 +84,31 @@ claude
 
 Process, CI, and product constraints above apply automatically via this file and CONTRIBUTING.md.
 
+## Orchestrator Workflow: Enhanced /loop
+
+After `CHECKER_PASS`, the orchestrator performs these steps automatically before gating to the next task:
+
+1. **PR Merge**: Wait for/confirm PR is merged to `main`
+2. **Auto-comment Issue**: Post `/loop` summary to the issue (via GitHub Actions)
+3. **Update Template Log**:
+   - Extract learnings from Builder + Checker reports
+   - Prompt human: review/edit suggested learning, accept template changes
+   - Auto-update `docs/MVP_CHECKLIST_BOARD.md` template improvement log + task checklist
+4. **Conditional External Review** (if P0 or first implementation):
+   - Invoke Reviewer agent to independently verify
+   - Reviewer reports: `REVIEWER_PASS` or `REVIEWER_FAIL`
+   - If FAIL: escalate; if PASS: proceed
+5. **Human Gate**: "Continue to next task? (y/n)"
+6. **Loop or Stop**: If yes → run next `/loop`; if no → stop and await direction
+
+**Conditional Reviewer Triggers**:
+- ✅ P0 priority tasks (TP-002, TP-003, TP-004, TP-011, TP-012)
+- ✅ First implementations (new adapters, new APIs)
+- ✅ Schema/database changes
+- ✅ Core logic changes (matching, notifications, aggregation)
+- ❌ Docs-only changes
+- ❌ Simple fixes (typos, config tweaks)
+
 ## Success Criteria for a Run
 
 A run is considered successful only when:
@@ -91,7 +117,9 @@ A run is considered successful only when:
 - All project tests and static checks pass (and CI is green for `tenderpulse/` changes)
 - CONTRIBUTING.md workflow was followed for code (branch + PR + evidence + `Closes #N`)
 - No stop rule was violated
-- A human has reviewed the final PR/diff (recommended for anything beyond pure experimentation)
+- Template improvement log updated (if not docs-only)
+- If triggered: Reviewer reports `REVIEWER_PASS`
+- A human has reviewed the final PR/diff and approved proceeding (or stopping)
 
 ## Experimentation Notes
 
