@@ -64,7 +64,7 @@ tasks.jacocoTestReport {
     }
 }
 
-tasks.register("jacocoTestCoverageVerification") {
+tasks.jacocoTestCoverageVerification {
     dependsOn(tasks.jacocoTestReport)
     doLast {
         val jacocoSourceDir = "build/reports/jacoco/test/jacocoTestReport.xml"
