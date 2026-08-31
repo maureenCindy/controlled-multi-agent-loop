@@ -73,17 +73,23 @@ tasks.jacocoTestCoverageVerification {
             throw RuntimeException("JaCoCo report not found at $jacocoSourceDir. Run 'gradle test' first.")
         }
         val xmlContent = sourceFile.readText()
-        val instructionPattern = """<counter type="INSTRUCTION"[^>]*covered="(\d+)"[^>]*missed="(\d+)"""".toRegex()
-        val match = instructionPattern.find(xmlContent)
-        if (match != null) {
-            val covered = match.groupValues[1].toLong()
-            val missed = match.groupValues[2].toLong()
+        val missedPattern = """<counter type="INSTRUCTION"[^>]*missed="(\d+)""".toRegex()
+        val coveredPattern = """<counter type="INSTRUCTION"[^>]*covered="(\d+)""".toRegex()
+
+        val missedMatch = missedPattern.find(xmlContent)
+        val coveredMatch = coveredPattern.find(xmlContent)
+
+        if (missedMatch != null && coveredMatch != null) {
+            val covered = coveredMatch.groupValues[1].toLong()
+            val missed = missedMatch.groupValues[1].toLong()
             val total = covered + missed
             val percentage = if (total > 0) (covered * 100 / total) else 0
             println("Code Coverage: $covered/$total ($percentage%)")
             if (percentage < 80) {
                 throw RuntimeException("Code coverage is $percentage%, minimum required is 80%")
             }
+        } else {
+            throw RuntimeException("Could not find INSTRUCTION counter in JaCoCo report")
         }
     }
 }
