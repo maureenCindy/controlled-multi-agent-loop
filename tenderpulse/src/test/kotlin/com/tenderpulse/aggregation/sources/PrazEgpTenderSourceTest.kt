@@ -1,10 +1,7 @@
 package com.tenderpulse.aggregation.sources
 
 import com.tenderpulse.domain.Sector
-import io.mockk.any
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.verify
+import io.mockk.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
