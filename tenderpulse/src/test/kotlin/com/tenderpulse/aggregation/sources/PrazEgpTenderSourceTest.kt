@@ -41,7 +41,7 @@ class PrazEgpTenderSourceTest {
     @Test
     fun `fetchNewNotices with fixture returns multiple tenders with required fields`() {
         // Arrange
-        every { mockRestTemplate.getForObject(any(), String::class.java) } returns sampleHtml
+        every { mockRestTemplate.getForObject(any<String>(), String::class.java) } returns sampleHtml
 
         // Act
         val tenders = source.fetchNewNotices()
@@ -87,7 +87,7 @@ class PrazEgpTenderSourceTest {
     @Test
     fun `multiple fetches produce consistent sourceUrl for deduplication`() {
         // Arrange
-        every { mockRestTemplate.getForObject(any(), String::class.java) } returns sampleHtml
+        every { mockRestTemplate.getForObject(any<String>(), String::class.java) } returns sampleHtml
 
         // Act
         val firstRun = source.fetchNewNotices()
@@ -127,13 +127,14 @@ class PrazEgpTenderSourceTest {
     @Test
     fun `network error is logged and empty list is returned`() {
         // Arrange: Mock a network timeout
-        every { mockRestTemplate.getForObject(any(), String::class.java) } throws
+        every { mockRestTemplate.getForObject(any<String>(), String::class.java) } throws
             RestClientException("Connection timeout")
 
         // Act
-        val result: List<com.tenderpulse.domain.Tender> = assertDoesNotThrow({
-            source.fetchNewNotices()
-        }, "Should not throw on network error")
+        val result: List<com.tenderpulse.domain.Tender> = assertDoesNotThrow(
+            { source.fetchNewNotices() },
+            "Should not throw on network error"
+        )
 
         // Assert
         assertNotNull(result, "Should return a list, not null")
@@ -148,13 +149,14 @@ class PrazEgpTenderSourceTest {
     @Test
     fun `malformed HTML is handled gracefully and returns empty list`() {
         // Arrange: Mock malformed HTML
-        every { mockRestTemplate.getForObject(any(), String::class.java) } returns
+        every { mockRestTemplate.getForObject(any<String>(), String::class.java) } returns
             "<html><body>No table here</body></html>"
 
         // Act
-        val result: List<com.tenderpulse.domain.Tender> = assertDoesNotThrow({
-            source.fetchNewNotices()
-        }, "Should not throw on malformed HTML")
+        val result: List<com.tenderpulse.domain.Tender> = assertDoesNotThrow(
+            { source.fetchNewNotices() },
+            "Should not throw on malformed HTML"
+        )
 
         // Assert
         assertNotNull(result, "Should return a list, not null")
@@ -169,12 +171,13 @@ class PrazEgpTenderSourceTest {
     @Test
     fun `null HTTP response is handled gracefully`() {
         // Arrange
-        every { mockRestTemplate.getForObject(any(), String::class.java) } returns null
+        every { mockRestTemplate.getForObject(any<String>(), String::class.java) } returns null
 
         // Act
-        val result: List<com.tenderpulse.domain.Tender> = assertDoesNotThrow({
-            source.fetchNewNotices()
-        }, "Should not throw on null response")
+        val result: List<com.tenderpulse.domain.Tender> = assertDoesNotThrow(
+            { source.fetchNewNotices() },
+            "Should not throw on null response"
+        )
 
         // Assert
         assertNotNull(result, "Should return a list, not null")
@@ -189,7 +192,7 @@ class PrazEgpTenderSourceTest {
     @Test
     fun `all tender fields are correctly mapped from HTML`() {
         // Arrange
-        every { mockRestTemplate.getForObject(any(), String::class.java) } returns sampleHtml
+        every { mockRestTemplate.getForObject(any<String>(), String::class.java) } returns sampleHtml
 
         // Act
         val tenders = source.fetchNewNotices()
@@ -228,7 +231,7 @@ class PrazEgpTenderSourceTest {
     @Test
     fun `category codes are correctly mapped to sector enum`() {
         // Arrange
-        every { mockRestTemplate.getForObject(any(), String::class.java) } returns sampleHtml
+        every { mockRestTemplate.getForObject(any<String>(), String::class.java) } returns sampleHtml
 
         // Act
         val tenders = source.fetchNewNotices()
@@ -250,7 +253,7 @@ class PrazEgpTenderSourceTest {
     @Test
     fun `keywords are extracted from category codes and titles`() {
         // Arrange
-        every { mockRestTemplate.getForObject(any(), String::class.java) } returns sampleHtml
+        every { mockRestTemplate.getForObject(any<String>(), String::class.java) } returns sampleHtml
 
         // Act
         val tenders = source.fetchNewNotices()
@@ -276,7 +279,7 @@ class PrazEgpTenderSourceTest {
     @Test
     fun `all tenders have consistent source name`() {
         // Arrange
-        every { mockRestTemplate.getForObject(any(), String::class.java) } returns sampleHtml
+        every { mockRestTemplate.getForObject(any<String>(), String::class.java) } returns sampleHtml
 
         // Act
         val tenders = source.fetchNewNotices()
@@ -294,12 +297,12 @@ class PrazEgpTenderSourceTest {
     @Test
     fun `restTemplate is called with correct base URL`() {
         // Arrange
-        every { mockRestTemplate.getForObject(any(), String::class.java) } returns sampleHtml
+        every { mockRestTemplate.getForObject(any<String>(), String::class.java) } returns sampleHtml
 
         // Act
         source.fetchNewNotices()
 
         // Assert
-        verify(exactly = 1) { mockRestTemplate.getForObject(any(), String::class.java) }
+        verify(exactly = 1) { mockRestTemplate.getForObject(any<String>(), String::class.java) }
     }
 }
