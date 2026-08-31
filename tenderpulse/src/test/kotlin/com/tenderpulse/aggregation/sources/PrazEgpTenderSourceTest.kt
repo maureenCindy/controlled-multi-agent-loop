@@ -128,7 +128,7 @@ class PrazEgpTenderSourceTest {
             RestClientException("Connection timeout")
 
         // Act
-        val result: List<com.tenderpulse.domain.Tender> = assertDoesNotThrow { source.fetchNewNotices() }
+        val result = source.fetchNewNotices()
 
         // Assert
         assertNotNull(result, "Should return a list, not null")
@@ -147,7 +147,7 @@ class PrazEgpTenderSourceTest {
             "<html><body>No table here</body></html>"
 
         // Act
-        val result: List<com.tenderpulse.domain.Tender> = assertDoesNotThrow { source.fetchNewNotices() }
+        val result = source.fetchNewNotices()
 
         // Assert
         assertNotNull(result, "Should return a list, not null")
@@ -165,7 +165,7 @@ class PrazEgpTenderSourceTest {
         every { mockRestTemplate.getForObject(any<String>(), String::class.java) } returns null
 
         // Act
-        val result: List<com.tenderpulse.domain.Tender> = assertDoesNotThrow { source.fetchNewNotices() }
+        val result = source.fetchNewNotices()
 
         // Assert
         assertNotNull(result, "Should return a list, not null")
