@@ -90,10 +90,15 @@ After `CHECKER_PASS`, the orchestrator performs these steps automatically before
 
 1. **PR Merge**: Wait for/confirm PR is merged to `main`
 2. **Auto-comment Issue**: Post `/loop` summary to the issue (via GitHub Actions)
-3. **Update Template Log**:
-   - Extract learnings from Builder + Checker reports
-   - Prompt human: review/edit suggested learning, accept template changes
-   - Auto-update `docs/MVP_CHECKLIST_BOARD.md` template improvement log + task checklist
+3. **Improve Task Specification**:
+   - Extract gaps from task spec that caused confusion or hallucination
+   - Examples: "AC didn't list all required fields", "test cases missed null deadline edge case", "estimate was wrong"
+   - Propose fixes to the task card itself (in MVP_CHECKLIST_BOARD.md):
+     - Better AC wording, explicit field lists, schema tables
+     - More comprehensive test cases (edge cases)
+     - Corrected estimates
+   - Prompt human: review/edit proposed spec improvements
+   - Auto-update `docs/MVP_CHECKLIST_BOARD.md` task card + template improvement log
 4. **Conditional External Review** (if P0 or first implementation):
    - Invoke Reviewer agent to independently verify
    - Reviewer reports: `REVIEWER_PASS` or `REVIEWER_FAIL`

@@ -47,6 +47,12 @@ jobs:
       - name: Test
         run: gradle test --no-daemon
 
+      - name: Generate code coverage report
+        run: gradle jacocoTestReport --no-daemon
+
+      - name: Verify code coverage threshold (≥80%)
+        run: gradle jacocoTestCoverageVerification --no-daemon
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -62,5 +68,14 @@ jobs:
         with:
           name: test-reports
           path: tenderpulse/build/reports/tests/**
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: tenderpulse/build/reports/jacoco/**
           if-no-files-found: ignore
           retention-days: 14

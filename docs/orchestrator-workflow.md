@@ -57,54 +57,71 @@ When the PR is merged, GitHub Actions posts a summary comment to the linked issu
 - Checks if branch matches `tp-*` pattern
 - Posts a standardized summary via GitHub API
 
-### 3. Template Improvement Log Update
+### 3. Task Specification Improvement
 
-The orchestrator (you) will:
+The orchestrator improves the TASK ITSELF for future agents, preventing hallucination and guessing.
 
-**a) Extract learnings from Builder + Checker output:**
-   - Builder: What did they discover during implementation? (gaps, surprises)
-   - Checker: What edge cases or gaps did verification reveal?
-   - Synthesize into 1–2 sentence learning
+**a) Extract spec gaps from Builder + Checker:**
 
-**Example:**
-- Builder found: "Currency field was needed for ZW tenders; external tender ID for deduplication"
-- Checker found: "Deadline is truly optional; matching logic unaffected when null"
-- **Learning:** "Tender schema needs currency tracking and external ID for ZW; deadline is optional but safely nullable"
+What was unclear, incomplete, or missing in the original issue?
+- Builder: "Had to infer that currency field was needed; AC didn't list all required fields"
+- Checker: "Edge case (null deadline) wasn't mentioned in test cases; discovered during implementation"
+- Gap: "Estimate was S but task took understanding of ZW context; should be S→M or add background note"
 
-**b) Propose template changes:**
-   - Estimate accuracy: Did task take longer/shorter than S/M/L?
-   - Test adequacy: Were acceptance criteria and test cases sufficient?
-   - AC clarity: Were any criteria ambiguous?
-   - Task template improvements for future similar tasks
+**b) Propose fixes to the task card itself:**
 
-**Example proposals:**
-- ✅ "Estimate was accurate (S = 1 cycle)"
-- ✅ "Test cases were comprehensive; caught null deadline edge case"
-- 💡 "Future schema tasks: add 'currency' to checklist"
+Update the issue description/AC/test cases to be unambiguous:
 
-**c) Prompt human for review:**
-```
-Template Improvement Log — Review & Confirm
-
-Proposed learning:
-  "Tender schema needs currency + external ID for ZW; deadline is optional"
-
-Proposed template changes:
-  - Estimate: S (accurate)
-  - Add checklist item: "Currency field required for multi-region tenders"
-
-Accept and update? (y/n)
+**Example — before (vague):**
+```markdown
+**Acceptance criteria:**
+- Schema documented (fields, types, required)
+- Sample ZW tender maps with no critical orphan data
+- Code/entity updated if gaps found
 ```
 
-**d) Auto-update `docs/MVP_CHECKLIST_BOARD.md`:**
-   - Add row to template improvement log table
+**Example — after (explicit):**
+```markdown
+**Acceptance criteria:**
+- Schema documented with table: field name, type, required/optional, ZW notes
+  - Required: id (UUID), title (String), issuingAuthority (String), sourceUrl (String), 
+    sourceName (String), publishedAt (Instant)
+  - Optional: description, externalTenderId (String, for deduplication), currency (String, e.g. USD/ZWL), 
+    deadline (Instant, can be null), sector, region, keywords, valueMin/Max
+- Sample ZW tender (e.g. TR22053) maps with ALL required fields + common optional fields (currency, external ID)
+- Test case: Tender with deadline=null still stores and matches
+- Code/entity updated if gaps found
+```
+
+**c) Prompt human for spec fixes:**
+```
+Task Specification Improvements — Review & Confirm
+
+Issue: TP-002 AC was vague about required/optional fields
+Fix proposed:
+  - Add explicit field table to AC (name, type, required/optional)
+  - Add ZW-specific context (currency codes, external ID for e-GP)
+  - Add edge case test (null deadline)
+  - Update estimate from S to S (accurate, but add "requires ZW context" note)
+
+Update task card in MVP_CHECKLIST_BOARD.md? (y/n)
+```
+
+**d) Auto-update task card + log:**
+   - Update task description/AC in MVP_CHECKLIST_BOARD.md (improve clarity)
    - Mark task ✅ in checklist
-   - Update estimate/test notes if changed
+   - Add row to template improvement log table
 
 **Example log entry:**
 ```markdown
-| 2026-08-31 | TP-002 | Tender schema needs currency + external ID for ZW; deadline is optional | - Estimate S accurate; add currency to schema template for multi-region tasks |
+| 2026-08-31 | TP-002 | AC was vague on required/optional fields; edge case (null deadline) discovered in testing | - Add explicit field table (type, required/optional); add null deadline test case; estimate S accurate |
 ```
+
+**Why this matters:**
+- Next agent building TP-003 or TP-011 gets better spec for similar work
+- Prevents Builder from hallucinating or guessing at requirements
+- Accumulates institutional knowledge in the task templates
+- 100% pass rate through better specs, not just better agents
 
 ### 4. Conditional External Review
 
