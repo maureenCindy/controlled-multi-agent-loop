@@ -24,3 +24,9 @@ server:
 logging:
   level:
     com.tenderpulse: INFO
+
+tenderpulse:
+  aggregation:
+    scheduled-enabled: false
+    scheduled-initial-delay-ms: 0
+    scheduled-interval-ms: 10800000  # 3 hours
