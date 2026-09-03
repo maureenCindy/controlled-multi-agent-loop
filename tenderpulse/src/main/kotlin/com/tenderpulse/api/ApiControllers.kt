@@ -54,10 +54,10 @@ class SubscriberController(
     fun createProfile(
         @PathVariable id: UUID,
         @Valid @RequestBody req: ProfileRequest
-    ): InterestProfile {
+    ): InterestProfileResponse {
         val subscriber = subscriberRepository.findById(id)
             .orElseThrow { NotFoundException("Subscriber $id") }
-        return profileRepository.save(
+        val saved = profileRepository.save(
             InterestProfile(
                 subscriber = subscriber,
                 sectors = req.sectors.toMutableSet(),
@@ -70,13 +70,14 @@ class SubscriberController(
                 active = req.active
             )
         )
+        return InterestProfileResponse.from(saved)
     }
 
     /** List ALL profiles for a subscriber, including inactive ones (management API). */
     @GetMapping("/{id}/profiles")
-    fun listProfiles(@PathVariable id: UUID): List<InterestProfile> {
+    fun listProfiles(@PathVariable id: UUID): List<InterestProfileResponse> {
         subscriberRepository.findById(id).orElseThrow { NotFoundException("Subscriber $id") }
-        return profileRepository.findBySubscriberId(id)
+        return profileRepository.findBySubscriberId(id).map { InterestProfileResponse.from(it) }
     }
 
     /** Full replace of the mutable filter fields on an existing profile. */
@@ -85,7 +86,7 @@ class SubscriberController(
         @PathVariable id: UUID,
         @PathVariable profileId: UUID,
         @Valid @RequestBody req: ProfileRequest
-    ): InterestProfile {
+    ): InterestProfileResponse {
         subscriberRepository.findById(id).orElseThrow { NotFoundException("Subscriber $id") }
         val existing = profileRepository.findById(profileId)
             .orElseThrow { NotFoundException("Profile $profileId") }
@@ -102,7 +103,8 @@ class SubscriberController(
             preferredChannels = req.preferredChannels.ifEmpty { setOf(NotificationChannel.EMAIL) }.toMutableSet(),
             active = req.active
         )
-        return profileRepository.save(updated)
+        val saved = profileRepository.save(updated)
+        return InterestProfileResponse.from(saved)
     }
 }
 
@@ -144,6 +146,38 @@ data class ProfileRequest(
             val max = valueMax
             return min == null || max == null || min <= max
         }
+}
+
+/**
+ * Response shape for interest-profile endpoints. Deliberately excludes the `subscriber`
+ * relation (and therefore `Subscriber.email`) so profile responses never leak PII.
+ * See issue #23 — this closes the response-shape leak only; it does not add
+ * authentication/authorization (tracked separately in issue #25).
+ */
+data class InterestProfileResponse(
+    val id: UUID,
+    val sectors: Set<Sector>,
+    val valueMin: BigDecimal?,
+    val valueMax: BigDecimal?,
+    val issuingAuthorityContains: String?,
+    val region: String?,
+    val keywords: Set<String>,
+    val preferredChannels: Set<NotificationChannel>,
+    val active: Boolean
+) {
+    companion object {
+        fun from(profile: InterestProfile): InterestProfileResponse = InterestProfileResponse(
+            id = profile.id,
+            sectors = profile.sectors,
+            valueMin = profile.valueMin,
+            valueMax = profile.valueMax,
+            issuingAuthorityContains = profile.issuingAuthorityContains,
+            region = profile.region,
+            keywords = profile.keywords,
+            preferredChannels = profile.preferredChannels,
+            active = profile.active
+        )
+    }
 }
 
 @ResponseStatus(HttpStatus.NOT_FOUND)
