@@ -135,3 +135,26 @@ data class NotificationRecord(
 
     val errorMessage: String? = null
 )
+
+@Entity
+@Table(name = "digest_queue_entries")
+data class DigestQueueEntry(
+    @Id
+    val id: UUID = UUID.randomUUID(),
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subscriber_id", nullable = false)
+    val subscriber: Subscriber,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tender_id", nullable = false)
+    val tender: Tender,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "profile_id", nullable = false)
+    val profile: InterestProfile,
+
+    val queuedAt: Instant = Instant.now(),
+
+    val digestedAt: Instant? = null
+)

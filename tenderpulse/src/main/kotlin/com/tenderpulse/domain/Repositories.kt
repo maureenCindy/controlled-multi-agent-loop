@@ -22,3 +22,7 @@ interface InterestProfileRepository : JpaRepository<InterestProfile, UUID> {
 }
 
 interface NotificationRecordRepository : JpaRepository<NotificationRecord, UUID>
+
+interface DigestQueueEntryRepository : JpaRepository<DigestQueueEntry, UUID> {
+    fun findBySubscriberIdAndDigestedAtIsNull(subscriberId: UUID): List<DigestQueueEntry>
+}

@@ -9,13 +9,14 @@ import org.springframework.transaction.annotation.Transactional
 /**
  * Delivers alerts when a tender matches a subscriber profile.
  *
- * Free tier  → batch into daily digests (not implemented in this scaffold; stub records only)
+ * Free tier  → enqueued for the daily digest (sending handled by a future job; see TP-013)
  * Paid tier  → real-time per preferred channel
  */
 @Service
 class NotificationService(
     private val profileRepository: InterestProfileRepository,
     private val notificationRecordRepository: NotificationRecordRepository,
+    private val digestQueueEntryRepository: DigestQueueEntryRepository,
     private val matchingService: MatchingService,
     private val channels: List<NotificationChannelSender>
 ) {
@@ -30,30 +31,40 @@ class NotificationService(
             if (!matchingService.matches(tender, profile)) continue
 
             val subscriber = profile.subscriber
-            val channelsToUse = when (subscriber.tier) {
-                SubscriptionTier.FREE -> setOf(NotificationChannel.EMAIL) // digest path later
-                SubscriptionTier.PAID -> profile.preferredChannels.ifEmpty {
-                    setOf(NotificationChannel.EMAIL)
-                }
-            }
 
-            for (channel in channelsToUse) {
-                val sender = channels.find { it.channel == channel }
-                if (sender == null) {
-                    log.warn("No sender registered for channel {}", channel)
-                    continue
-                }
-                val result = sender.send(subscriber, tender, profile)
-                notificationRecordRepository.save(
-                    NotificationRecord(
-                        subscriber = subscriber,
-                        tender = tender,
-                        channel = channel,
-                        success = result.success,
-                        errorMessage = result.error
+            when (subscriber.tier) {
+                SubscriptionTier.FREE -> {
+                    digestQueueEntryRepository.save(
+                        DigestQueueEntry(
+                            subscriber = subscriber,
+                            tender = tender,
+                            profile = profile
+                        )
                     )
-                )
-                if (result.success) sent++
+                }
+                SubscriptionTier.PAID -> {
+                    val channelsToUse = profile.preferredChannels.ifEmpty {
+                        setOf(NotificationChannel.EMAIL)
+                    }
+                    for (channel in channelsToUse) {
+                        val sender = channels.find { it.channel == channel }
+                        if (sender == null) {
+                            log.warn("No sender registered for channel {}", channel)
+                            continue
+                        }
+                        val result = sender.send(subscriber, tender, profile)
+                        notificationRecordRepository.save(
+                            NotificationRecord(
+                                subscriber = subscriber,
+                                tender = tender,
+                                channel = channel,
+                                success = result.success,
+                                errorMessage = result.error
+                            )
+                        )
+                        if (result.success) sent++
+                    }
+                }
             }
         }
         return sent
