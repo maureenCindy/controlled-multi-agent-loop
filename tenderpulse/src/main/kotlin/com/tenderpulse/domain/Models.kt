@@ -136,6 +136,35 @@ data class NotificationRecord(
     val errorMessage: String? = null
 )
 
+/**
+ * Pre-launch waitlist signup (TP-020). Deliberately separate from [Subscriber]: a waitlist
+ * entry is just "someone who told us they're interested in ZW tenders" and carries no
+ * subscription tier / notification semantics. Converting a waitlist entry into a real
+ * [Subscriber] + [InterestProfile] is tracked separately (TP-021) and out of scope here.
+ */
+@Entity
+@Table(name = "waitlist_entries")
+data class WaitlistEntry(
+    @Id
+    val id: UUID = UUID.randomUUID(),
+
+    @Column(nullable = false, unique = true)
+    val email: String,
+
+    @ElementCollection
+    @CollectionTable(name = "waitlist_entry_sectors")
+    @Enumerated(EnumType.STRING)
+    val sectors: MutableSet<Sector> = mutableSetOf(),
+
+    val province: String? = null,
+
+    val company: String? = null,
+
+    val createdAt: Instant = Instant.now(),
+
+    val updatedAt: Instant = Instant.now()
+)
+
 @Entity
 @Table(name = "digest_queue_entries")
 data class DigestQueueEntry(

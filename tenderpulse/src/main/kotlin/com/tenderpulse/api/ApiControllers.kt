@@ -7,8 +7,10 @@ import jakarta.validation.constraints.AssertTrue
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.math.BigDecimal
+import java.time.Instant
 import java.util.UUID
 
 @RestController
@@ -109,6 +111,42 @@ class SubscriberController(
 }
 
 @RestController
+@RequestMapping("/api/v1/waitlist")
+class WaitlistController(
+    private val waitlistRepository: WaitlistEntryRepository
+) {
+    /**
+     * Pre-launch waitlist signup (TP-020). Idempotent on email: a repeat submission from the
+     * same address updates the existing row (sectors/province/company) instead of erroring or
+     * creating a second logical record.
+     */
+    @PostMapping
+    fun submit(@Valid @RequestBody req: WaitlistRequest): ResponseEntity<WaitlistResponse> {
+        val existing = waitlistRepository.findByEmail(req.email)
+        return if (existing != null) {
+            val updated = existing.copy(
+                sectors = req.sectors.toMutableSet(),
+                province = req.province,
+                company = req.company,
+                updatedAt = Instant.now()
+            )
+            val saved = waitlistRepository.save(updated)
+            ResponseEntity.ok(WaitlistResponse.from(saved))
+        } else {
+            val saved = waitlistRepository.save(
+                WaitlistEntry(
+                    email = req.email,
+                    sectors = req.sectors.toMutableSet(),
+                    province = req.province,
+                    company = req.company
+                )
+            )
+            ResponseEntity.status(HttpStatus.CREATED).body(WaitlistResponse.from(saved))
+        }
+    }
+}
+
+@RestController
 @RequestMapping("/api/v1/admin")
 class AdminController(
     private val aggregationService: AggregationService
@@ -176,6 +214,35 @@ data class InterestProfileResponse(
             keywords = profile.keywords,
             preferredChannels = profile.preferredChannels,
             active = profile.active
+        )
+    }
+}
+
+data class WaitlistRequest(
+    @field:Email @field:NotBlank val email: String,
+    val sectors: Set<Sector> = emptySet(),
+    val province: String? = null,
+    val company: String? = null
+)
+
+data class WaitlistResponse(
+    val id: UUID,
+    val email: String,
+    val sectors: Set<Sector>,
+    val province: String?,
+    val company: String?,
+    val createdAt: Instant,
+    val updatedAt: Instant
+) {
+    companion object {
+        fun from(entry: WaitlistEntry): WaitlistResponse = WaitlistResponse(
+            id = entry.id,
+            email = entry.email,
+            sectors = entry.sectors,
+            province = entry.province,
+            company = entry.company,
+            createdAt = entry.createdAt,
+            updatedAt = entry.updatedAt
         )
     }
 }
