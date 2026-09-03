@@ -15,6 +15,8 @@ import java.math.BigDecimal
  * - Region/province: whole-word token match (case-insensitive, punctuation-insensitive).
  *   One side's word set must contain the other's, so "Harare" matches "Harare Province"
  *   and vice versa, while a fragment like "land" does not match "Mashonaland East".
+ *   A tender with a null region is a no-op for a region filter (does not exclude), the same
+ *   way a tender with no value does not exclude on the value-range filter (issue #21).
  * - Keywords: at least one profile keyword appears in title, description, or tender keywords
  *   (case-insensitive)
  *
@@ -40,7 +42,13 @@ class MatchingService {
         }
 
         profile.region?.takeIf { it.isNotBlank() }?.let { region ->
-            val tenderRegion = tender.region ?: return false
+            // A tender with no region is treated as a no-op for a region filter rather than a
+            // rejection, mirroring how valueOverlaps handles a tender with no value. PRAZ never
+            // populates region today, so failing here would silently zero out every subscriber's
+            // region filter against the only MVP source (issue #21). This reverses the #19 item 2
+            // decision that a null region should fail a region filter, which was pinned by a test
+            // in PR #20 — see the #21 product decision (option 2) for the rationale.
+            val tenderRegion = tender.region ?: return@let
             if (!regionMatches(tenderRegion, region)) return false
         }
 

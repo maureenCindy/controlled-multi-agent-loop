@@ -156,9 +156,14 @@ class MatchingServiceTest {
     }
 
     @Test
-    fun `rejects tender with null region when the profile sets a region filter`() {
+    fun `matches tender with null region when the profile sets a region filter`() {
+        // Reverses the #19 item 2 decision (pinned by a test in PR #20) that a null tender
+        // region should fail a region filter. Issue #21: PRAZ never populates region, so
+        // failing here made every region filter match zero live tenders. Per the #21 product
+        // decision (option 2), a null tender region is now a no-op for region filters,
+        // mirroring how valueOverlaps treats a tender with no value.
         val profile = sampleProfile(region = "Harare")
-        assertFalse(matching.matches(sampleTender(region = null), profile))
+        assertTrue(matching.matches(sampleTender(region = null), profile))
     }
 
     @Test
