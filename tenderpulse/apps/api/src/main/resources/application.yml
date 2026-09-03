@@ -1,11 +1,20 @@
+# TP-048: the app connects to a real PostgreSQL instance (started via ../docker-compose.yml)
+# instead of the old H2 in-memory database, so subscriber/tender data survives restarts.
+#
+# Defaults below match tenderpulse/docker-compose.yml's local-dev Postgres service; override any
+# of them with the corresponding env var (e.g. for a non-Docker Postgres, or later deployment).
+#
+# The test suite deliberately keeps using H2 in-memory (see
+# apps/api/src/test/resources/application.yml) rather than this datasource — see
+# apps/api/README.md "Tests vs. the real datasource" for why.
 spring:
   application:
     name: tenderpulse
   datasource:
-    url: jdbc:h2:mem:tenderpulse;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:tenderpulse}
+    driver-class-name: org.postgresql.Driver
+    username: ${DB_USER:tenderpulse}
+    password: ${DB_PASSWORD:tenderpulse}
   jpa:
     hibernate:
       ddl-auto: update
@@ -13,10 +22,6 @@ spring:
     properties:
       hibernate:
         format_sql: true
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
 
 server:
   port: 8080

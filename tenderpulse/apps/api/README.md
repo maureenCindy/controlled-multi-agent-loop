@@ -17,7 +17,7 @@ Kotlin / Spring Boot scaffold for a tender aggregation & notification platform.
 ## Stack
 
 - Kotlin 2.x + Spring Boot 3.4
-- Spring Data JPA + H2 (dev) / PostgreSQL (prod-ready driver included)
+- Spring Data JPA + PostgreSQL (app) / H2 in-memory (tests only — see below)
 - Validation, Mail starter (email channel stub)
 - JUnit 5 + MockK for tests
 
@@ -35,18 +35,65 @@ src/main/kotlin/com/tenderpulse/
 
 ## Run locally
 
+The app now runs against a real PostgreSQL instance (TP-048) instead of H2 in-memory, so data
+survives restarts. Start Postgres via Docker Compose first, then run the app:
+
 ```bash
+# 1. Start local Postgres (from the tenderpulse/ directory, one level up from apps/api)
 cd tenderpulse
+docker compose up -d
+docker compose ps          # wait until postgres is "healthy"
+
+# 2. Run the app (from apps/api)
+cd apps/api
 ./gradlew bootRun          # after generating wrapper, or use an IDE
 # API: http://localhost:8080
-# H2 console: http://localhost:8080/h2-console
 ```
+
+The app connects using these local-dev defaults (matching `docker-compose.yml`), each overridable
+via env var — see `src/main/resources/application.yml`:
+
+| Env var       | Default       |
+| ------------- | ------------- |
+| `DB_HOST`     | `localhost`   |
+| `DB_PORT`     | `5432`        |
+| `DB_NAME`     | `tenderpulse` |
+| `DB_USER`     | `tenderpulse` |
+| `DB_PASSWORD` | `tenderpulse` |
+
+Schema is still managed by Hibernate's `ddl-auto: update` (no Flyway — deferred, see #49) and is
+created automatically on first boot against the empty Postgres database.
+
+To stop Postgres: `docker compose down` (from `tenderpulse/`). Add `-v` to also delete the data
+volume (irreversible — wipes all local subscriber/tender data).
 
 Generate the Gradle wrapper if needed:
 
 ```bash
 gradle wrapper --gradle-version 8.11.1
 ```
+
+### Tests vs. the real datasource
+
+`./gradlew test` does **not** require Postgres or Docker to be running. Tests use H2 in-memory via
+`src/test/resources/application.yml`, which shadows the main `application.yml` on the test
+classpath. This was a deliberate choice (TP-048 / #49), not an oversight:
+
+- CI (`.github/workflows/ci.yml`) has no Postgres service configured, and adding one (or
+  Testcontainers) was judged a bigger lift than this migration's scope warranted.
+- The suite's only tests that boot a real Spring/JPA context are `EntityPersistenceTest`
+  (`@DataJpaTest`, which always uses an embedded database regardless of datasource config) and
+  `PrivacyPageTest` / `WaitlistRetirementTest` (`@SpringBootTest`, neither of which touches the
+  database). Every other test mocks the repository layer, so H2 vs. Postgres makes no difference
+  to what's tested.
+- As part of TP-048, the full suite was also run once with the datasource pointed at the
+  docker-compose Postgres service (env-var override, no source changes) to confirm no divergence,
+  and the app was run against Postgres directly and exercised via a few endpoints — see the PR
+  evidence for #49.
+
+If real Postgres-backed test coverage becomes valuable later (e.g. to catch a dialect-specific
+regression), revisit via Testcontainers rather than pointing the default test config at the
+docker-compose service, so `./gradlew test` keeps working without Docker.
 
 ## Useful endpoints (scaffold)
 
@@ -72,7 +119,7 @@ Matching rules are covered by unit tests under `src/test/kotlin/.../MatchingServ
 - Scheduled aggregation (`@Scheduled`)
 - Daily digest job for FREE tier
 - Auth (JWT / OAuth2)
-- PostgreSQL + Flyway migrations
+- Flyway migrations (Postgres itself landed in TP-048; schema is still Hibernate `ddl-auto: update`)
 - Real email (SES / SendGrid) and SMS (Twilio) providers
 - Analytics & history endpoints for PAID tier
 

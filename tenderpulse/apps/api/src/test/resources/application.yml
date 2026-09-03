@@ -1,0 +1,46 @@
+# TP-048: tests deliberately keep using H2 in-memory rather than the real Postgres datasource
+# that apps/api/src/main/resources/application.yml now points the running app at.
+#
+# Why: on the Gradle `test` classpath, this file (src/test/resources/application.yml) shadows
+# the main resource of the same name, so it is the config the whole test suite boots against
+# (Spring Boot loads the first "application.yml" it finds on the classpath, and Gradle puts test
+# resources ahead of main resources for the `test` task). No external Postgres service, Docker,
+# or Testcontainers dependency is needed to run `./gradlew test` — this keeps CI (which has no
+# Postgres service configured) fast and simple.
+#
+# This is a deliberate decision, not an oversight: see apps/api/README.md "Tests vs. the real
+# datasource" for the full reasoning and for how this was verified not to mask a real Postgres
+# divergence (the full suite was also run once with the datasource pointed at the docker-compose
+# Postgres service — see PR evidence for TP-048 / issue #49).
+spring:
+  application:
+    name: tenderpulse
+  datasource:
+    url: jdbc:h2:mem:tenderpulse;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.tenderpulse: INFO
+
+tenderpulse:
+  aggregation:
+    scheduled-enabled: false
+    scheduled-initial-delay-ms: 0
+    scheduled-interval-ms: 10800000  # 3 hours
