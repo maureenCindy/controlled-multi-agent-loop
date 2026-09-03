@@ -15,10 +15,9 @@ import org.springframework.transaction.annotation.Transactional
  * TP-041 (consent guarantee): [profileRepository].findAllActiveWithSubscriber() only returns
  * [InterestProfile] rows joined to a real [Subscriber] row (the FK is non-null at the DB
  * level, see Models.kt). The only place a [Subscriber] is ever created is
- * `SubscriberController.register()` (`POST /api/v1/subscribers`), i.e. an explicit opt-in.
- * A [WaitlistEntry] (pre-launch waitlist signup) is a separate table with no notification
- * wiring — nothing in this class or [AggregationService][com.tenderpulse.aggregation.AggregationService]
- * reads from it. So there is no code path that emails an address that wasn't explicitly
+ * `SubscriberService.register()` (called from `POST /api/v1/subscribers`), i.e. an explicit
+ * opt-in. (The pre-launch Waitlist feature that predated `Subscriber` opt-in was retired in
+ * TP-037 — see #38.) So there is no code path that emails an address that wasn't explicitly
  * registered as a subscriber.
  */
 @Service

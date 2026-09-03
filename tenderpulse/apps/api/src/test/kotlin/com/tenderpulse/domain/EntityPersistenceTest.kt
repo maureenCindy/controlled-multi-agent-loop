@@ -15,7 +15,7 @@ import java.math.BigDecimal
  * `@DataJpaTest` boots a real Spring context with an actual (H2) `EntityManagerFactory` and
  * Hibernate `SessionFactory` — unlike every other existing test in this module, which either
  * constructs entities directly in memory ([TenderSchemaTest]) or mocks the repository layer
- * ([com.tenderpulse.api.WaitlistControllerTest], [com.tenderpulse.api.SubscriberControllerTest]).
+ * ([com.tenderpulse.api.SubscriberControllerTest]).
  * Mocked repositories never invoke Hibernate's entity instantiator, so they could not have
  * caught (and did not catch) the missing `kotlin("plugin.jpa")` compiler plugin that left these
  * `@Entity` classes without a synthetic no-arg constructor.
@@ -35,9 +35,6 @@ class EntityPersistenceTest {
     private lateinit var entityManager: TestEntityManager
 
     @Autowired
-    private lateinit var waitlistEntryRepository: WaitlistEntryRepository
-
-    @Autowired
     private lateinit var subscriberRepository: SubscriberRepository
 
     @Autowired
@@ -52,29 +49,9 @@ class EntityPersistenceTest {
     @Autowired
     private lateinit var digestQueueEntryRepository: DigestQueueEntryRepository
 
-    // ---- minimum bar: WaitlistEntry (TP-020, the entity that first surfaced this bug) ----
-
-    @Test
-    fun `WaitlistEntry save-read round trip against a real JPA context`() {
-        val saved = waitlistEntryRepository.save(
-            WaitlistEntry(
-                email = "roundtrip@example.co.zw",
-                sectors = mutableSetOf(Sector.CONSTRUCTION),
-                province = "Harare",
-                company = "Acme Builders"
-            )
-        )
-        entityManager.flush()
-        entityManager.clear()
-
-        val reloaded = waitlistEntryRepository.findById(saved.id).orElseThrow()
-
-        assertEquals("roundtrip@example.co.zw", reloaded.email)
-        assertEquals(setOf(Sector.CONSTRUCTION), reloaded.sectors)
-        assertEquals("Harare", reloaded.province)
-        assertEquals("Acme Builders", reloaded.company)
-    }
-
+    // ---- minimum bar: Subscriber (the simplest entity; WaitlistEntry, the entity that first
+    //      surfaced this bug, was retired in TP-037) ----
+    //
     // ---- remaining @Entity classes in Models.kt, so this class of bug cannot silently
     //      reappear for any of them ----
 
