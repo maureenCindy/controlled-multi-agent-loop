@@ -45,6 +45,8 @@ class WaitlistLandingPageTest {
             .andExpect(content().string(containsString("only use your email")))
             // link to X for build updates
             .andExpect(content().string(containsString("x.com/tenderpulse_zw")))
+            // TP-041: link to the short privacy note
+            .andExpect(content().string(containsString("/privacy.html")))
     }
 
     @Test
@@ -54,5 +56,13 @@ class WaitlistLandingPageTest {
             .andExpect(status().isOk)
             // the client-side script posts to the existing TP-020 waitlist API
             .andExpect(content().string(containsString("/api/v1/waitlist")))
+    }
+
+    @Test
+    fun `GET privacy html contains the MVP-stage disclaimer and no third-party sharing statement`() {
+        mockMvc.perform(get("/privacy.html"))
+            .andExpect(status().isOk)
+            .andExpect(content().string(containsString("not vetted legal advice")))
+            .andExpect(content().string(containsString("don't sell or share")))
     }
 }
