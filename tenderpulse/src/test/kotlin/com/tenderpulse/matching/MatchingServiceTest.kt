@@ -117,6 +117,77 @@ class MatchingServiceTest {
     }
 
     @Test
+    fun `rejects a region fragment that only overlaps part of a province name`() {
+        val profile = sampleProfile(region = "land")
+        assertFalse(matching.matches(sampleTender(region = "Mashonaland East"), profile))
+        assertFalse(matching.matches(sampleTender(region = "Matabeleland North"), profile))
+    }
+
+    @Test
+    fun `rejects sibling provinces that share a word`() {
+        val profile = sampleProfile(region = "Mashonaland East")
+        assertFalse(matching.matches(sampleTender(region = "Mashonaland West"), profile))
+    }
+
+    @Test
+    fun `matches when the profile region is a whole word within the tender region`() {
+        val profile = sampleProfile(region = "Harare")
+        assertTrue(matching.matches(sampleTender(region = "Harare Province"), profile))
+    }
+
+    @Test
+    fun `matches when the tender region is narrower than the profile region`() {
+        val profile = sampleProfile(region = "Harare Metropolitan Province")
+        assertTrue(matching.matches(sampleTender(region = "Harare"), profile))
+    }
+
+    @Test
+    fun `matches region ignoring case and punctuation`() {
+        val profile = sampleProfile(region = "matabeleland north")
+        assertTrue(matching.matches(sampleTender(region = "Matabeleland-North"), profile))
+    }
+
+    @Test
+    fun `rejects tender with null region when the profile sets a region filter`() {
+        val profile = sampleProfile(region = "Harare")
+        assertFalse(matching.matches(sampleTender(region = null), profile))
+    }
+
+    @Test
+    fun `matches tender with null region when the profile sets no region filter`() {
+        val profile = sampleProfile(region = null)
+        assertTrue(matching.matches(sampleTender(region = null), profile))
+    }
+
+    @Test
+    fun `matches when tender valueMax lands exactly on profile valueMin`() {
+        val profile = sampleProfile(valueMin = BigDecimal("100000"), valueMax = BigDecimal("500000"))
+        val tender = sampleTender(valueMin = BigDecimal("20000"), valueMax = BigDecimal("100000"))
+        assertTrue(matching.matches(tender, profile))
+    }
+
+    @Test
+    fun `matches when tender valueMin lands exactly on profile valueMax`() {
+        val profile = sampleProfile(valueMin = BigDecimal("100000"), valueMax = BigDecimal("500000"))
+        val tender = sampleTender(valueMin = BigDecimal("500000"), valueMax = BigDecimal("800000"))
+        assertTrue(matching.matches(tender, profile))
+    }
+
+    @Test
+    fun `rejects when tender valueMax falls one unit below profile valueMin`() {
+        val profile = sampleProfile(valueMin = BigDecimal("100000"), valueMax = BigDecimal("500000"))
+        val tender = sampleTender(valueMin = BigDecimal("20000"), valueMax = BigDecimal("99999"))
+        assertFalse(matching.matches(tender, profile))
+    }
+
+    @Test
+    fun `rejects when tender valueMin falls one unit above profile valueMax`() {
+        val profile = sampleProfile(valueMin = BigDecimal("100000"), valueMax = BigDecimal("500000"))
+        val tender = sampleTender(valueMin = BigDecimal("500001"), valueMax = BigDecimal("800000"))
+        assertFalse(matching.matches(tender, profile))
+    }
+
+    @Test
     fun `matches keyword found only in title, not in tender keywords`() {
         val profile = sampleProfile(keywords = setOf("consumables"))
         val tender = sampleTender(
