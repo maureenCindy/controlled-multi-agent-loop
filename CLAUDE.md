@@ -2,7 +2,7 @@
 
 This repository is set up for **local experimentation** with a Builder + Checker agent loop that includes explicit cost, governance, parallelism, and human-in-the-loop controls.
 
-It also hosts the **TenderPulse** Kotlin MVP. Product and process docs under `docs/` and `CONTRIBUTING.md` apply to all TenderPulse work.
+It also hosts the **TenderPulse** Kotlin MVP. Product and process docs under `tenderpulse/docs/specs/` and `CONTRIBUTING.md` apply to all TenderPulse work.
 
 ## Contribution workflow (mandatory)
 
