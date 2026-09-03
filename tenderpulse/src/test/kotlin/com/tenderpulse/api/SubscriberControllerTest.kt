@@ -92,7 +92,17 @@ class SubscriberControllerTest {
                         region = "Harare"
                     )
                 )
-        ).andExpect(status().isCreated)
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.id").value(saved.captured.id.toString()))
+            .andExpect(jsonPath("$.sectors[0]").value("IT"))
+            .andExpect(jsonPath("$.valueMin").value(100000))
+            .andExpect(jsonPath("$.valueMax").value(500000))
+            .andExpect(jsonPath("$.region").value("Harare"))
+            .andExpect(jsonPath("$.active").value(true))
+            .andExpect(jsonPath("$.subscriber").doesNotExist())
+            .andExpect(jsonPath("$.subscriberId").doesNotExist())
+            .andExpect(jsonPath("$.email").doesNotExist())
 
         assertEquals(setOf(Sector.IT), saved.captured.sectors)
         assertEquals(BigDecimal("100000"), saved.captured.valueMin)
@@ -172,8 +182,16 @@ class SubscriberControllerTest {
         mockMvc.perform(get(profilesUrl()))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.length()").value(2))
+            .andExpect(jsonPath("$[0].id").value(activeProfile.id.toString()))
             .andExpect(jsonPath("$[0].active").value(true))
+            .andExpect(jsonPath("$[1].id").value(inactiveProfile.id.toString()))
             .andExpect(jsonPath("$[1].active").value(false))
+            .andExpect(jsonPath("$[0].subscriber").doesNotExist())
+            .andExpect(jsonPath("$[0].subscriberId").doesNotExist())
+            .andExpect(jsonPath("$[0].email").doesNotExist())
+            .andExpect(jsonPath("$[1].subscriber").doesNotExist())
+            .andExpect(jsonPath("$[1].subscriberId").doesNotExist())
+            .andExpect(jsonPath("$[1].email").doesNotExist())
     }
 
     @Test
@@ -203,7 +221,14 @@ class SubscriberControllerTest {
             put("${profilesUrl()}/$profileId")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(profileJson(sectors = setOf(Sector.HEALTHCARE), region = "Bulawayo"))
-        ).andExpect(status().isOk)
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.id").value(profileId.toString()))
+            .andExpect(jsonPath("$.sectors[0]").value("HEALTHCARE"))
+            .andExpect(jsonPath("$.region").value("Bulawayo"))
+            .andExpect(jsonPath("$.subscriber").doesNotExist())
+            .andExpect(jsonPath("$.subscriberId").doesNotExist())
+            .andExpect(jsonPath("$.email").doesNotExist())
 
         assertEquals(profileId, saved.captured.id)
         assertEquals(setOf(Sector.HEALTHCARE), saved.captured.sectors)
@@ -223,7 +248,10 @@ class SubscriberControllerTest {
             put("${profilesUrl()}/$profileId")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(profileJson(active = false))
-        ).andExpect(status().isOk)
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.active").value(false))
+            .andExpect(jsonPath("$.email").doesNotExist())
 
         assertFalse(saved.captured.active)
     }
