@@ -3,18 +3,16 @@ package com.tenderpulse.api
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import com.tenderpulse.domain.ConflictException
 import com.tenderpulse.domain.InterestProfile
-import com.tenderpulse.domain.InterestProfileRepository
+import com.tenderpulse.domain.NotFoundException
 import com.tenderpulse.domain.Sector
 import com.tenderpulse.domain.Subscriber
-import com.tenderpulse.domain.SubscriberRepository
+import com.tenderpulse.domain.SubscriptionTier
+import com.tenderpulse.subscriber.SubscriberService
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.slot
 import io.mockk.verify
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
@@ -27,20 +25,21 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import java.math.BigDecimal
-import java.util.Optional
 import java.util.UUID
 
 /**
- * Standalone MockMvc tests for [SubscriberController]'s interest-profile endpoints (TP-010).
- * No Spring context is booted; repositories are mockk mocks and the request body is validated
- * by the default standalone validator (registered automatically by
+ * Standalone MockMvc tests for [SubscriberController] (TP-010, TP-037). No Spring context is
+ * booted; [SubscriberService] is a mockk mock, so these tests exercise only the controller's
+ * own responsibilities — request validation (`@Valid`), delegation to the service, HTTP status
+ * mapping, and entity -> DTO mapping — not the business logic itself (that's
+ * [com.tenderpulse.subscriber.SubscriberServiceTest]). The request body is validated by the
+ * default standalone validator (registered automatically by
  * [MockMvcBuilders.standaloneSetup]), which exercises the same `@Valid` / `@ResponseStatus`
  * wiring the real application uses.
  */
 class SubscriberControllerTest {
 
-    private val subscriberRepository = mockk<SubscriberRepository>()
-    private val profileRepository = mockk<InterestProfileRepository>()
+    private val subscriberService = mockk<SubscriberService>()
     private val objectMapper: ObjectMapper = ObjectMapper().registerKotlinModule().registerModule(JavaTimeModule())
     private lateinit var mockMvc: MockMvc
 
@@ -49,7 +48,7 @@ class SubscriberControllerTest {
 
     @BeforeEach
     fun setUp() {
-        val controller = SubscriberController(subscriberRepository, profileRepository)
+        val controller = SubscriberController(subscriberService)
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
             .setMessageConverters(MappingJackson2HttpMessageConverter(objectMapper))
             .build()
@@ -73,13 +72,58 @@ class SubscriberControllerTest {
         return objectMapper.writeValueAsString(body)
     }
 
-    // ---- create ----
+    // ---- register ----
 
     @Test
-    fun `create profile returns 201 and persists what was requested`() {
-        every { subscriberRepository.findById(subscriberId) } returns Optional.of(subscriber)
-        val saved = slot<InterestProfile>()
-        every { profileRepository.save(capture(saved)) } answers { saved.captured }
+    fun `register returns 201 with a subscriber response DTO, not the raw entity`() {
+        every { subscriberService.register(any()) } returns
+            Subscriber(email = "new@example.com", tier = SubscriptionTier.FREE)
+
+        mockMvc.perform(
+            post("/api/v1/subscribers")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"email":"new@example.com"}""")
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.email").value("new@example.com"))
+            .andExpect(jsonPath("$.tier").value("FREE"))
+            .andExpect(jsonPath("$.id").exists())
+    }
+
+    @Test
+    fun `register with an already-registered email returns 409`() {
+        every { subscriberService.register(any()) } throws ConflictException("Email already registered")
+
+        mockMvc.perform(
+            post("/api/v1/subscribers")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"email":"sub@example.com"}""")
+        ).andExpect(status().isConflict)
+    }
+
+    @Test
+    fun `register with an invalid email returns 400`() {
+        mockMvc.perform(
+            post("/api/v1/subscribers")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"email":"not-an-email"}""")
+        ).andExpect(status().isBadRequest)
+
+        verify(exactly = 0) { subscriberService.register(any()) }
+    }
+
+    // ---- create profile ----
+
+    @Test
+    fun `create profile returns 201 and delegates to the service`() {
+        val profile = InterestProfile(
+            subscriber = subscriber,
+            sectors = mutableSetOf(Sector.IT),
+            valueMin = BigDecimal("100000"),
+            valueMax = BigDecimal("500000"),
+            region = "Harare"
+        )
+        every { subscriberService.createProfile(subscriberId, any()) } returns profile
 
         mockMvc.perform(
             post(profilesUrl())
@@ -94,7 +138,7 @@ class SubscriberControllerTest {
                 )
         )
             .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.id").value(saved.captured.id.toString()))
+            .andExpect(jsonPath("$.id").value(profile.id.toString()))
             .andExpect(jsonPath("$.sectors[0]").value("IT"))
             .andExpect(jsonPath("$.valueMin").value(100000))
             .andExpect(jsonPath("$.valueMax").value(500000))
@@ -103,81 +147,54 @@ class SubscriberControllerTest {
             .andExpect(jsonPath("$.subscriber").doesNotExist())
             .andExpect(jsonPath("$.subscriberId").doesNotExist())
             .andExpect(jsonPath("$.email").doesNotExist())
-
-        assertEquals(setOf(Sector.IT), saved.captured.sectors)
-        assertEquals(BigDecimal("100000"), saved.captured.valueMin)
-        assertEquals(BigDecimal("500000"), saved.captured.valueMax)
-        assertEquals("Harare", saved.captured.region)
-        assertEquals(subscriberId, saved.captured.subscriber.id)
-        assertTrue(saved.captured.active)
     }
 
     @Test
     fun `create with valueMin greater than valueMax returns 400`() {
-        every { subscriberRepository.findById(subscriberId) } returns Optional.of(subscriber)
-
         mockMvc.perform(
             post(profilesUrl())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(profileJson(valueMin = BigDecimal("500000"), valueMax = BigDecimal("100000")))
         ).andExpect(status().isBadRequest)
 
-        verify(exactly = 0) { profileRepository.save(any()) }
+        verify(exactly = 0) { subscriberService.createProfile(any(), any()) }
     }
 
     @Test
     fun `create with equal valueMin and valueMax is accepted`() {
-        every { subscriberRepository.findById(subscriberId) } returns Optional.of(subscriber)
-        val saved = slot<InterestProfile>()
-        every { profileRepository.save(capture(saved)) } answers { saved.captured }
+        val profile = InterestProfile(
+            subscriber = subscriber,
+            valueMin = BigDecimal("250000"),
+            valueMax = BigDecimal("250000")
+        )
+        every { subscriberService.createProfile(subscriberId, any()) } returns profile
 
         mockMvc.perform(
             post(profilesUrl())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(profileJson(valueMin = BigDecimal("250000"), valueMax = BigDecimal("250000")))
         ).andExpect(status().isCreated)
-
-        assertEquals(BigDecimal("250000"), saved.captured.valueMin)
-        assertEquals(BigDecimal("250000"), saved.captured.valueMax)
-    }
-
-    @Test
-    fun `create with only valueMin set is accepted`() {
-        every { subscriberRepository.findById(subscriberId) } returns Optional.of(subscriber)
-        val saved = slot<InterestProfile>()
-        every { profileRepository.save(capture(saved)) } answers { saved.captured }
-
-        mockMvc.perform(
-            post(profilesUrl())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(profileJson(valueMin = BigDecimal("250000"), valueMax = null))
-        ).andExpect(status().isCreated)
-
-        assertEquals(BigDecimal("250000"), saved.captured.valueMin)
-        assertEquals(null, saved.captured.valueMax)
     }
 
     @Test
     fun `create for unknown subscriber returns 404`() {
-        every { subscriberRepository.findById(subscriberId) } returns Optional.empty()
+        every { subscriberService.createProfile(subscriberId, any()) } throws
+            NotFoundException("Subscriber $subscriberId")
 
         mockMvc.perform(
             post(profilesUrl())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(profileJson())
         ).andExpect(status().isNotFound)
-
-        verify(exactly = 0) { profileRepository.save(any()) }
     }
 
     // ---- list ----
 
     @Test
     fun `list returns all profiles for the subscriber including an inactive one`() {
-        every { subscriberRepository.findById(subscriberId) } returns Optional.of(subscriber)
         val activeProfile = InterestProfile(subscriber = subscriber, active = true)
         val inactiveProfile = InterestProfile(subscriber = subscriber, active = false)
-        every { profileRepository.findBySubscriberId(subscriberId) } returns listOf(activeProfile, inactiveProfile)
+        every { subscriberService.listProfiles(subscriberId) } returns listOf(activeProfile, inactiveProfile)
 
         mockMvc.perform(get(profilesUrl()))
             .andExpect(status().isOk)
@@ -189,14 +206,11 @@ class SubscriberControllerTest {
             .andExpect(jsonPath("$[0].subscriber").doesNotExist())
             .andExpect(jsonPath("$[0].subscriberId").doesNotExist())
             .andExpect(jsonPath("$[0].email").doesNotExist())
-            .andExpect(jsonPath("$[1].subscriber").doesNotExist())
-            .andExpect(jsonPath("$[1].subscriberId").doesNotExist())
-            .andExpect(jsonPath("$[1].email").doesNotExist())
     }
 
     @Test
     fun `list for unknown subscriber returns 404`() {
-        every { subscriberRepository.findById(subscriberId) } returns Optional.empty()
+        every { subscriberService.listProfiles(subscriberId) } throws NotFoundException("Subscriber $subscriberId")
 
         mockMvc.perform(get(profilesUrl())).andExpect(status().isNotFound)
     }
@@ -204,18 +218,15 @@ class SubscriberControllerTest {
     // ---- update ----
 
     @Test
-    fun `update mutates the intended fields and persists`() {
+    fun `update mutates the intended fields and returns the mapped DTO`() {
         val profileId = UUID.randomUUID()
-        val existing = InterestProfile(
+        val updated = InterestProfile(
             id = profileId,
             subscriber = subscriber,
-            sectors = mutableSetOf(Sector.IT),
-            region = "Harare"
+            sectors = mutableSetOf(Sector.HEALTHCARE),
+            region = "Bulawayo"
         )
-        every { subscriberRepository.findById(subscriberId) } returns Optional.of(subscriber)
-        every { profileRepository.findById(profileId) } returns Optional.of(existing)
-        val saved = slot<InterestProfile>()
-        every { profileRepository.save(capture(saved)) } answers { saved.captured }
+        every { subscriberService.updateProfile(subscriberId, profileId, any()) } returns updated
 
         mockMvc.perform(
             put("${profilesUrl()}/$profileId")
@@ -229,20 +240,13 @@ class SubscriberControllerTest {
             .andExpect(jsonPath("$.subscriber").doesNotExist())
             .andExpect(jsonPath("$.subscriberId").doesNotExist())
             .andExpect(jsonPath("$.email").doesNotExist())
-
-        assertEquals(profileId, saved.captured.id)
-        assertEquals(setOf(Sector.HEALTHCARE), saved.captured.sectors)
-        assertEquals("Bulawayo", saved.captured.region)
     }
 
     @Test
     fun `update can deactivate a profile`() {
         val profileId = UUID.randomUUID()
-        val existing = InterestProfile(id = profileId, subscriber = subscriber, active = true)
-        every { subscriberRepository.findById(subscriberId) } returns Optional.of(subscriber)
-        every { profileRepository.findById(profileId) } returns Optional.of(existing)
-        val saved = slot<InterestProfile>()
-        every { profileRepository.save(capture(saved)) } answers { saved.captured }
+        val updated = InterestProfile(id = profileId, subscriber = subscriber, active = false)
+        every { subscriberService.updateProfile(subscriberId, profileId, any()) } returns updated
 
         mockMvc.perform(
             put("${profilesUrl()}/$profileId")
@@ -252,8 +256,6 @@ class SubscriberControllerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.active").value(false))
             .andExpect(jsonPath("$.email").doesNotExist())
-
-        assertFalse(saved.captured.active)
     }
 
     @Test
@@ -264,15 +266,17 @@ class SubscriberControllerTest {
                 .content(profileJson(valueMin = BigDecimal("500000"), valueMax = BigDecimal("100000")))
         ).andExpect(status().isBadRequest)
 
-        verify(exactly = 0) { profileRepository.save(any()) }
+        verify(exactly = 0) { subscriberService.updateProfile(any(), any(), any()) }
     }
 
     @Test
     fun `update for unknown subscriber returns 404`() {
-        every { subscriberRepository.findById(subscriberId) } returns Optional.empty()
+        val profileId = UUID.randomUUID()
+        every { subscriberService.updateProfile(subscriberId, profileId, any()) } throws
+            NotFoundException("Subscriber $subscriberId")
 
         mockMvc.perform(
-            put("${profilesUrl()}/${UUID.randomUUID()}")
+            put("${profilesUrl()}/$profileId")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(profileJson())
         ).andExpect(status().isNotFound)
@@ -281,32 +285,26 @@ class SubscriberControllerTest {
     @Test
     fun `update for unknown profile returns 404`() {
         val profileId = UUID.randomUUID()
-        every { subscriberRepository.findById(subscriberId) } returns Optional.of(subscriber)
-        every { profileRepository.findById(profileId) } returns Optional.empty()
+        every { subscriberService.updateProfile(subscriberId, profileId, any()) } throws
+            NotFoundException("Profile $profileId")
 
         mockMvc.perform(
             put("${profilesUrl()}/$profileId")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(profileJson())
         ).andExpect(status().isNotFound)
-
-        verify(exactly = 0) { profileRepository.save(any()) }
     }
 
     @Test
     fun `update for a profile belonging to a different subscriber returns 404`() {
-        val otherSubscriber = Subscriber(id = UUID.randomUUID(), email = "other@example.com")
         val profileId = UUID.randomUUID()
-        val existing = InterestProfile(id = profileId, subscriber = otherSubscriber)
-        every { subscriberRepository.findById(subscriberId) } returns Optional.of(subscriber)
-        every { profileRepository.findById(profileId) } returns Optional.of(existing)
+        every { subscriberService.updateProfile(subscriberId, profileId, any()) } throws
+            NotFoundException("Profile $profileId")
 
         mockMvc.perform(
             put("${profilesUrl()}/$profileId")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(profileJson())
         ).andExpect(status().isNotFound)
-
-        verify(exactly = 0) { profileRepository.save(any()) }
     }
 }

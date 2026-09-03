@@ -1,16 +1,18 @@
 package com.tenderpulse.api
 
 import com.tenderpulse.aggregation.AggregationService
-import com.tenderpulse.domain.*
+import com.tenderpulse.domain.NotFoundException
+import com.tenderpulse.domain.Sector
+import com.tenderpulse.domain.Tender
+import com.tenderpulse.domain.TenderRepository
+import com.tenderpulse.subscriber.InterestProfileResponse
+import com.tenderpulse.subscriber.ProfileRequest
+import com.tenderpulse.subscriber.RegisterRequest
+import com.tenderpulse.subscriber.SubscriberResponse
+import com.tenderpulse.subscriber.SubscriberService
 import jakarta.validation.Valid
-import jakarta.validation.constraints.AssertTrue
-import jakarta.validation.constraints.Email
-import jakarta.validation.constraints.NotBlank
 import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import java.math.BigDecimal
-import java.time.Instant
 import java.util.UUID
 
 @RestController
@@ -35,52 +37,32 @@ class TenderController(
         tenderRepository.findById(id).orElseThrow { NotFoundException("Tender $id") }
 }
 
+/**
+ * Thin controller (TP-037): validates input, delegates all persistence/business logic to
+ * [SubscriberService], and maps the returned entity to a response DTO. No repository is
+ * injected here.
+ */
 @RestController
 @RequestMapping("/api/v1/subscribers")
 class SubscriberController(
-    private val subscriberRepository: SubscriberRepository,
-    private val profileRepository: InterestProfileRepository
+    private val subscriberService: SubscriberService
 ) {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    fun register(@Valid @RequestBody req: RegisterRequest): Subscriber {
-        val existing = subscriberRepository.findByEmail(req.email)
-        if (existing != null) throw ConflictException("Email already registered")
-        return subscriberRepository.save(
-            Subscriber(email = req.email, phone = req.phone, tier = req.tier ?: SubscriptionTier.FREE)
-        )
-    }
+    fun register(@Valid @RequestBody req: RegisterRequest): SubscriberResponse =
+        SubscriberResponse.from(subscriberService.register(req))
 
     @PostMapping("/{id}/profiles")
     @ResponseStatus(HttpStatus.CREATED)
     fun createProfile(
         @PathVariable id: UUID,
         @Valid @RequestBody req: ProfileRequest
-    ): InterestProfileResponse {
-        val subscriber = subscriberRepository.findById(id)
-            .orElseThrow { NotFoundException("Subscriber $id") }
-        val saved = profileRepository.save(
-            InterestProfile(
-                subscriber = subscriber,
-                sectors = req.sectors.toMutableSet(),
-                valueMin = req.valueMin,
-                valueMax = req.valueMax,
-                issuingAuthorityContains = req.issuingAuthorityContains,
-                region = req.region,
-                keywords = req.keywords.toMutableSet(),
-                preferredChannels = req.preferredChannels.ifEmpty { setOf(NotificationChannel.EMAIL) }.toMutableSet(),
-                active = req.active
-            )
-        )
-        return InterestProfileResponse.from(saved)
-    }
+    ): InterestProfileResponse = InterestProfileResponse.from(subscriberService.createProfile(id, req))
 
     /** List ALL profiles for a subscriber, including inactive ones (management API). */
     @GetMapping("/{id}/profiles")
-    fun listProfiles(@PathVariable id: UUID): List<InterestProfileResponse> {
-        subscriberRepository.findById(id).orElseThrow { NotFoundException("Subscriber $id") }
-        return profileRepository.findBySubscriberId(id).map { InterestProfileResponse.from(it) }
-    }
+    fun listProfiles(@PathVariable id: UUID): List<InterestProfileResponse> =
+        subscriberService.listProfiles(id).map { InterestProfileResponse.from(it) }
 
     /** Full replace of the mutable filter fields on an existing profile. */
     @PutMapping("/{id}/profiles/{profileId}")
@@ -88,62 +70,7 @@ class SubscriberController(
         @PathVariable id: UUID,
         @PathVariable profileId: UUID,
         @Valid @RequestBody req: ProfileRequest
-    ): InterestProfileResponse {
-        subscriberRepository.findById(id).orElseThrow { NotFoundException("Subscriber $id") }
-        val existing = profileRepository.findById(profileId)
-            .orElseThrow { NotFoundException("Profile $profileId") }
-        if (existing.subscriber.id != id) {
-            throw NotFoundException("Profile $profileId")
-        }
-        val updated = existing.copy(
-            sectors = req.sectors.toMutableSet(),
-            valueMin = req.valueMin,
-            valueMax = req.valueMax,
-            issuingAuthorityContains = req.issuingAuthorityContains,
-            region = req.region,
-            keywords = req.keywords.toMutableSet(),
-            preferredChannels = req.preferredChannels.ifEmpty { setOf(NotificationChannel.EMAIL) }.toMutableSet(),
-            active = req.active
-        )
-        val saved = profileRepository.save(updated)
-        return InterestProfileResponse.from(saved)
-    }
-}
-
-@RestController
-@RequestMapping("/api/v1/waitlist")
-class WaitlistController(
-    private val waitlistRepository: WaitlistEntryRepository
-) {
-    /**
-     * Pre-launch waitlist signup (TP-020). Idempotent on email: a repeat submission from the
-     * same address updates the existing row (sectors/province/company) instead of erroring or
-     * creating a second logical record.
-     */
-    @PostMapping
-    fun submit(@Valid @RequestBody req: WaitlistRequest): ResponseEntity<WaitlistResponse> {
-        val existing = waitlistRepository.findByEmail(req.email)
-        return if (existing != null) {
-            val updated = existing.copy(
-                sectors = req.sectors.toMutableSet(),
-                province = req.province,
-                company = req.company,
-                updatedAt = Instant.now()
-            )
-            val saved = waitlistRepository.save(updated)
-            ResponseEntity.ok(WaitlistResponse.from(saved))
-        } else {
-            val saved = waitlistRepository.save(
-                WaitlistEntry(
-                    email = req.email,
-                    sectors = req.sectors.toMutableSet(),
-                    province = req.province,
-                    company = req.company
-                )
-            )
-            ResponseEntity.status(HttpStatus.CREATED).body(WaitlistResponse.from(saved))
-        }
-    }
+    ): InterestProfileResponse = InterestProfileResponse.from(subscriberService.updateProfile(id, profileId, req))
 }
 
 @RestController
@@ -155,100 +82,3 @@ class AdminController(
     @PostMapping("/aggregate")
     fun aggregate() = aggregationService.runAggregationCycle()
 }
-
-data class RegisterRequest(
-    @field:Email @field:NotBlank val email: String,
-    val phone: String? = null,
-    val tier: SubscriptionTier? = null
-)
-
-data class ProfileRequest(
-    val sectors: Set<Sector> = emptySet(),
-    val valueMin: BigDecimal? = null,
-    val valueMax: BigDecimal? = null,
-    val issuingAuthorityContains: String? = null,
-    val region: String? = null,
-    val keywords: Set<String> = emptySet(),
-    val preferredChannels: Set<NotificationChannel> = setOf(NotificationChannel.EMAIL),
-    val active: Boolean = true
-) {
-    /**
-     * valueMin <= valueMax when both are set; either one alone (or neither) is unrestricted.
-     * Expressed as a bean-validation constraint so @Valid turns a violation into a 400 via
-     * MethodArgumentNotValidException, on both create and update.
-     */
-    @get:AssertTrue(message = "valueMin must be <= valueMax")
-    val valueRangeValid: Boolean
-        get() {
-            val min = valueMin
-            val max = valueMax
-            return min == null || max == null || min <= max
-        }
-}
-
-/**
- * Response shape for interest-profile endpoints. Deliberately excludes the `subscriber`
- * relation (and therefore `Subscriber.email`) so profile responses never leak PII.
- * See issue #23 — this closes the response-shape leak only; it does not add
- * authentication/authorization (tracked separately in issue #25).
- */
-data class InterestProfileResponse(
-    val id: UUID,
-    val sectors: Set<Sector>,
-    val valueMin: BigDecimal?,
-    val valueMax: BigDecimal?,
-    val issuingAuthorityContains: String?,
-    val region: String?,
-    val keywords: Set<String>,
-    val preferredChannels: Set<NotificationChannel>,
-    val active: Boolean
-) {
-    companion object {
-        fun from(profile: InterestProfile): InterestProfileResponse = InterestProfileResponse(
-            id = profile.id,
-            sectors = profile.sectors,
-            valueMin = profile.valueMin,
-            valueMax = profile.valueMax,
-            issuingAuthorityContains = profile.issuingAuthorityContains,
-            region = profile.region,
-            keywords = profile.keywords,
-            preferredChannels = profile.preferredChannels,
-            active = profile.active
-        )
-    }
-}
-
-data class WaitlistRequest(
-    @field:Email @field:NotBlank val email: String,
-    val sectors: Set<Sector> = emptySet(),
-    val province: String? = null,
-    val company: String? = null
-)
-
-data class WaitlistResponse(
-    val id: UUID,
-    val email: String,
-    val sectors: Set<Sector>,
-    val province: String?,
-    val company: String?,
-    val createdAt: Instant,
-    val updatedAt: Instant
-) {
-    companion object {
-        fun from(entry: WaitlistEntry): WaitlistResponse = WaitlistResponse(
-            id = entry.id,
-            email = entry.email,
-            sectors = entry.sectors,
-            province = entry.province,
-            company = entry.company,
-            createdAt = entry.createdAt,
-            updatedAt = entry.updatedAt
-        )
-    }
-}
-
-@ResponseStatus(HttpStatus.NOT_FOUND)
-class NotFoundException(message: String) : RuntimeException(message)
-
-@ResponseStatus(HttpStatus.CONFLICT)
-class ConflictException(message: String) : RuntimeException(message)
