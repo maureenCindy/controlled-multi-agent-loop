@@ -104,7 +104,7 @@ class EmailNotificationSender : NotificationChannelSender {
  *
  * TP-041: every alert (email now; digest content later, TP-013) must attribute the issuing
  * authority and link back to the official PRAZ e-GP listing rather than hosting the full
- * bid document ourselves — see docs/zw-tender-sources.md. Pulled out as a standalone function
+ * bid document ourselves — see tenderpulse/docs/specs/zw-tender-sources.md. Pulled out as a standalone function
  * (instead of inline string formatting inside [EmailNotificationSender.send]) so this
  * requirement is independently unit-testable.
  */
