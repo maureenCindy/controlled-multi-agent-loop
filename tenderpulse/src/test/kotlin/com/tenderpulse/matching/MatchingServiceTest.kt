@@ -88,6 +88,59 @@ class MatchingServiceTest {
     }
 
     @Test
+    fun `empty filters match a tender that would fail every individual filter`() {
+        val openProfile = sampleProfile(
+            sectors = emptySet(),
+            valueMin = null,
+            valueMax = null,
+            authority = null,
+            region = null,
+            keywords = emptySet()
+        )
+        val unrelatedTender = sampleTender(
+            sector = Sector.AGRICULTURE,
+            valueMin = BigDecimal("5"),
+            valueMax = BigDecimal("10"),
+            authority = "Rural District Council",
+            region = "Matabeleland North",
+            title = "Supply of fertiliser",
+            keywords = setOf("fertiliser")
+        )
+        assertTrue(matching.matches(unrelatedTender, openProfile))
+    }
+
+    @Test
+    fun `rejects province mismatch`() {
+        val profile = sampleProfile(region = "Harare")
+        val tender = sampleTender(region = "Bulawayo")
+        assertFalse(matching.matches(tender, profile))
+    }
+
+    @Test
+    fun `matches keyword found only in title, not in tender keywords`() {
+        val profile = sampleProfile(keywords = setOf("consumables"))
+        val tender = sampleTender(
+            title = "Supply and Delivery of Computer Consumables",
+            keywords = setOf("computers", "printers")
+        )
+        assertTrue(matching.matches(tender, profile))
+    }
+
+    @Test
+    fun `matches keyword case-insensitively`() {
+        val profile = sampleProfile(keywords = setOf("NETWORK"))
+        val tender = sampleTender(title = "Supply of network switches", keywords = setOf("Switches"))
+        assertTrue(matching.matches(tender, profile))
+    }
+
+    @Test
+    fun `matches issuing authority case-insensitively`() {
+        val profile = sampleProfile(authority = "cape town")
+        val tender = sampleTender(authority = "CITY OF CAPE TOWN")
+        assertTrue(matching.matches(tender, profile))
+    }
+
+    @Test
     fun `matches tender without deadline`() {
         val tenderNoDeadline = sampleTender().copy(deadline = null)
         assertTrue(matching.matches(tenderNoDeadline, sampleProfile()))

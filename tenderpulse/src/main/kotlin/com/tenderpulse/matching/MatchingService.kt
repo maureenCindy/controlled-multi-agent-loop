@@ -12,8 +12,14 @@ import java.math.BigDecimal
  * - Sector: tender.sector is in profile.sectors (if profile has sectors)
  * - Value range: tender value overlaps profile valueMin/valueMax
  * - Issuing authority: profile substring appears in tender.issuingAuthority (case-insensitive)
- * - Region: exact or contains match (case-insensitive)
+ * - Region/province: exact or contains match (case-insensitive)
  * - Keywords: at least one profile keyword appears in title, description, or tender keywords
+ *   (case-insensitive)
+ *
+ * Empty filters match all: any profile filter field that is null, blank, or an empty
+ * collection (sectors, valueMin/valueMax, issuingAuthorityContains, region, keywords) is
+ * treated as unrestricted for that dimension — it never causes a rejection. A profile with
+ * every filter empty matches every tender.
  */
 @Service
 class MatchingService {
