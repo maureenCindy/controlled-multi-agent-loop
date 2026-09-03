@@ -26,6 +26,22 @@ Issue (open, clear AC)
     → merge → issue closes
 ```
 
+### 0. Local dev setup (Postgres)
+
+`tenderpulse/apps/api` runs against a real PostgreSQL instance (not H2 — TP-048). Before
+`bootRun`-ing the app locally, start Postgres via Docker Compose:
+
+```bash
+cd tenderpulse
+docker compose up -d
+docker compose ps   # wait for "healthy"
+```
+
+See [tenderpulse/apps/api/README.md](tenderpulse/apps/api/README.md) for connection defaults and
+env var overrides. **Tests do not need Postgres/Docker** — `./gradlew test` runs against H2
+in-memory (see the same README, "Tests vs. the real datasource," for why that's a deliberate
+choice).
+
 ### 1. Pick an issue
 
 - Prefer **P0 / M1** items first.  

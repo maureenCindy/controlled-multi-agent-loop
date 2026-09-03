@@ -30,12 +30,15 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
     implementation("org.jsoup:jsoup:1.18.1")
 
-    runtimeOnly("com.h2database:h2")
+    // TP-048: the running app connects to real PostgreSQL only (see application.yml). H2 is no
+    // longer on the app's runtime classpath — it now backs the test suite only (see
+    // src/test/resources/application.yml and apps/api/README.md "Tests vs. the real datasource").
     runtimeOnly("org.postgresql:postgresql")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("io.mockk:mockk:1.13.13")
+    testRuntimeOnly("com.h2database:h2")
 }
 
 tasks.withType<Test> {
