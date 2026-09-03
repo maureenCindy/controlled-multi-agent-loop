@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TenderPulse ZW — Never miss a Zimbabwe tender again</title>
+  <meta name="description" content="TenderPulse alerts Zimbabwean businesses the moment a matching PRAZ e-GP tender is published. Join the waitlist." />
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <header class="hero">
+    <div class="container">
+      <p class="eyebrow">Built for Zimbabwe</p>
+      <h1>Stop missing government &amp; parastatal tenders in Zimbabwe.</h1>
+      <p class="lede">
+        Zimbabwean SMEs and contractors lose out on PRAZ e-GP opportunities every week —
+        not because they aren't qualified, but because nobody has time to check the portal
+        every day. TenderPulse watches <strong>egp.praz.org.zw</strong> for you and alerts you
+        the moment a tender matches your sector.
+      </p>
+      <a href="#waitlist-form" class="cta-button">Join the ZW waitlist</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="problem-solution">
+      <div class="card">
+        <h2>The problem</h2>
+        <p>
+          Tenders on Zimbabwe's PRAZ e-GP portal are scattered, easy to miss, and rarely
+          reach the businesses that could win them — especially outside Harare.
+        </p>
+      </div>
+      <div class="card">
+        <h2>The solution</h2>
+        <p>
+          TenderPulse aggregates PRAZ e-GP tenders three times a day and notifies you when
+          one matches your sector and province — so you can focus on preparing a winning bid,
+          not refreshing a government website.
+        </p>
+      </div>
+    </section>
+
+    <section id="waitlist-form" class="waitlist-section">
+      <h2>Get notified when we launch</h2>
+      <p class="section-intro">
+        Zimbabwe-first, built with Zimbabwean businesses in mind. Tell us where you are and
+        what you do, and we'll let you know the moment matching tenders go live.
+      </p>
+
+      <form id="waitlist-form-el" novalidate>
+        <div class="form-row">
+          <label for="email">Email <span aria-hidden="true">*</span></label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="you@business.co.zw"
+            autocomplete="email"
+            required
+          />
+          <p class="field-error" id="email-error" role="alert" hidden></p>
+        </div>
+
+        <div class="form-row">
+          <label for="sector">Sector</label>
+          <select id="sector" name="sector">
+            <option value="">Select a sector (optional)</option>
+            <option value="CONSTRUCTION">Construction</option>
+            <option value="IT">IT</option>
+            <option value="HEALTHCARE">Healthcare</option>
+            <option value="EDUCATION">Education</option>
+            <option value="TRANSPORT">Transport</option>
+            <option value="ENERGY">Energy</option>
+            <option value="AGRICULTURE">Agriculture</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="province">Province</label>
+          <input
+            type="text"
+            id="province"
+            name="province"
+            placeholder="e.g. Harare, Bulawayo, Manicaland"
+            autocomplete="address-level1"
+          />
+        </div>
+
+        <p class="privacy-note">
+          We'll only use your email to notify you about ZW tender matches. No spam.
+        </p>
+
+        <button type="submit" class="cta-button" id="submit-button">Join the waitlist</button>
+
+        <p class="form-status" id="form-status" role="alert" aria-live="polite" hidden></p>
+      </form>
+
+      <div class="success-message" id="success-message" hidden>
+        <h3>You're on the list.</h3>
+        <p>
+          Thanks for joining the TenderPulse ZW waitlist. We'll email you as soon as matching
+          PRAZ e-GP tenders start flowing.
+        </p>
+        <p>
+          Follow build updates on X:
+          <a href="https://x.com/tenderpulse_zw" target="_blank" rel="noopener noreferrer">
+            @tenderpulse_zw
+          </a>
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>TenderPulse — PRAZ e-GP tender alerts for Zimbabwe.</p>
+    </div>
+  </footer>
+
+  <script src="/js/waitlist.js"></script>
+</body>
+</html>
