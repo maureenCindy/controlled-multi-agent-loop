@@ -21,6 +21,10 @@ interface InterestProfileRepository : JpaRepository<InterestProfile, UUID> {
     fun findAllActiveWithSubscriber(): List<InterestProfile>
 }
 
+interface WaitlistEntryRepository : JpaRepository<WaitlistEntry, UUID> {
+    fun findByEmail(email: String): WaitlistEntry?
+}
+
 interface NotificationRecordRepository : JpaRepository<NotificationRecord, UUID>
 
 interface DigestQueueEntryRepository : JpaRepository<DigestQueueEntry, UUID> {
