@@ -19,7 +19,7 @@ You are the **Checker**. Your only job is to verify whether the current code mee
 ## Verification Steps (adapt to the project)
 
 1. Identify and run the primary test command (e.g. `npm test`, `pytest`, `go test ./...`, `cargo test`).
-2. Run code coverage verification (`gradle jacocoTestCoverageVerification` for tenderpulse/).
+2. Run code coverage verification (`gradle jacocoTestCoverageVerification` for tenderpulse/apps/api/).
 3. Run static analysis / lint / type check if available.
 4. Check that new behavior is covered by tests when required by the task.
 5. Confirm no obvious regressions in related areas.

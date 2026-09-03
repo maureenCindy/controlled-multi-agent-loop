@@ -26,7 +26,7 @@ lists").
 
 - Sending tender-match alerts (email now; SMS/in-app are scaffolded but not yet wired to a real
   provider).
-- Free-tier daily digest, paid-tier real-time alerts — see `docs/aggregation-policy.md`.
+- Free-tier daily digest, paid-tier real-time alerts — see `tenderpulse/docs/specs/aggregation-policy.md`.
 - Occasional build/launch updates for waitlist signups (surfaced via the X handle on the landing
   page, not a separate mailing list).
 
@@ -35,20 +35,20 @@ lists").
 Subscriber, interest-profile, and waitlist data is not sold or shared with third parties.
 Outbound alerts link to the *official* PRAZ e-GP tender listing rather than mirroring or
 reselling the underlying bid document — consistent with the MVP scrape-source constraint in
-`docs/zw-tender-sources.md` (public summary fields + official link only).
+`tenderpulse/docs/specs/zw-tender-sources.md` (public summary fields + official link only).
 
 ## Consent guarantee: emails only go to people who signed up
 
 This is enforced as a code guarantee, not just a policy statement:
 
-- `NotificationService.notifyMatchingSubscribers()` (`tenderpulse/src/main/kotlin/com/tenderpulse/notification/NotificationService.kt`)
+- `NotificationService.notifyMatchingSubscribers()` (`tenderpulse/apps/api/src/main/kotlin/com/tenderpulse/notification/NotificationService.kt`)
   only ever iterates `InterestProfileRepository.findAllActiveWithSubscriber()`
-  (`tenderpulse/src/main/kotlin/com/tenderpulse/domain/Repositories.kt`), a JPA query that
+  (`tenderpulse/apps/api/src/main/kotlin/com/tenderpulse/domain/Repositories.kt`), a JPA query that
   `JOIN FETCH`es the `subscriber` relation. `InterestProfile.subscriber` is a non-null
-  `@ManyToOne` (`tenderpulse/src/main/kotlin/com/tenderpulse/domain/Models.kt`), so it can only
+  `@ManyToOne` (`tenderpulse/apps/api/src/main/kotlin/com/tenderpulse/domain/Models.kt`), so it can only
   ever point at a row in the `subscribers` table.
 - The **only** place a `Subscriber` row is created is `SubscriberController.register()`
-  (`POST /api/v1/subscribers`, `tenderpulse/src/main/kotlin/com/tenderpulse/api/ApiControllers.kt`)
+  (`POST /api/v1/subscribers`, `tenderpulse/apps/api/src/main/kotlin/com/tenderpulse/api/ApiControllers.kt`)
   — i.e. an explicit self-registration.
 - `WaitlistEntry` (pre-launch waitlist, `POST /api/v1/waitlist`) is a **separate table** with no
   notification wiring at all: nothing in `NotificationService`, `AggregationService`, or any

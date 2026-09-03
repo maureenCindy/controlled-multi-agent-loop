@@ -29,7 +29,7 @@ Issue (open, clear AC)
 ### 1. Pick an issue
 
 - Prefer **P0 / M1** items first.  
-- Read the issue body **and** [docs/MVP_CHECKLIST_BOARD.md](docs/MVP_CHECKLIST_BOARD.md) if linked.  
+- Read the issue body **and** [tenderpulse/docs/specs/MVP_CHECKLIST_BOARD.md](tenderpulse/docs/specs/MVP_CHECKLIST_BOARD.md) if linked.  
 - Do not expand into Phase 2 (application helper, full apply workspace) unless the issue says so.
 
 ### 2. Branch naming
@@ -47,13 +47,13 @@ Branch from latest `main`.
 - Stay inside **Scope in / out** on the issue.  
 - Meet every **acceptance criterion**.  
 - Add or update **tests** listed on the issue (or equivalent coverage).  
-- Follow [docs/aggregation-policy.md](docs/aggregation-policy.md) and [docs/zw-tender-sources.md](docs/zw-tender-sources.md) for aggregation work.  
+- Follow [tenderpulse/docs/specs/aggregation-policy.md](tenderpulse/docs/specs/aggregation-policy.md) and [tenderpulse/docs/specs/zw-tender-sources.md](tenderpulse/docs/specs/zw-tender-sources.md) for aggregation work.  
 - **MVP scrape source:** PRAZ e-GP only (`egp.praz.org.zw`).  
 
 ### 4. Before you open the PR
 
 - [ ] Branch is up to date with `main`  
-- [ ] Tests pass locally (`gradle test` or `./gradlew test` in `tenderpulse/`)  
+- [ ] Tests pass locally (`gradle test` or `./gradlew test` in `tenderpulse/apps/api/`)  
 - [ ] Lint/format clean when configured  
 - [ ] No secrets committed  
 - [ ] PR body drafted with **evidence** (see template)  
@@ -94,7 +94,7 @@ When an agent works an issue:
 Suggested prompt:
 
 ```text
-/loop Complete TP-XXX as specified in issue #N and docs/MVP_CHECKLIST_BOARD.md.
+/loop Complete TP-XXX as specified in issue #N and tenderpulse/docs/specs/MVP_CHECKLIST_BOARD.md.
 Respect Scope in/out. Meet every acceptance criterion. Add/run the listed tests.
 Open a PR (do not push to main). Include evidence in the PR body. Closes #N.
 Do not expand into Phase 2 features.
@@ -108,7 +108,7 @@ Workflow: [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
 
 | Trigger | Paths |
 |---------|--------|
-| Push to `main` | `tenderpulse/**`, workflow file |
+| Push to `main` | `tenderpulse/apps/api/**`, workflow file |
 | Pull request → `main` | same |
 
 | Job | What it runs |
@@ -117,7 +117,7 @@ Workflow: [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
 
 - Test result XML is uploaded as an artifact.  
 - On failure, HTML test reports are uploaded.  
-- **Do not merge** a PR that changes `tenderpulse/` if CI is red.
+- **Do not merge** a PR that changes `tenderpulse/apps/api/` if CI is red.
 
 Optional later: ktlint, branch protection requiring the `CI` status check.
 

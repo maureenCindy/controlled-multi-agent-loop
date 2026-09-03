@@ -10,11 +10,11 @@ It also hosts the **TenderPulse** Kotlin MVP. Product and process docs under `do
 
 Non-negotiable process rules:
 
-1. **Issues are the source of truth** for scope (acceptance criteria + test cases). Also read `docs/MVP_CHECKLIST_BOARD.md` when linked.
+1. **Issues are the source of truth** for scope (acceptance criteria + test cases). Also read `tenderpulse/docs/specs/MVP_CHECKLIST_BOARD.md` when linked.
 2. **Application code reaches `main` only via pull request** — never push app code, tests, or runtime config straight to `main`.
 3. **Branch naming** as in CONTRIBUTING (e.g. `tp-002-normalised-tender-schema`).
 4. **PR body** must use the project PR template: summary, acceptance criteria checklist, **test evidence**, scope in/out, and `Closes #N` / `Fixes #N`.
-5. **CI** (`.github/workflows/ci.yml`) must be treated as required for `tenderpulse/` changes — do not consider the task done if build/tests are red.
+5. **CI** (`.github/workflows/ci.yml`) must be treated as required for `tenderpulse/apps/api/` changes — do not consider the task done if build/tests are red.
 6. **Do not expand into Phase 2** (tender registration, application checklist, apply templates) unless the issue explicitly says so.
 7. Pure docs/research may land on `main` only after explicit human review; prefer a docs PR when practical.
 
@@ -26,8 +26,8 @@ Suggested minimal task prompt (process is already required by this file):
 
 ## TenderPulse product constraints (mandatory for product tasks)
 
-- **MVP scrape source:** PRAZ e-GP only — `https://egp.praz.org.zw/` (see `docs/zw-tender-sources.md`).
-- **Aggregation / notify:** follow `docs/aggregation-policy.md` — shared 3×/day fetch; Free = daily digest; Paid = on-match after each run.
+- **MVP scrape source:** PRAZ e-GP only — `https://egp.praz.org.zw/` (see `tenderpulse/docs/specs/zw-tender-sources.md`).
+- **Aggregation / notify:** follow `tenderpulse/docs/specs/aggregation-policy.md` — shared 3×/day fetch; Free = daily digest; Paid = on-match after each run.
 - Public summary fields + **official link only**; polite rate limits; no full bid-document hosting.
 - No live network in unit tests — use fixtures.
 
@@ -98,7 +98,7 @@ After `CHECKER_PASS`, the orchestrator performs these steps automatically before
      - More comprehensive test cases (edge cases)
      - Corrected estimates
    - Prompt human: review/edit proposed spec improvements
-   - Auto-update `docs/MVP_CHECKLIST_BOARD.md` task card + template improvement log
+   - Auto-update `tenderpulse/docs/specs/MVP_CHECKLIST_BOARD.md` task card + template improvement log
 4. **Conditional External Review** (if P0 or first implementation):
    - Invoke Reviewer agent to independently verify
    - Reviewer reports: `REVIEWER_PASS` or `REVIEWER_FAIL`
@@ -119,7 +119,7 @@ After `CHECKER_PASS`, the orchestrator performs these steps automatically before
 A run is considered successful only when:
 
 - The Checker reports `CHECKER_PASS`
-- All project tests and static checks pass (and CI is green for `tenderpulse/` changes)
+- All project tests and static checks pass (and CI is green for `tenderpulse/apps/api/` changes)
 - CONTRIBUTING.md workflow was followed for code (branch + PR + evidence + `Closes #N`)
 - No stop rule was violated
 - Template improvement log updated (if not docs-only)
