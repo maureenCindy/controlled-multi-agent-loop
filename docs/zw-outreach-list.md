@@ -2,7 +2,7 @@
 
 **Purpose:** Named Zimbabwean businesses that already chase government/parastatal tenders (mostly via PRAZ e-GP, `egp.praz.org.zw`) and are plausible early customers for a tender-alert product.
 
-**Status:** 32 real, named businesses identified through public-source research. **23 have a verified, working contact path** (email, phone, website, or LinkedIn confirmed live during this research). **9 are real, named, PRAZ-registered businesses whose contact details could not be found publicly and are explicitly marked `NEEDS RESEARCH`** rather than guessed.
+**Status:** 31 real, named businesses identified through public-source research. **22 have a verified, working contact path** (email, phone, website, or LinkedIn confirmed live during this research). **9 are real, named, PRAZ-registered businesses whose contact details could not be found publicly and are explicitly marked `NEEDS RESEARCH`** rather than guessed.
 
 No company name, email, phone number, or LinkedIn URL in this document was invented. Every entry below carries a source note showing exactly where it was found. See "Research methodology" and "Spot-check results" at the end.
 
@@ -94,7 +94,7 @@ The issue's brief listed sectors (construction, IT, engineering/consulting, logi
 
 | # | Business | Contact | Source |
 |---|----------|---------|--------|
-| 31 | Distributed Power Africa (DPA) Zimbabwe (Avondale, Harare) | Email: enquiries@dpaafrica.com · Phone: 0771 222 696 · LinkedIn: zw.linkedin.com/company/distributed-power-technologies | Company website dpaafrica.com and LinkedIn |
+| 31 | Distributed Power Africa (DPA) Zimbabwe (Avondale, Harare) | Email: enquiries@dpaafrica.com · Phone: **UNCONFIRMED** — this document previously listed 0771 222 696, but that could not be re-confirmed on re-check; independent re-verification instead points to +263 8677 000 000 as DPA's Zimbabwe office line (a separate +254-prefixed number found elsewhere is DPA's Kenya office, not Zimbabwe). `dpaafrica.com` could not be fetched directly during re-verification (its TLS certificate fails hostname validation), so neither number is confirmed off the primary site — confirm directly before outreach. · LinkedIn: zw.linkedin.com/company/distributed-power-technologies | Company website dpaafrica.com and LinkedIn; phone re-verification via web search, September 2026 |
 
 ---
 
