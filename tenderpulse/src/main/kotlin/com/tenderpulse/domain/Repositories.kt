@@ -15,6 +15,7 @@ interface SubscriberRepository : JpaRepository<Subscriber, UUID> {
 
 interface InterestProfileRepository : JpaRepository<InterestProfile, UUID> {
     fun findBySubscriberIdAndActiveTrue(subscriberId: UUID): List<InterestProfile>
+    fun findBySubscriberId(subscriberId: UUID): List<InterestProfile>
 
     @Query("SELECT p FROM InterestProfile p JOIN FETCH p.subscriber WHERE p.active = true AND p.subscriber.active = true")
     fun findAllActiveWithSubscriber(): List<InterestProfile>

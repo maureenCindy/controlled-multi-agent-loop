@@ -37,7 +37,8 @@ class MatchingServiceTest {
         valueMax: BigDecimal? = BigDecimal("1000000"),
         authority: String? = "Cape Town",
         region: String? = "Western Cape",
-        keywords: Set<String> = setOf("network")
+        keywords: Set<String> = setOf("network"),
+        active: Boolean = true
     ): InterestProfile {
         val sub = Subscriber(email = "test@example.com", tier = SubscriptionTier.PAID)
         return InterestProfile(
@@ -47,13 +48,20 @@ class MatchingServiceTest {
             valueMax = valueMax,
             issuingAuthorityContains = authority,
             region = region,
-            keywords = keywords.toMutableSet()
+            keywords = keywords.toMutableSet(),
+            active = active
         )
     }
 
     @Test
     fun `matches when all criteria align`() {
         assertTrue(matching.matches(sampleTender(), sampleProfile()))
+    }
+
+    @Test
+    fun `rejects an inactive profile even when every other dimension matches`() {
+        val inactiveProfile = sampleProfile(active = false)
+        assertFalse(matching.matches(sampleTender(), inactiveProfile))
     }
 
     @Test
