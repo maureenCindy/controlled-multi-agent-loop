@@ -11,6 +11,15 @@ import org.springframework.transaction.annotation.Transactional
  *
  * Free tier  → enqueued for the daily digest (sending handled by a future job; see TP-013)
  * Paid tier  → real-time per preferred channel
+ *
+ * TP-041 (consent guarantee): [profileRepository].findAllActiveWithSubscriber() only returns
+ * [InterestProfile] rows joined to a real [Subscriber] row (the FK is non-null at the DB
+ * level, see Models.kt). The only place a [Subscriber] is ever created is
+ * `SubscriberController.register()` (`POST /api/v1/subscribers`), i.e. an explicit opt-in.
+ * A [WaitlistEntry] (pre-launch waitlist signup) is a separate table with no notification
+ * wiring — nothing in this class or [AggregationService][com.tenderpulse.aggregation.AggregationService]
+ * reads from it. So there is no code path that emails an address that wasn't explicitly
+ * registered as a subscriber.
  */
 @Service
 class NotificationService(
@@ -85,13 +94,23 @@ class EmailNotificationSender : NotificationChannelSender {
 
     override fun send(subscriber: Subscriber, tender: Tender, profile: InterestProfile): SendResult {
         // Scaffold: log only. Wire JavaMailSender in production.
-        log.info(
-            "EMAIL → {} | Tender: {} | Deadline: {} | Link: {}",
-            subscriber.email, tender.title, tender.deadline, tender.sourceUrl
-        )
+        log.info("EMAIL → {} | {}", subscriber.email, buildAlertBody(tender))
         return SendResult(success = true)
     }
 }
+
+/**
+ * Builds the outbound alert content for a matched tender.
+ *
+ * TP-041: every alert (email now; digest content later, TP-013) must attribute the issuing
+ * authority and link back to the official PRAZ e-GP listing rather than hosting the full
+ * bid document ourselves — see docs/zw-tender-sources.md. Pulled out as a standalone function
+ * (instead of inline string formatting inside [EmailNotificationSender.send]) so this
+ * requirement is independently unit-testable.
+ */
+fun buildAlertBody(tender: Tender): String =
+    "Tender: ${tender.title} | Issued by: ${tender.issuingAuthority} | " +
+        "Deadline: ${tender.deadline ?: "n/a"} | Official source: ${tender.sourceUrl}"
 
 @Service
 class SmsNotificationSender : NotificationChannelSender {

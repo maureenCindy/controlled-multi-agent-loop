@@ -167,3 +167,59 @@ class NotificationServiceTest {
         assertEquals("SMTP timeout", recordSlot.captured.errorMessage)
     }
 }
+
+/**
+ * TP-041: alerts must attribute the issuing authority and link back to the official
+ * PRAZ e-GP source rather than hosting the tender document ourselves.
+ */
+class AlertContentTest {
+
+    @Test
+    fun `alert body attributes the issuing authority and links to the official source`() {
+        val t = Tender(
+            title = "Supply of office equipment",
+            issuingAuthority = "Ministry of Finance",
+            sourceUrl = "https://egp.praz.org.zw/tender/123",
+            sourceName = "praz-egp"
+        )
+
+        val body = buildAlertBody(t)
+
+        assertTrue(body.contains("Ministry of Finance"), "should attribute the issuing authority")
+        assertTrue(body.contains("https://egp.praz.org.zw/tender/123"), "should link to the official source")
+        assertTrue(body.contains(t.title), "should include the tender title")
+    }
+
+    @Test
+    fun `alert body handles a missing deadline gracefully`() {
+        val t = Tender(
+            title = "Road maintenance works",
+            issuingAuthority = "Ministry of Transport",
+            sourceUrl = "https://egp.praz.org.zw/tender/456",
+            sourceName = "praz-egp",
+            deadline = null
+        )
+
+        val body = buildAlertBody(t)
+
+        assertTrue(body.contains("n/a"))
+    }
+
+    @Test
+    fun `EmailNotificationSender send succeeds and content includes attribution and link`() {
+        val sender = EmailNotificationSender()
+        val t = Tender(
+            title = "IT equipment supply",
+            issuingAuthority = "Zimbabwe Revenue Authority",
+            sourceUrl = "https://egp.praz.org.zw/tender/789",
+            sourceName = "praz-egp"
+        )
+        val sub = Subscriber(email = "biz@example.co.zw")
+        val prof = InterestProfile(subscriber = sub)
+
+        val result = sender.send(sub, t, prof)
+
+        assertTrue(result.success)
+        assertNull(result.error)
+    }
+}
