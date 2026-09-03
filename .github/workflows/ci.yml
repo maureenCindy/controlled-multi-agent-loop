@@ -4,12 +4,12 @@ on:
   push:
     branches: [main]
     paths:
-      - "tenderpulse/**"
+      - "tenderpulse/apps/api/**"
       - ".github/workflows/ci.yml"
   pull_request:
     branches: [main]
     paths:
-      - "tenderpulse/**"
+      - "tenderpulse/apps/api/**"
       - ".github/workflows/ci.yml"
 
 concurrency:
@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: tenderpulse
+        working-directory: tenderpulse/apps/api
 
     steps:
       - name: Checkout
@@ -57,7 +57,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: tenderpulse/build/test-results/**/*.xml
+          path: tenderpulse/apps/api/build/test-results/**/*.xml
           if-no-files-found: ignore
           retention-days: 14
 
@@ -66,7 +66,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-reports
-          path: tenderpulse/build/reports/tests/**
+          path: tenderpulse/apps/api/build/reports/tests/**
           if-no-files-found: ignore
           retention-days: 14
 
@@ -75,6 +75,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-reports
-          path: tenderpulse/build/reports/jacoco/**
+          path: tenderpulse/apps/api/build/reports/jacoco/**
           if-no-files-found: ignore
           retention-days: 14

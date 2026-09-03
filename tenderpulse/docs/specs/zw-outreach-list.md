@@ -10,7 +10,7 @@ No company name, email, phone number, or LinkedIn URL in this document was inven
 
 ## How sectors map to the product schema
 
-Segmentation below is cross-referenced against `Sector` in `tenderpulse/src/main/kotlin/com/tenderpulse/domain/Models.kt`:
+Segmentation below is cross-referenced against `Sector` in `tenderpulse/apps/api/src/main/kotlin/com/tenderpulse/domain/Models.kt`:
 `CONSTRUCTION, IT, HEALTHCARE, EDUCATION, TRANSPORT, ENERGY, AGRICULTURE, OTHER`.
 
 The issue's brief listed sectors (construction, IT, engineering/consulting, logistics/transport, medical/health supplies, agriculture/agro-processing, security services) that don't map 1:1 onto the enum. Mapping used:

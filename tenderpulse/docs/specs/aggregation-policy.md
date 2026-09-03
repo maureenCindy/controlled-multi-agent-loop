@@ -22,7 +22,7 @@ Do **not** run a separate scrape schedule per tier.
 |---------|-----------|
 | **Frequency** | **3× per day** |
 | **Suggested cron (CAT)** | `0 0 7,13,19 * * *` (07:00, 13:00, 19:00) |
-| **Source** | PRAZ e-GP bulletin board (primary) — see `docs/zw-tender-sources.md` |
+| **Source** | PRAZ e-GP bulletin board (primary) — see `tenderpulse/docs/specs/zw-tender-sources.md` |
 | **Behaviour** | Fetch → normalise → dedupe by `sourceUrl` → store → run matching |
 | **Politeness** | Sequential page fetches; min delay between pages (e.g. 2s); identifiable User-Agent; backoff on errors |
 | **Scope** | Public open-tender **summaries only** + official link; no full bid document hosting |
@@ -88,7 +88,7 @@ Avoid promising “instant” or “real-time” until frequency or push channel
 
 - Respect robots.txt if published; polite rate limits always.  
 - Public list data + link back to e-GP; no republishing full bid packs.  
-- See `docs/zw-tender-sources.md` for source and legal notes.  
+- See `tenderpulse/docs/specs/zw-tender-sources.md` for source and legal notes.  
 - Revisit schedule and PRAZ contact before high volume or heavy commercial scale.
 
 ---

@@ -43,4 +43,4 @@ coverage/
 *.tar.gz
 *.mp4
 *.png
-!docs/**/*.png
+!tenderpulse/docs/**/*.png

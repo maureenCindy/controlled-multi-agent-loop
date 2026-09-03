@@ -83,7 +83,7 @@
 | 2 | Map one sample notice to our fields | Title, authority, deadline, link present |
 
 **Dependencies:** None  
-**Deliverable:** `docs/zw-tender-sources.md`
+**Deliverable:** `tenderpulse/docs/specs/zw-tender-sources.md`
 
 ---
 
@@ -112,7 +112,7 @@
 | 2 | Missing deadline | Stored; matching still runs |
 
 **Dependencies:** TP-001  
-**Deliverable:** Schema section in `docs/zw-tender-sources.md` or `docs/domain-schema.md` + code if needed  
+**Deliverable:** Schema section in `tenderpulse/docs/specs/zw-tender-sources.md` or `tenderpulse/docs/specs/domain-schema.md` + code if needed  
 
 ---
 
@@ -231,7 +231,7 @@
 | 1 | Spot-check 5 contacts | Reachable or clearly marked “needs research” |
 
 **Dependencies:** None  
-**Deliverable:** `docs/zw-outreach-list.md` (or private sheet linked from docs)
+**Deliverable:** `tenderpulse/docs/specs/zw-outreach-list.md` (or private sheet linked from docs)
 
 ---
 
@@ -351,7 +351,7 @@ Track B (Growth):      TP-020 → TP-030 → TP-041
 ## Quick agent prompt (optional)
 
 ```
-/loop Complete TP-00X as specified in docs/MVP_CHECKLIST_BOARD.md.
+/loop Complete TP-00X as specified in tenderpulse/docs/specs/MVP_CHECKLIST_BOARD.md.
 Respect Scope in/out, meet every Acceptance criterion, and add or run the listed Test cases.
 Do not expand into Phase 2 features.
 ```
