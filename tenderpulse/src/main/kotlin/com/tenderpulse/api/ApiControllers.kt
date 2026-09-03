@@ -3,6 +3,7 @@ package com.tenderpulse.api
 import com.tenderpulse.aggregation.AggregationService
 import com.tenderpulse.domain.*
 import jakarta.validation.Valid
+import jakarta.validation.constraints.AssertTrue
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import org.springframework.http.HttpStatus
@@ -65,9 +66,43 @@ class SubscriberController(
                 issuingAuthorityContains = req.issuingAuthorityContains,
                 region = req.region,
                 keywords = req.keywords.toMutableSet(),
-                preferredChannels = req.preferredChannels.ifEmpty { setOf(NotificationChannel.EMAIL) }.toMutableSet()
+                preferredChannels = req.preferredChannels.ifEmpty { setOf(NotificationChannel.EMAIL) }.toMutableSet(),
+                active = req.active
             )
         )
+    }
+
+    /** List ALL profiles for a subscriber, including inactive ones (management API). */
+    @GetMapping("/{id}/profiles")
+    fun listProfiles(@PathVariable id: UUID): List<InterestProfile> {
+        subscriberRepository.findById(id).orElseThrow { NotFoundException("Subscriber $id") }
+        return profileRepository.findBySubscriberId(id)
+    }
+
+    /** Full replace of the mutable filter fields on an existing profile. */
+    @PutMapping("/{id}/profiles/{profileId}")
+    fun updateProfile(
+        @PathVariable id: UUID,
+        @PathVariable profileId: UUID,
+        @Valid @RequestBody req: ProfileRequest
+    ): InterestProfile {
+        subscriberRepository.findById(id).orElseThrow { NotFoundException("Subscriber $id") }
+        val existing = profileRepository.findById(profileId)
+            .orElseThrow { NotFoundException("Profile $profileId") }
+        if (existing.subscriber.id != id) {
+            throw NotFoundException("Profile $profileId")
+        }
+        val updated = existing.copy(
+            sectors = req.sectors.toMutableSet(),
+            valueMin = req.valueMin,
+            valueMax = req.valueMax,
+            issuingAuthorityContains = req.issuingAuthorityContains,
+            region = req.region,
+            keywords = req.keywords.toMutableSet(),
+            preferredChannels = req.preferredChannels.ifEmpty { setOf(NotificationChannel.EMAIL) }.toMutableSet(),
+            active = req.active
+        )
+        return profileRepository.save(updated)
     }
 }
 
@@ -94,8 +129,22 @@ data class ProfileRequest(
     val issuingAuthorityContains: String? = null,
     val region: String? = null,
     val keywords: Set<String> = emptySet(),
-    val preferredChannels: Set<NotificationChannel> = setOf(NotificationChannel.EMAIL)
-)
+    val preferredChannels: Set<NotificationChannel> = setOf(NotificationChannel.EMAIL),
+    val active: Boolean = true
+) {
+    /**
+     * valueMin <= valueMax when both are set; either one alone (or neither) is unrestricted.
+     * Expressed as a bean-validation constraint so @Valid turns a violation into a 400 via
+     * MethodArgumentNotValidException, on both create and update.
+     */
+    @get:AssertTrue(message = "valueMin must be <= valueMax")
+    val valueRangeValid: Boolean
+        get() {
+            val min = valueMin
+            val max = valueMax
+            return min == null || max == null || min <= max
+        }
+}
 
 @ResponseStatus(HttpStatus.NOT_FOUND)
 class NotFoundException(message: String) : RuntimeException(message)

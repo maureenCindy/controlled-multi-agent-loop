@@ -128,12 +128,38 @@ Source URL: https://egp.praz.org.zw/tenders/2026/TR22053
 
 ---
 
+## InterestProfile — Region/Province Filter (TP-010)
+
+`InterestProfile.region` (like `Tender.region`) is **free text, not an enum** — this is a
+deliberate MVP decision, not a placeholder oversight. A ZW Province enum is deferred to Phase 2
+(see "Future Extensions" below).
+
+- **Storage:** `region` is a nullable free-text `String` on both `Tender` and `InterestProfile`.
+  Subscribers type a province or area name (e.g. "Harare", "Mashonaland East") when creating or
+  updating a profile via `POST/PUT /api/v1/subscribers/{id}/profiles`.
+- **Matching:** `MatchingService.regionMatches` compares `profile.region` against
+  `tender.region` using case- and punctuation-insensitive **whole-word set comparison**: the
+  words of one side must be a subset of the other's. This lets "Harare" match "Harare Province"
+  and vice versa, while rejecting partial-word overlaps such as "land" matching "Mashonaland
+  East", or sibling provinces that share a word (e.g. "Mashonaland East" vs "Mashonaland West").
+  A blank/empty profile region places no constraint (matches every tender region, including
+  null). A non-blank profile region never matches a tender with a null region. See
+  `MatchingServiceTest` for the full set of region-matching cases (merged in PR #20, issue #19).
+- **Known gap (issue #21):** The PRAZ e-GP adapter does not currently populate `Tender.region`
+  from live scraped data, so any profile that sets a region filter will not match live PRAZ
+  tenders until issue #21 is resolved. Region matching is exercised end-to-end only against
+  fixture data today.
+
+---
+
 ## Notes
 
 - **No migration needed:** This schema is compatible with existing tests and sample data. New fields are all optional with safe defaults.
 - **Currency field:** Supports multi-currency tenders; default for ZW is USD or ZWL as per source.
 - **External ID field:** Prevents duplicate imports of same tender from e-GP on re-run.
-- **Region field:** Currently free text; future versions may introduce a ZW Province enum.
+- **Region field:** Free text on both `Tender` and `InterestProfile` (no enum yet); see the
+  "InterestProfile — Region/Province Filter" section above for the matching approach and known
+  gaps. Future versions may introduce a ZW Province enum.
 - **Matching:** Existing matching logic (sector, value, authority, region, keywords) is unaffected by optional additions.
 
 ---
@@ -150,7 +176,9 @@ Source URL: https://egp.praz.org.zw/tenders/2026/TR22053
 
 ## Future Extensions (Phase 2 / not MVP)
 
-- **Province enum:** Map `region` to ZW provinces (Harare, Bulawayo, etc.) once data is richer.
+- **Province enum:** Map `region` (on both `Tender` and `InterestProfile`) to ZW provinces
+  (Harare, Bulawayo, etc.) once data is richer. Blocked in practice on issue #21 (PRAZ adapter
+  does not yet populate `Tender.region`).
 - **Attachments:** Link to full bid documents (if we later host copies).
 - **Application templates:** Link to standard forms for each category.
 - **Supplier registration:** Link to pre-qualification data for applicants.
