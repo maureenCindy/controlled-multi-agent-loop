@@ -46,6 +46,12 @@ tenderpulse:
     scheduled-enabled: false
     scheduled-initial-delay-ms: 0
     scheduled-interval-ms: 10800000  # 3 hours
+  # TP-013: Free-tier daily digest job (com.tenderpulse.notification.DigestService), disabled by
+  # default same as the aggregation job above — enable explicitly in a real deployment.
+  digest:
+    scheduled-enabled: false
+    scheduled-initial-delay-ms: 0
+    scheduled-interval-ms: 86400000  # 24 hours
   # TP-044: shared admin-key secret guarding every /api/v1/admin/** route (see
   # com.tenderpulse.auth.AdminKeyAuthFilter / SecurityConfig) — loaded from an env var only, never
   # committed. No fallback value on purpose: an unset TENDERPULSE_ADMIN_KEY leaves this blank, and
