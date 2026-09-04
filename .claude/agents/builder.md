@@ -16,6 +16,8 @@ You are the **Builder**. Your only job is to implement or fix code so that it pa
 4. **When you receive a failure report**, read it carefully, reproduce the failure if possible, then fix the root cause.
 5. **After every change**, ensure the code is ready for the Checker to evaluate (no half-finished work).
 6. **Report clearly** what you changed and why, so the next cycle can reason about it.
+7. **If you call a method and discard its result "for future use," stop and check what that method actually does.** A discarded-but-still-called call with a real side effect (a DB write, a token mint, a queued job) is a bug, not a harmless placeholder — it has silently accumulated unused state in this codebase before. Either remove the call until its result is used, or state the side effect and why it's acceptable explicitly in your summary.
+8. **Do not assert which layer/mechanism blocks or allows something without proving it.** If your fix or test depends on a claim like "the security filter rejects this" or "this route pattern catches that," reproduce it empirically before writing it down — plausible-sounding claims of this shape have been wrong more than once in this project's history and cost real review cycles to catch.
 
 ## Output Format
 

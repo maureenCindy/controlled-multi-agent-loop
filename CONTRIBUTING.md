@@ -86,6 +86,7 @@ Branch from latest `main`.
 - Merge when **CI is green** and review is satisfied.  
 - Prefer **squash merge** for tidy history on small tasks.  
 - Issue closes automatically if the PR body contains `Closes #N`.
+- If several PRs have been landing in quick succession while this one sat open, confirm it's genuinely rebased onto current `main` (not just conflict-free) before treating it as merge-ready — see the Verification Standards note in `CLAUDE.md`.
 
 ---
 
@@ -106,6 +107,10 @@ When an agent works an issue:
 3. Open or update a **PR** with evidence.  
 4. Respect stop rules in `CLAUDE.md` (max cycles, same failure twice, human escalation).  
 5. Do not invent contacts for outreach lists or invent legal conclusions.  
+6. **Never start a Builder/Checker loop against an issue with placeholder acceptance criteria** (e.g. "to be filled once scoped/when scoped"). Finalize concrete AC and test cases first — a decision may be needed from the human before that's possible, in which case ask rather than guess.
+7. **Follow the Verification Standards in `CLAUDE.md`** — in particular: prove security/behavior claims empirically rather than by plausible reasoning, and prove new regression tests actually regress (temporarily revert the fix, confirm the test fails, restore it) before trusting them.
+8. **Cross-link every follow-up issue with the PR/review that raised it, both ways**: the new issue's body links back to the originating PR, and a comment on that PR links to the new issue. This is how the audit trail stays navigable — a follow-up with no link back to its origin is as good as lost.
+9. **Before creating a new tracked task**, do a quick check that its intended ID isn't already used elsewhere (search open/closed issues and PR titles) — task-ID collisions have happened in this repo and are confusing to untangle after the fact.
 
 Suggested prompt:
 
