@@ -13,6 +13,9 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
+import org.springframework.mail.MailException
+import org.springframework.mail.SimpleMailMessage
+import org.springframework.mail.javamail.JavaMailSender
 
 class NotificationServiceTest {
 
@@ -226,17 +229,17 @@ class AlertContentTest {
     }
 
     /**
-     * TP-083: EmailNotificationSender is a log-only scaffold — it never sends a real email, so it
-     * must not call UnsubscribeService.buildUnsubscribeLink(...) either. That method is
-     * @Transactional and mints + persists a real, non-expiring UnsubscribeToken row per call (see
-     * UnsubscribeService.buildUnsubscribeLink), so calling it here and discarding the result would
-     * silently accumulate one orphaned DB row per notification cycle for as long as this stays a
-     * scaffold. The real mail sender (TP-013) should call it itself once it actually builds and
-     * sends the email body.
+     * TP-090: EmailNotificationSender is no longer a log-only scaffold — it now calls
+     * [com.tenderpulse.auth.UnsubscribeService.buildUnsubscribeLink] and sends a real email via
+     * [JavaMailSender]. This supersedes the TP-083 "succeeds without minting an unsubscribe
+     * token" test: #83 removed the call because it was discarded and orphaned DB rows with no
+     * consumer; this task is the real consumer the call now feeds into, via [buildAlertBody] and
+     * an actual outbound message.
      */
     @Test
-    fun `EmailNotificationSender send succeeds without minting an unsubscribe token`() {
+    fun `send builds a real email containing tender content and the unsubscribe link`() {
         val unsubscribeService = mockk<com.tenderpulse.auth.UnsubscribeService>()
+        val mailSender = mockk<JavaMailSender>()
         val t = Tender(
             title = "IT equipment supply",
             issuingAuthority = "Zimbabwe Revenue Authority",
@@ -245,25 +248,37 @@ class AlertContentTest {
         )
         val sub = Subscriber(email = "biz@example.co.zw")
         val prof = InterestProfile(subscriber = sub)
+        val unsubscribeLink = "https://api.tenderpulse.example/api/v1/unsubscribe?token=raw-unsub-token"
 
-        val sender = EmailNotificationSender(unsubscribeService)
+        every { unsubscribeService.buildUnsubscribeLink(sub) } returns unsubscribeLink
+        val messageSlot = slot<SimpleMailMessage>()
+        every { mailSender.send(capture(messageSlot)) } returns Unit
+
+        val sender = EmailNotificationSender(mailSender, unsubscribeService)
         val result = sender.send(sub, t, prof)
 
         assertTrue(result.success)
         assertNull(result.error)
-        verify(exactly = 0) { unsubscribeService.buildUnsubscribeLink(any()) }
+        verify(exactly = 1) { unsubscribeService.buildUnsubscribeLink(sub) }
+        verify(exactly = 1) { mailSender.send(any<SimpleMailMessage>()) }
+
+        val sentMessage = messageSlot.captured
+        assertTrue(sentMessage.to!!.contains(sub.email))
+        assertTrue(sentMessage.text!!.contains(t.issuingAuthority), "should attribute the issuing authority")
+        assertTrue(sentMessage.text!!.contains(t.sourceUrl), "should link to the official source")
+        assertTrue(sentMessage.text!!.contains(unsubscribeLink), "should include the unsubscribe link")
     }
 
     /**
-     * TP-083: EmailNotificationSender.send used to log the full buildAlertBody(...) output,
-     * which embeds the unsubscribe link — and therefore the raw unsubscribe token — in plain
-     * text. That link grants unauthenticated unsubscribe access to anyone who reads it, so it
-     * must never be written to application logs, while the log line must still identify which
-     * tender/subscriber the alert was for.
+     * TP-083: the log line must still identify which tender/subscriber the alert was for, but
+     * must never leak the raw unsubscribe token/link (which grants unauthenticated unsubscribe
+     * access to anyone who reads the logs) — this guarantee must hold even now that a real
+     * unsubscribe link is built and embedded in the sent email (TP-090).
      */
     @Test
     fun `send logs tender and subscriber identifiers but never the unsubscribe link or token`() {
         val unsubscribeService = mockk<com.tenderpulse.auth.UnsubscribeService>()
+        val mailSender = mockk<JavaMailSender>()
         val t = Tender(
             title = "Road resurfacing works",
             issuingAuthority = "Ministry of Transport",
@@ -272,10 +287,11 @@ class AlertContentTest {
         )
         val sub = Subscriber(email = "watcher@example.co.zw")
         val prof = InterestProfile(subscriber = sub)
-        // Deliberately no stub for unsubscribeService.buildUnsubscribeLink(...): send() must not
-        // call it at all (see the "without minting an unsubscribe token" test above), so an
-        // unstubbed mockk call here would fail the test outright if that regressed.
         val rawToken = "super-secret-unsub-token-that-would-be-embedded-if-a-link-were-built"
+        val unsubscribeLink = "https://api.tenderpulse.example/api/v1/unsubscribe?token=$rawToken"
+
+        every { unsubscribeService.buildUnsubscribeLink(sub) } returns unsubscribeLink
+        every { mailSender.send(any<SimpleMailMessage>()) } returns Unit
 
         val logger = LoggerFactory.getLogger(EmailNotificationSender::class.java) as Logger
         val appender = ListAppender<ILoggingEvent>()
@@ -283,7 +299,7 @@ class AlertContentTest {
         logger.addAppender(appender)
 
         try {
-            val sender = EmailNotificationSender(unsubscribeService)
+            val sender = EmailNotificationSender(mailSender, unsubscribeService)
             sender.send(sub, t, prof)
         } finally {
             logger.detachAppender(appender)
@@ -299,6 +315,36 @@ class AlertContentTest {
             messages.any { it.contains(t.id.toString()) && it.contains(sub.id.toString()) },
             "log line should still identify which tender/subscriber the alert was for"
         )
-        verify(exactly = 0) { unsubscribeService.buildUnsubscribeLink(any()) }
+    }
+
+    /**
+     * TP-090 AC: "A send failure is logged and does not crash the notification cycle." Mirrors
+     * [com.tenderpulse.auth.SmtpMagicLinkMailSenderTest]'s equivalent failure-swallowing test for
+     * the magic-link sender.
+     */
+    @Test
+    fun `send reports failure and does not throw when the mail sender fails`() {
+        val unsubscribeService = mockk<com.tenderpulse.auth.UnsubscribeService>()
+        val mailSender = mockk<JavaMailSender>()
+        val t = Tender(
+            title = "Fleet maintenance contract",
+            issuingAuthority = "Ministry of Transport",
+            sourceUrl = "https://egp.praz.org.zw/tender/321",
+            sourceName = "praz-egp"
+        )
+        val sub = Subscriber(email = "fails@example.co.zw")
+        val prof = InterestProfile(subscriber = sub)
+
+        every { unsubscribeService.buildUnsubscribeLink(sub) } returns
+            "https://api.tenderpulse.example/api/v1/unsubscribe?token=irrelevant"
+        every { mailSender.send(any<SimpleMailMessage>()) } throws object : MailException("smtp down") {}
+
+        val sender = EmailNotificationSender(mailSender, unsubscribeService)
+
+        // Should not throw.
+        val result = sender.send(sub, t, prof)
+
+        assertFalse(result.success)
+        assertNotNull(result.error)
     }
 }
