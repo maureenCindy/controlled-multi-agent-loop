@@ -83,9 +83,8 @@ classpath. This was a deliberate choice (TP-048 / #49), not an oversight:
   Testcontainers) was judged a bigger lift than this migration's scope warranted.
 - The suite's only tests that boot a real Spring/JPA context are `EntityPersistenceTest`
   (`@DataJpaTest`, which always uses an embedded database regardless of datasource config) and
-  `PrivacyPageTest` / `WaitlistRetirementTest` (`@SpringBootTest`, neither of which touches the
-  database). Every other test mocks the repository layer, so H2 vs. Postgres makes no difference
-  to what's tested.
+  `WaitlistRetirementTest` (`@SpringBootTest`, which doesn't touch the database). Every other
+  test mocks the repository layer, so H2 vs. Postgres makes no difference to what's tested.
 - As part of TP-048, the full suite was also run once with the datasource pointed at the
   docker-compose Postgres service (env-var override, no source changes) to confirm no divergence,
   and the app was run against Postgres directly and exercised via a few endpoints — see the PR

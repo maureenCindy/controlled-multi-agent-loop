@@ -32,7 +32,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
  *   routes, since a bearer token would otherwise satisfy a bare "authenticated" check here too.
  *
  * Everything else (`POST /api/v1/subscribers` signup, everything under `/api/v1/auth`, tender
- * listings, static resources like `/privacy.html`) stays open — protecting those is out of scope.
+ * listings) stays open — protecting those is out of scope.
  *
  * `.cors { ... }` (TP-034) is wired to a separate, narrowly-scoped [CorsConfigurationSource] bean
  * ([WebsiteCorsConfig], below) that only covers the two public signup endpoints — it neither
