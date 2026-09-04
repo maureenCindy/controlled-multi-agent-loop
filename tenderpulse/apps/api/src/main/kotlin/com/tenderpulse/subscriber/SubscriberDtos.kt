@@ -8,6 +8,7 @@ import com.tenderpulse.domain.SubscriptionTier
 import jakarta.validation.constraints.AssertTrue
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Pattern
 import java.math.BigDecimal
 import java.time.Instant
 import java.util.UUID
@@ -23,10 +24,27 @@ data class RegisterRequest(
  * one returned to the frontend by PayPal's `onApprove` callback after checkout. It is never
  * trusted directly: [com.tenderpulse.subscriber.SubscriberService.registerPro] verifies it
  * server-side against PayPal's API before any tier upgrade happens.
+ *
+ * `paypalSubscriptionId` is also checked against PayPal's own subscription ID shape (issue #81:
+ * it previously flowed unvalidated into
+ * [com.tenderpulse.paypal.PayPalClient.fetchSubscription]'s string-interpolated request URL — the
+ * same class of bug issue #68 fixed for the admin plan-pricing path, but on this **public,
+ * unauthenticated** endpoint, so higher exposure). Unlike #68's `planId` path variable, this is a
+ * `@RequestBody` field, so standard Bean Validation (`@Valid` on the controller parameter) is
+ * sufficient to guarantee rejection before [com.tenderpulse.subscriber.SubscriberService] or
+ * [com.tenderpulse.paypal.PayPalClient] are ever invoked — no method-level proxy/AOP is needed the
+ * way it would be for a `@PathVariable`. A mismatch surfaces as the framework's standard 400
+ * (`MethodArgumentNotValidException`), same as every other `@Valid` failure on this DTO (e.g. a
+ * malformed `email`).
  */
 data class ProSubscribeRequest(
     @field:Email @field:NotBlank val email: String,
-    @field:NotBlank val paypalSubscriptionId: String
+    @field:NotBlank
+    @field:Pattern(
+        regexp = "^[A-Za-z0-9-]+$",
+        message = "paypalSubscriptionId must be alphanumeric with hyphens only (PayPal subscription ID format), e.g. 'I-BW452GLLEP1G'"
+    )
+    val paypalSubscriptionId: String
 )
 
 data class ProfileRequest(

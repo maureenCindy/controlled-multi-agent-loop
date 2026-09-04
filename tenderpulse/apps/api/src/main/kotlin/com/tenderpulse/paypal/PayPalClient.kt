@@ -53,9 +53,22 @@ class PayPalClient(
      */
     fun fetchSubscription(subscriptionId: String): PayPalSubscriptionResponse? {
         val headers = HttpHeaders().apply { setBearerAuth(accessToken()) }
+        // Built via UriComponentsBuilder.pathSegment (issue #81, mirroring #68's fix to
+        // updatePlanPricing) rather than string interpolation: pathSegment treats subscriptionId
+        // as one opaque segment, and `.encode()` percent-encodes any reserved character (e.g.
+        // `/`, `?`) *within* it instead of letting it restructure the URL, so a malformed
+        // subscriptionId can only ever reach here as an inert value, not a path-altering payload.
+        // subscriptionId is also validated at the DTO level (ProSubscribeRequest, via @Valid on
+        // SubscriberController.registerPro) before this is ever called, so this is
+        // defense-in-depth, not the only line of protection.
+        val uri = UriComponentsBuilder.fromUriString(baseUrl)
+            .pathSegment("v1", "billing", "subscriptions", subscriptionId)
+            .build()
+            .encode()
+            .toUri()
         return try {
             val response = restTemplate.exchange(
-                "$baseUrl/v1/billing/subscriptions/$subscriptionId",
+                uri,
                 HttpMethod.GET,
                 HttpEntity<Void>(headers),
                 PayPalSubscriptionResponse::class.java

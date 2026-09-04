@@ -52,7 +52,7 @@ class PayPalClientTest {
         stubToken()
         every {
             restTemplate.exchange(
-                "https://api-m.sandbox.paypal.com/v1/billing/subscriptions/I-VALID123",
+                URI.create("https://api-m.sandbox.paypal.com/v1/billing/subscriptions/I-VALID123"),
                 HttpMethod.GET,
                 any<HttpEntity<Void>>(),
                 PayPalSubscriptionResponse::class.java
@@ -79,7 +79,7 @@ class PayPalClientTest {
         stubToken()
         every {
             restTemplate.exchange(
-                any<String>(),
+                any<URI>(),
                 HttpMethod.GET,
                 any<HttpEntity<Void>>(),
                 PayPalSubscriptionResponse::class.java
@@ -98,7 +98,7 @@ class PayPalClientTest {
         stubToken()
         every {
             restTemplate.exchange(
-                any<String>(),
+                any<URI>(),
                 HttpMethod.GET,
                 any<HttpEntity<Void>>(),
                 PayPalSubscriptionResponse::class.java
@@ -117,7 +117,7 @@ class PayPalClientTest {
         stubToken()
         every {
             restTemplate.exchange(
-                any<String>(),
+                any<URI>(),
                 HttpMethod.GET,
                 any<HttpEntity<Void>>(),
                 PayPalSubscriptionResponse::class.java
@@ -149,7 +149,7 @@ class PayPalClientTest {
         stubToken()
         every {
             restTemplate.exchange(
-                any<String>(),
+                any<URI>(),
                 HttpMethod.GET,
                 any<HttpEntity<Void>>(),
                 PayPalSubscriptionResponse::class.java
@@ -180,7 +180,7 @@ class PayPalClientTest {
         stubToken(accessToken = "short-lived-token", expiresIn = 60)
         every {
             restTemplate.exchange(
-                any<String>(),
+                any<URI>(),
                 HttpMethod.GET,
                 any<HttpEntity<Void>>(),
                 PayPalSubscriptionResponse::class.java
@@ -207,7 +207,7 @@ class PayPalClientTest {
         val headersEntity = slot<HttpEntity<Void>>()
         every {
             restTemplate.exchange(
-                any<String>(),
+                any<URI>(),
                 HttpMethod.GET,
                 capture(headersEntity),
                 PayPalSubscriptionResponse::class.java
@@ -219,6 +219,36 @@ class PayPalClientTest {
         client.fetchSubscription("I-VALID123")
 
         assertEquals("Bearer the-access-token", headersEntity.captured.headers.getFirst("Authorization"))
+    }
+
+    /**
+     * Issue #81 defense-in-depth (mirrors #68's equivalent test for `updatePlanPricing`): even if
+     * a `/`-bearing subscriptionId ever reached this client (it shouldn't —
+     * [com.tenderpulse.subscriber.ProSubscribeRequest]'s `@field:Pattern` rejects it first via
+     * `@Valid` on [com.tenderpulse.api.SubscriberController.registerPro]), the request URL is
+     * built via [org.springframework.web.util.UriComponentsBuilder.pathSegment] rather than string
+     * interpolation, so the `/` is percent-encoded *within* the subscription-id segment rather
+     * than being treated as a path separator that could redirect the call to a different PayPal
+     * resource.
+     */
+    @Test
+    fun `fetchSubscription percent-encodes a slash in subscriptionId instead of letting it restructure the URL`() {
+        stubToken()
+        val uriCaptor = slot<URI>()
+        every {
+            restTemplate.exchange(capture(uriCaptor), HttpMethod.GET, any<HttpEntity<Void>>(), PayPalSubscriptionResponse::class.java)
+        } returns ResponseEntity.ok(
+            PayPalSubscriptionResponse(id = "I-VALID123", status = "ACTIVE", planId = "P-EXPECTED")
+        )
+
+        client.fetchSubscription("I-VALID/../admin-only")
+
+        val requestedUri = uriCaptor.captured
+        assertEquals(
+            "https://api-m.sandbox.paypal.com/v1/billing/subscriptions/I-VALID%2F..%2Fadmin-only",
+            requestedUri.toString()
+        )
+        assertEquals(4, requestedUri.rawPath.split("/").size - 1)
     }
 
     // ---- updatePlanPricing (TP-044) ----
