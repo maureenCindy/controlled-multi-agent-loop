@@ -216,20 +216,32 @@ class ReminderServiceTest {
     fun `a Paid subscriber who has since opted out does not receive a reminder`() {
         val t = tender(Instant.now().plus(Duration.ofDays(2)))
         val sub = subscriber(SubscriptionTier.PAID).copy(emailOptOut = true)
+        val prof = profile(sub)
 
         every { tenderRepository.findByDeadlineBetween(any(), any()) } returns listOf(t)
         every { notificationRecordRepository.findByTenderIdAndSuccessTrue(t.id) } returns listOf(
             NotificationRecord(subscriber = sub, tender = t, channel = NotificationChannel.EMAIL, success = true)
         )
         every { digestQueueEntryRepository.findByTenderId(t.id) } returns emptyList()
+        // Fully stub every downstream call the (subscriber, tender) pair would reach if the
+        // active/emailOptOut filter were absent or broken, so the ONLY thing that can make this
+        // test fail is a genuinely-reached emailNotificationSender.send(...) call — not an
+        // unrelated MockKException from an unstubbed call swallowed by the per-subscriber
+        // try/catch in ReminderService (which would increment result.failed for the wrong reason
+        // and make this test pass by accident even with the filter removed).
+        every { deadlineReminderRecordRepository.existsBySubscriberIdAndTenderId(sub.id, t.id) } returns false
+        every { profileRepository.findBySubscriberIdAndActiveTrue(sub.id) } returns listOf(prof)
+        every { emailNotificationSender.send(sub, t, prof) } returns SendResult(success = true)
 
         val result = reminderService.runReminderCycle()
 
+        // Primary regression signal: send/save must never actually be invoked for this subscriber.
+        verify(exactly = 0) { emailNotificationSender.send(any(), any(), any()) }
+        verify(exactly = 0) { deadlineReminderRecordRepository.save(any()) }
+        // Secondary corroborating signals.
         assertEquals(0, result.remindersSent)
         assertEquals(0, result.failed)
         verify(exactly = 0) { deadlineReminderRecordRepository.existsBySubscriberIdAndTenderId(any(), any()) }
-        verify(exactly = 0) { emailNotificationSender.send(any(), any(), any()) }
-        verify(exactly = 0) { deadlineReminderRecordRepository.save(any()) }
     }
 
     // 6c. Subscriber WAS previously matched/notified via the Free digest queue but has SINCE been
@@ -244,14 +256,24 @@ class ReminderServiceTest {
         every { tenderRepository.findByDeadlineBetween(any(), any()) } returns listOf(t)
         every { notificationRecordRepository.findByTenderIdAndSuccessTrue(t.id) } returns emptyList()
         every { digestQueueEntryRepository.findByTenderId(t.id) } returns listOf(originalEntry)
+        // Fully stub every downstream call the (subscriber, tender) pair would reach if the
+        // active/emailOptOut filter were absent or broken, so the ONLY thing that can make this
+        // test fail is a genuinely-reached digestQueueEntryRepository.save(...) call — not an
+        // unrelated MockKException from an unstubbed call swallowed by the per-subscriber
+        // try/catch in ReminderService (which would increment result.failed for the wrong reason
+        // and make this test pass by accident even with the filter removed).
+        every { deadlineReminderRecordRepository.existsBySubscriberIdAndTenderId(sub.id, t.id) } returns false
+        every { profileRepository.findBySubscriberIdAndActiveTrue(sub.id) } returns listOf(prof)
 
         val result = reminderService.runReminderCycle()
 
+        // Primary regression signal: save must never actually be invoked for this subscriber.
+        verify(exactly = 0) { digestQueueEntryRepository.save(any()) }
+        verify(exactly = 0) { deadlineReminderRecordRepository.save(any()) }
+        // Secondary corroborating signals.
         assertEquals(0, result.digestEntriesQueued)
         assertEquals(0, result.failed)
         verify(exactly = 0) { deadlineReminderRecordRepository.existsBySubscriberIdAndTenderId(any(), any()) }
-        verify(exactly = 0) { digestQueueEntryRepository.save(any()) }
-        verify(exactly = 0) { deadlineReminderRecordRepository.save(any()) }
     }
 
     // A previous Paid send that failed never actually reached the subscriber, so it shouldn't
