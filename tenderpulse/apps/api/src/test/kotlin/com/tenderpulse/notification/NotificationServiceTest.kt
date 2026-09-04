@@ -1,5 +1,8 @@
 package com.tenderpulse.notification
 
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import com.tenderpulse.domain.*
 import com.tenderpulse.matching.MatchingService
 import io.mockk.every
@@ -9,6 +12,7 @@ import io.mockk.verify
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 
 class NotificationServiceTest {
 
@@ -241,5 +245,51 @@ class AlertContentTest {
         assertTrue(result.success)
         assertNull(result.error)
         verify(exactly = 1) { unsubscribeService.buildUnsubscribeLink(sub) }
+    }
+
+    /**
+     * TP-083: EmailNotificationSender.send used to log the full buildAlertBody(...) output,
+     * which embeds the unsubscribe link — and therefore the raw unsubscribe token — in plain
+     * text. That link grants unauthenticated unsubscribe access to anyone who reads it, so it
+     * must never be written to application logs, while the log line must still identify which
+     * tender/subscriber the alert was for.
+     */
+    @Test
+    fun `send logs tender and subscriber identifiers but never the unsubscribe link or token`() {
+        val unsubscribeService = mockk<com.tenderpulse.auth.UnsubscribeService>()
+        val t = Tender(
+            title = "Road resurfacing works",
+            issuingAuthority = "Ministry of Transport",
+            sourceUrl = "https://egp.praz.org.zw/tender/999",
+            sourceName = "praz-egp"
+        )
+        val sub = Subscriber(email = "watcher@example.co.zw")
+        val prof = InterestProfile(subscriber = sub)
+        val rawToken = "super-secret-unsub-token"
+        every { unsubscribeService.buildUnsubscribeLink(sub) } returns
+            "https://api.tenderpulse.example/api/v1/unsubscribe?token=$rawToken"
+
+        val logger = LoggerFactory.getLogger(EmailNotificationSender::class.java) as Logger
+        val appender = ListAppender<ILoggingEvent>()
+        appender.start()
+        logger.addAppender(appender)
+
+        try {
+            val sender = EmailNotificationSender(unsubscribeService)
+            sender.send(sub, t, prof)
+        } finally {
+            logger.detachAppender(appender)
+        }
+
+        val messages = appender.list.map { it.formattedMessage }
+        assertTrue(messages.isNotEmpty(), "expected the EMAIL send to log something")
+        for (message in messages) {
+            assertFalse(message.contains(rawToken), "log line must not contain the raw unsubscribe token: $message")
+            assertFalse(message.contains("unsubscribe", ignoreCase = true), "log line must not reference the unsubscribe link: $message")
+        }
+        assertTrue(
+            messages.any { it.contains(t.id.toString()) && it.contains(sub.id.toString()) },
+            "log line should still identify which tender/subscriber the alert was for"
+        )
     }
 }
