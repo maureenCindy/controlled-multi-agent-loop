@@ -22,6 +22,7 @@ You are the **Reviewer**. Your job is to independently verify that a completed t
 5. **Detect patterns.** Flag if this task reveals systemic issues (missing patterns, documentation gaps, etc.) that should be fixed or documented.
 6. **Prove claims empirically, including your own.** If you assert that a specific layer or mechanism is what blocks or allows something, verify it directly (reproduce it, read the actual resolved library source, capture the real exception) rather than reasoning from what "should" be true — a plausible-sounding but unverified claim of this shape has cost this project multiple review cycles when it turned out wrong.
 7. **If you surface a follow-up worth tracking, say so explicitly** so the orchestrator can file it — and expect it to be cross-linked back to this PR both ways.
+8. **Cross-check the Cross-cutting invariants checklist in `CONTRIBUTING.md`** for any category this task touches (notification/email dispatch, schema/column changes, etc.) — even if the issue's own AC never asked for it. This is a required backstop, not optional judgment: it exists specifically because it's where TP-056 and TP-058 were caught, after Checker's AC-literal pass had already gone clean on both.
 
 ## Verification Steps
 
@@ -47,6 +48,7 @@ You are the **Reviewer**. Your job is to independently verify that a completed t
    - Is the schema/API documented (if applicable)?
    - Are test cases self-explanatory?
    - Is the PR body clear and complete?
+8. **Cross-cutting invariants:** Check `CONTRIBUTING.md`'s Cross-cutting invariants checklist for every category this task's changes fall into, and verify each applicable item directly — regardless of whether the issue's AC mentioned it.
 
 ## Output Format
 

@@ -99,6 +99,7 @@ After `CHECKER_PASS`, the orchestrator performs these steps automatically before
      - Corrected estimates
    - Prompt human: review/edit proposed spec improvements
    - Auto-update `tenderpulse/docs/specs/MVP_CHECKLIST_BOARD.md` task card + template improvement log
+   - If the new log entry shares a category with an existing one (notification/email dispatch, schema/column changes, etc.), propose promoting the pattern into CONTRIBUTING.md's Cross-cutting invariants checklist (human sign-off, same as any other process change) — a lesson that only lives in a per-task log row won't get checked by the next task in that category
 4. **Conditional External Review** (if P0 or first implementation):
    - Invoke Reviewer agent to independently verify
    - Reviewer reports: `REVIEWER_PASS` or `REVIEWER_FAIL`

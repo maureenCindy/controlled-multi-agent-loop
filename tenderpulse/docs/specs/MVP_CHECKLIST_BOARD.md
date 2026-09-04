@@ -345,7 +345,7 @@ Track B (Growth):      TP-020 → TP-030 → TP-041
 | 2026-09-04 | TP-056 (#56) | AC/test cases didn't include "a previously-notified subscriber who has since opted out/deactivated" — the TP-041 consent guarantee wasn't treated as a standing invariant every new notification-dispatch feature must test against. Caught only at Reviewer stage, not Checker (Checker verifies against the issue's own AC, which didn't ask for this). | Any task that adds a new notification/email-dispatch code path must include an explicit test case: "a subscriber eligible by history but currently opted-out/deactivated receives nothing." |
 | 2026-09-04 | TP-058 (#58) | AC didn't flag that adding a `NOT NULL` column under this project's `ddl-auto: update` strategy needs a migration-safety check against a populated table — H2-only tests can't catch this class of bug. Caught only at Reviewer stage (2nd time this exact class of bug needed a manual Postgres boot to catch — see #54). | Any task adding/modifying a column with a `NOT NULL` constraint must state in Assumptions/AC how migration safety against an already-populated table is verified (DB-level default, or explicit backfill). |
 
-*(Fill after each completed task.)*
+*(Fill after each completed task. When 2+ entries share a category, promote the pattern to [CONTRIBUTING.md's Cross-cutting invariants checklist](../../../CONTRIBUTING.md#cross-cutting-invariants-checklist) — that's what future task scoping and Reviewer actually check against, not this raw log.)*
 
 ---
 

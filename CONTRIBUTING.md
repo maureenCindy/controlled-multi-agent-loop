@@ -111,6 +111,7 @@ When an agent works an issue:
 7. **Follow the Verification Standards in `CLAUDE.md`** — in particular: prove security/behavior claims empirically rather than by plausible reasoning, and prove new regression tests actually regress (temporarily revert the fix, confirm the test fails, restore it) before trusting them.
 8. **Cross-link every follow-up issue with the PR/review that raised it, both ways**: the new issue's body links back to the originating PR, and a comment on that PR links to the new issue. This is how the audit trail stays navigable — a follow-up with no link back to its origin is as good as lost.
 9. **Before creating a new tracked task**, do a quick check that its intended ID isn't already used elsewhere (search open/closed issues and PR titles) — task-ID collisions have happened in this repo and are confusing to untangle after the fact.
+10. **Before finalizing AC/test cases for a new task**, check the [Cross-cutting invariants checklist](#cross-cutting-invariants-checklist) below for any category the task touches, and fold applicable items into that task's AC/test cases explicitly. This is cheaper than the alternative: both existing entries in that checklist were originally caught only at Reviewer stage, after Checker had already passed the task clean against AC that never asked for them.
 
 Suggested prompt:
 
@@ -120,6 +121,18 @@ Respect Scope in/out. Meet every acceptance criterion. Add/run the listed tests.
 Open a PR (do not push to main). Include evidence in the PR body. Closes #N.
 Do not expand into Phase 2 features.
 ```
+
+---
+
+## Cross-cutting invariants checklist
+
+Some lessons from `tenderpulse/docs/specs/MVP_CHECKLIST_BOARD.md`'s "Template improvement log" don't just apply to the one task that surfaced them — they apply to every future task in the same category. When 2+ log entries share a category, promote the pattern here (human sign-off required, same as any other process change in this file). Task scoping checks this list per rule 10 above; Reviewer treats it as a standing backstop per its own instructions, independent of whether scoping caught it.
+
+**Notification / email dispatch** — any task that adds a new code path sending an email or queuing a digest entry:
+- [ ] Include a test case for a subscriber who is eligible by history (previously matched/notified) but is *currently* opted out (`emailOptOut = true`) or deactivated (`active = false`) — confirm they receive nothing. This is the standing consent guarantee established in TP-041; a new dispatch path must re-check current status, not just historical eligibility. *(Source: TP-056/#56 — `ReminderService` shipped without this check, caught only at Reviewer stage.)*
+
+**Schema / column changes** — any task that adds or modifies a column with a `NOT NULL` constraint:
+- [ ] State in Assumptions/AC how migration safety against an already-populated table is verified — a DB-level default (e.g. `@ColumnDefault`) or an explicit backfill step. This app uses `ddl-auto: update`, not Flyway (#61), and the test suite runs against H2 only (#54), so this class of bug is invisible to both the schema-evolution mechanism and CI — it only surfaces by booting against a real, populated Postgres instance. *(Source: TP-058/#58 — adding `InterestProfile.name` as required broke boot against a populated table, caught only at Reviewer stage; the second such gap this project has hit.)*
 
 ---
 
