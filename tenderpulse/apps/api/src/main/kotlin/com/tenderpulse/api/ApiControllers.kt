@@ -141,19 +141,28 @@ class AdminController(
      * Update a PayPal Plan's pricing scheme via PayPal's `update-pricing-schemes` endpoint.
      *
      * `planId` is checked against PayPal's own plan ID shape (issue #68: it previously flowed
-     * unvalidated into a string-interpolated PayPal request URL, so a caller could inject `/`,
-     * `..`, or `?` to redirect the outbound call). A mismatch throws [InvalidPlanIdException]
-     * (400) here — checked explicitly in the method body, rather than relying on `@Pattern` +
-     * Bean Validation, since method-parameter constraint validation requires either an AOP proxy
-     * (`@Validated` + `MethodValidationPostProcessor`, only present with a full Spring context) or
-     * Spring MVC's newer built-in handler-method validation; neither reliably intercepts a plain,
-     * non-Spring-managed instance of this controller, so an explicit check is the only way to
-     * *guarantee* [adminService] / [com.tenderpulse.paypal.PayPalClient] are never reached with a
-     * malformed value. The path is mapped with the greedy `{planId:.+}` regex (rather than the
-     * default single-segment variable) so a `planId` containing `/` is captured whole and rejected
-     * by this check, instead of Spring routing quietly 404ing it as an unmatched path.
+     * unvalidated into a string-interpolated PayPal request URL, so a caller could inject a
+     * URL-structural character to redirect the outbound call). A mismatch throws
+     * [InvalidPlanIdException] (400) here — checked explicitly in the method body, rather than
+     * relying on `@Pattern` + Bean Validation, since method-parameter constraint validation
+     * requires either an AOP proxy (`@Validated` + `MethodValidationPostProcessor`, only present
+     * with a full Spring context) or Spring MVC's newer built-in handler-method validation;
+     * neither reliably intercepts a plain, non-Spring-managed instance of this controller, so an
+     * explicit check is the only way to *guarantee* [adminService] /
+     * [com.tenderpulse.paypal.PayPalClient] are never reached with a malformed value.
+     *
+     * This check is the layer of defense for a `planId` that reaches this method at all — e.g.
+     * `P-FAKE..EVIL` (a `..` substring within a single path segment, which Spring MVC routes here
+     * normally). It is *not* the only thing standing between a raw `/` or `?` and this method: the
+     * default path variable here only ever binds a single URL path segment (a route regex such as
+     * `{planId:.+}` does **not** make Spring's `PathPatternParser` span raw `/` characters across
+     * segments — see [com.tenderpulse.api.AdminPlanIdValidationIntegrationTest]'s kdoc for the
+     * verified layer-by-layer breakdown), and a percent-encoded `%2F`/`%3F` payload is rejected
+     * even earlier, by [com.tenderpulse.auth.SecurityConfig]'s default `StrictHttpFirewall`,
+     * before `DispatcherServlet` resolves a handler at all — pre-existing protection this PR
+     * doesn't add or depend on.
      */
-    @PostMapping("/plans/{planId:.+}/pricing")
+    @PostMapping("/plans/{planId}/pricing")
     fun updatePlanPricing(
         @PathVariable planId: String,
         @Valid @RequestBody req: AdminPlanPricingRequest
@@ -168,8 +177,8 @@ class AdminController(
 
     companion object {
         /** PayPal plan IDs are alphanumeric, conventionally `P-`-prefixed; this also rejects any
-         * URL-structural character (`/`, `.`, `?`, etc.) that could redirect the outbound PayPal
-         * request built in [com.tenderpulse.paypal.PayPalClient.updatePlanPricing] (issue #68). */
+         * character disallowed in that shape (e.g. `.`) that reaches this method within a single
+         * path segment (issue #68). */
         private val PLAN_ID_PATTERN = Regex("^[A-Za-z0-9-]+$")
     }
 }

@@ -34,9 +34,11 @@ import java.util.UUID
 /**
  * Standalone MockMvc tests for [AdminController] (TP-044): [AdminService] and
  * [AggregationService] are mockk mocks, no Spring context/security filter chain is booted (that
- * is covered separately by [AdminApiSecurityIntegrationTest]) — this class exercises only the
- * controller's own responsibilities (request validation, delegation, HTTP status/DTO mapping),
- * mirroring [SubscriberControllerTest]'s pattern.
+ * is covered separately by [AdminApiSecurityIntegrationTest], and — specifically for issue #68's
+ * `planId` payloads that a real `HttpFirewall` intercepts before this controller ever runs — by
+ * [AdminPlanIdValidationIntegrationTest]) — this class exercises only the controller's own
+ * responsibilities (request validation, delegation, HTTP status/DTO mapping), mirroring
+ * [SubscriberControllerTest]'s pattern.
  */
 class AdminControllerTest {
 
@@ -213,32 +215,23 @@ class AdminControllerTest {
 
     // ---- planId validation (issue #68: planId flowed unvalidated into the PayPal request URL) ----
 
-    @Test
-    fun `updatePlanPricing with a planId containing a slash returns 400 and never calls the service`() {
-        mockMvc.perform(
-            post("/api/v1/admin/plans/P-VALID%2FEVIL/pricing")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"currencyCode":"USD","fixedPrice":19.99}""")
-        ).andExpect(status().isBadRequest)
-
-        verify(exactly = 0) { adminService.updatePlanPricing(any(), any()) }
-    }
-
+    /**
+     * This is the one malicious-`planId` case a *standalone* MockMvc test (no security filter
+     * chain — see this class's kdoc) can honestly claim to prove: `P-FAKE..EVIL` is a single path
+     * segment containing a `..` substring, so it reaches [AdminController.updatePlanPricing]
+     * unaffected by any servlet/security-layer path normalization, and is rejected by this
+     * method's own [com.tenderpulse.domain.InvalidPlanIdException] check.
+     *
+     * A `planId` containing a raw `/` or `?` is *not* covered here — see
+     * [AdminPlanIdValidationIntegrationTest] instead, which boots the real security filter chain
+     * (including Spring Security's default `StrictHttpFirewall`) to test those honestly: this
+     * standalone setup has no `HttpFirewall` in play at all, so a passing assertion here for
+     * those payloads wouldn't prove what actually stops them in the deployed app.
+     */
     @Test
     fun `updatePlanPricing with a planId containing dot-dot returns 400 and never calls the service`() {
         mockMvc.perform(
             post("/api/v1/admin/plans/P-FAKE..EVIL/pricing")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"currencyCode":"USD","fixedPrice":19.99}""")
-        ).andExpect(status().isBadRequest)
-
-        verify(exactly = 0) { adminService.updatePlanPricing(any(), any()) }
-    }
-
-    @Test
-    fun `updatePlanPricing with a planId containing a question mark returns 400 and never calls the service`() {
-        mockMvc.perform(
-            post("/api/v1/admin/plans/P-FAKE%3FEVIL/pricing")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"currencyCode":"USD","fixedPrice":19.99}""")
         ).andExpect(status().isBadRequest)
