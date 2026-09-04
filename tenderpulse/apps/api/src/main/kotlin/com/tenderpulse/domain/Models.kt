@@ -1,6 +1,7 @@
 package com.tenderpulse.domain
 
 import jakarta.persistence.*
+import org.hibernate.annotations.ColumnDefault
 import java.math.BigDecimal
 import java.time.Instant
 import java.util.UUID
@@ -111,6 +112,26 @@ data class InterestProfile(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subscriber_id", nullable = false)
     val subscriber: Subscriber,
+
+    /**
+     * Subscriber-chosen label distinguishing this profile from any others they maintain (issue
+     * #58: a subscriber may keep more than one named interest profile — matching and notification
+     * already iterate every active profile independently, so this is the field that lets an alert
+     * be attributed back to *which* profile triggered it). Required at both the entity and
+     * [com.tenderpulse.subscriber.ProfileRequest] level (`@NotBlank`), so every profile — including
+     * a subscriber's only one — has a meaningful label from creation.
+     *
+     * `@ColumnDefault` matters beyond documentation here: this app runs with `ddl-auto: update`
+     * (no Flyway yet — see #49) against a real, already-populated Postgres table in any
+     * environment that predates this field. Without a DB-level default, Hibernate emits
+     * `ALTER TABLE ... ADD COLUMN name varchar(255) NOT NULL` with no way to backfill existing
+     * rows, which Postgres rejects once any row already exists. With the default, the emitted DDL
+     * becomes `... ADD COLUMN name varchar(255) NOT NULL DEFAULT 'Unnamed Profile'`, which Postgres
+     * applies even to a populated table, backfilling existing rows with the default value.
+     */
+    @Column(nullable = false)
+    @ColumnDefault("'Unnamed Profile'")
+    val name: String,
 
     @ElementCollection
     @CollectionTable(name = "profile_sectors")

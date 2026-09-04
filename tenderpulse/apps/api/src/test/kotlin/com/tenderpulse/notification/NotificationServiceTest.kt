@@ -38,8 +38,9 @@ class NotificationServiceTest {
         tier = tier
     )
 
-    private fun profile(subscriber: Subscriber) = InterestProfile(
-        subscriber = subscriber
+    private fun profile(subscriber: Subscriber, name: String = "Test Profile") = InterestProfile(
+        subscriber = subscriber,
+        name = name
     )
 
     @BeforeEach
@@ -153,6 +154,60 @@ class NotificationServiceTest {
         verify(exactly = 0) { emailSender.send(freeSub, t, freeProfile) }
     }
 
+    /**
+     * Issue #58, test case 2: a subscriber's two named profiles are matched independently — a
+     * tender matching only profile A's criteria must trigger exactly one notification,
+     * attributed to profile A (not B).
+     */
+    @Test
+    fun `a tender matching only one of a subscriber's two profiles sends one notification attributed to that profile`() {
+        val t = tender()
+        val sub = subscriber(SubscriptionTier.PAID)
+        val profileA = profile(sub, name = "Profile A")
+        val profileB = profile(sub, name = "Profile B")
+
+        every { profileRepository.findAllActiveWithSubscriber() } returns listOf(profileA, profileB)
+        every { matchingService.matches(t, profileA) } returns true
+        every { matchingService.matches(t, profileB) } returns false
+        every { emailSender.send(sub, t, profileA) } returns SendResult(success = true)
+
+        val recordSlot = slot<NotificationRecord>()
+        every { notificationRecordRepository.save(capture(recordSlot)) } answers { it.invocation.args[0] as NotificationRecord }
+
+        val sent = notificationService.notifyMatchingSubscribers(t)
+
+        assertEquals(1, sent)
+        verify(exactly = 1) { emailSender.send(sub, t, profileA) }
+        verify(exactly = 0) { emailSender.send(sub, t, profileB) }
+        verify(exactly = 1) { notificationRecordRepository.save(any()) }
+    }
+
+    /**
+     * Issue #58, test case 3: a tender matching both of a subscriber's profiles triggers two
+     * independent notifications, one per profile, each correctly attributed.
+     */
+    @Test
+    fun `a tender matching both of a subscriber's profiles sends two independently-attributed notifications`() {
+        val t = tender()
+        val sub = subscriber(SubscriptionTier.PAID)
+        val profileA = profile(sub, name = "Profile A")
+        val profileB = profile(sub, name = "Profile B")
+
+        every { profileRepository.findAllActiveWithSubscriber() } returns listOf(profileA, profileB)
+        every { matchingService.matches(t, profileA) } returns true
+        every { matchingService.matches(t, profileB) } returns true
+        every { emailSender.send(sub, t, profileA) } returns SendResult(success = true)
+        every { emailSender.send(sub, t, profileB) } returns SendResult(success = true)
+        every { notificationRecordRepository.save(any()) } answers { it.invocation.args[0] as NotificationRecord }
+
+        val sent = notificationService.notifyMatchingSubscribers(t)
+
+        assertEquals(2, sent)
+        verify(exactly = 1) { emailSender.send(sub, t, profileA) }
+        verify(exactly = 1) { emailSender.send(sub, t, profileB) }
+        verify(exactly = 2) { notificationRecordRepository.save(any()) }
+    }
+
     @Test
     fun `PAID match with failed send still records failure and does not increment sent count`() {
         val t = tender()
@@ -181,6 +236,9 @@ class NotificationServiceTest {
  */
 class AlertContentTest {
 
+    private fun sampleProfile(name: String = "Office Supplies Profile") =
+        InterestProfile(subscriber = Subscriber(email = "alert-content@example.co.zw"), name = name)
+
     @Test
     fun `alert body attributes the issuing authority and links to the official source`() {
         val t = Tender(
@@ -190,7 +248,7 @@ class AlertContentTest {
             sourceName = "praz-egp"
         )
 
-        val body = buildAlertBody(t, "https://api.tenderpulse.example/api/v1/unsubscribe?token=raw")
+        val body = buildAlertBody(t, sampleProfile(), "https://api.tenderpulse.example/api/v1/unsubscribe?token=raw")
 
         assertTrue(body.contains("Ministry of Finance"), "should attribute the issuing authority")
         assertTrue(body.contains("https://egp.praz.org.zw/tender/123"), "should link to the official source")
@@ -207,7 +265,7 @@ class AlertContentTest {
             deadline = null
         )
 
-        val body = buildAlertBody(t, "https://api.tenderpulse.example/api/v1/unsubscribe?token=raw")
+        val body = buildAlertBody(t, sampleProfile(), "https://api.tenderpulse.example/api/v1/unsubscribe?token=raw")
 
         assertTrue(body.contains("n/a"))
     }
@@ -223,9 +281,28 @@ class AlertContentTest {
         )
         val unsubscribeLink = "https://api.tenderpulse.example/api/v1/unsubscribe?token=raw-unsub-token"
 
-        val body = buildAlertBody(t, unsubscribeLink)
+        val body = buildAlertBody(t, sampleProfile(), unsubscribeLink)
 
         assertTrue(body.contains(unsubscribeLink), "should include the unsubscribe link")
+    }
+
+    /** Issue #58: the alert body must attribute which named profile triggered the match. */
+    @Test
+    fun `alert body attributes the profile that triggered the match`() {
+        val t = Tender(
+            title = "Supply of office equipment",
+            issuingAuthority = "Ministry of Finance",
+            sourceUrl = "https://egp.praz.org.zw/tender/123",
+            sourceName = "praz-egp"
+        )
+
+        val body = buildAlertBody(
+            t,
+            sampleProfile(name = "Harare IT Tenders"),
+            "https://api.tenderpulse.example/api/v1/unsubscribe?token=raw"
+        )
+
+        assertTrue(body.contains("Harare IT Tenders"), "should attribute the matched profile by name")
     }
 
     /**
@@ -247,7 +324,7 @@ class AlertContentTest {
             sourceName = "praz-egp"
         )
         val sub = Subscriber(email = "biz@example.co.zw")
-        val prof = InterestProfile(subscriber = sub)
+        val prof = InterestProfile(subscriber = sub, name = "Test Profile")
         val unsubscribeLink = "https://api.tenderpulse.example/api/v1/unsubscribe?token=raw-unsub-token"
 
         every { unsubscribeService.buildUnsubscribeLink(sub) } returns unsubscribeLink
@@ -286,7 +363,7 @@ class AlertContentTest {
             sourceName = "praz-egp"
         )
         val sub = Subscriber(email = "watcher@example.co.zw")
-        val prof = InterestProfile(subscriber = sub)
+        val prof = InterestProfile(subscriber = sub, name = "Test Profile")
         val rawToken = "super-secret-unsub-token-that-would-be-embedded-if-a-link-were-built"
         val unsubscribeLink = "https://api.tenderpulse.example/api/v1/unsubscribe?token=$rawToken"
 
@@ -333,7 +410,7 @@ class AlertContentTest {
             sourceName = "praz-egp"
         )
         val sub = Subscriber(email = "fails@example.co.zw")
-        val prof = InterestProfile(subscriber = sub)
+        val prof = InterestProfile(subscriber = sub, name = "Test Profile")
 
         every { unsubscribeService.buildUnsubscribeLink(sub) } returns
             "https://api.tenderpulse.example/api/v1/unsubscribe?token=irrelevant"

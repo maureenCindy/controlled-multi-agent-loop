@@ -48,6 +48,8 @@ data class ProSubscribeRequest(
 )
 
 data class ProfileRequest(
+    @field:NotBlank
+    val name: String,
     val sectors: Set<Sector> = emptySet(),
     val valueMin: BigDecimal? = null,
     val valueMax: BigDecimal? = null,
@@ -107,6 +109,7 @@ data class SubscriberResponse(
  */
 data class InterestProfileResponse(
     val id: UUID,
+    val name: String,
     val sectors: Set<Sector>,
     val valueMin: BigDecimal?,
     val valueMax: BigDecimal?,
@@ -119,6 +122,7 @@ data class InterestProfileResponse(
     companion object {
         fun from(profile: InterestProfile): InterestProfileResponse = InterestProfileResponse(
             id = profile.id,
+            name = profile.name,
             sectors = profile.sectors,
             valueMin = profile.valueMin,
             valueMax = profile.valueMax,

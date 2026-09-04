@@ -132,6 +132,7 @@ class EntityPersistenceTest {
         val saved = interestProfileRepository.save(
             InterestProfile(
                 subscriber = subscriber,
+                name = "IT Networking Profile",
                 sectors = mutableSetOf(Sector.IT),
                 valueMin = BigDecimal("1000"),
                 valueMax = BigDecimal("50000"),
@@ -145,6 +146,7 @@ class EntityPersistenceTest {
         val reloaded = interestProfileRepository.findById(saved.id).orElseThrow()
 
         assertEquals(subscriber.id, reloaded.subscriber.id)
+        assertEquals("IT Networking Profile", reloaded.name)
         assertEquals(setOf(Sector.IT), reloaded.sectors)
         assertEquals("Bulawayo", reloaded.region)
         assertEquals(setOf("networking"), reloaded.keywords)
@@ -193,7 +195,7 @@ class EntityPersistenceTest {
             )
         )
         val profile = interestProfileRepository.save(
-            InterestProfile(subscriber = subscriber, sectors = mutableSetOf(Sector.HEALTHCARE))
+            InterestProfile(subscriber = subscriber, name = "Healthcare Profile", sectors = mutableSetOf(Sector.HEALTHCARE))
         )
         entityManager.flush()
 
@@ -229,8 +231,8 @@ class EntityPersistenceTest {
                 sourceName = "egp.praz.org.zw"
             )
         )
-        val profileA = interestProfileRepository.save(InterestProfile(subscriber = subA))
-        val profileB = interestProfileRepository.save(InterestProfile(subscriber = subB))
+        val profileA = interestProfileRepository.save(InterestProfile(subscriber = subA, name = "Profile A"))
+        val profileB = interestProfileRepository.save(InterestProfile(subscriber = subB, name = "Profile B"))
         entityManager.flush()
 
         val pendingA = digestQueueEntryRepository.save(

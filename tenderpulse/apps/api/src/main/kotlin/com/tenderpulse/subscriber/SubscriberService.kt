@@ -111,6 +111,7 @@ class SubscriberService(
         return profileRepository.save(
             InterestProfile(
                 subscriber = subscriber,
+                name = req.name,
                 sectors = req.sectors.toMutableSet(),
                 valueMin = req.valueMin,
                 valueMax = req.valueMax,
@@ -138,6 +139,7 @@ class SubscriberService(
             throw NotFoundException("Profile $profileId")
         }
         val updated = existing.copy(
+            name = req.name,
             sectors = req.sectors.toMutableSet(),
             valueMin = req.valueMin,
             valueMax = req.valueMax,

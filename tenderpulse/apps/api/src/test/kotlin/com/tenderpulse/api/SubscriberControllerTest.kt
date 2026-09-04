@@ -67,9 +67,11 @@ class SubscriberControllerTest {
         valueMin: BigDecimal? = null,
         valueMax: BigDecimal? = null,
         region: String? = null,
-        active: Boolean? = null
+        active: Boolean? = null,
+        name: String = "Test Profile"
     ): String {
         val body = LinkedHashMap<String, Any?>()
+        body["name"] = name
         body["sectors"] = sectors
         body["valueMin"] = valueMin
         body["valueMax"] = valueMax
@@ -274,6 +276,7 @@ class SubscriberControllerTest {
     fun `create profile returns 201 and delegates to the service`() {
         val profile = InterestProfile(
             subscriber = subscriber,
+            name = "Harare IT Profile",
             sectors = mutableSetOf(Sector.IT),
             valueMin = BigDecimal("100000"),
             valueMax = BigDecimal("500000"),
@@ -286,6 +289,7 @@ class SubscriberControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     profileJson(
+                        name = "Harare IT Profile",
                         sectors = setOf(Sector.IT),
                         valueMin = BigDecimal("100000"),
                         valueMax = BigDecimal("500000"),
@@ -295,6 +299,7 @@ class SubscriberControllerTest {
         )
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.id").value(profile.id.toString()))
+            .andExpect(jsonPath("$.name").value("Harare IT Profile"))
             .andExpect(jsonPath("$.sectors[0]").value("IT"))
             .andExpect(jsonPath("$.valueMin").value(100000))
             .andExpect(jsonPath("$.valueMax").value(500000))
@@ -316,10 +321,23 @@ class SubscriberControllerTest {
         verify(exactly = 0) { subscriberService.createProfile(any(), any()) }
     }
 
+    /** Issue #58 AC: `name` is required on create. */
+    @Test
+    fun `create with a blank name returns 400`() {
+        mockMvc.perform(
+            post(profilesUrl())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(profileJson(name = ""))
+        ).andExpect(status().isBadRequest)
+
+        verify(exactly = 0) { subscriberService.createProfile(any(), any()) }
+    }
+
     @Test
     fun `create with equal valueMin and valueMax is accepted`() {
         val profile = InterestProfile(
             subscriber = subscriber,
+            name = "Equal Value Profile",
             valueMin = BigDecimal("250000"),
             valueMax = BigDecimal("250000")
         )
@@ -348,20 +366,39 @@ class SubscriberControllerTest {
 
     @Test
     fun `list returns all profiles for the subscriber including an inactive one`() {
-        val activeProfile = InterestProfile(subscriber = subscriber, active = true)
-        val inactiveProfile = InterestProfile(subscriber = subscriber, active = false)
+        val activeProfile = InterestProfile(subscriber = subscriber, name = "Active Profile", active = true)
+        val inactiveProfile = InterestProfile(subscriber = subscriber, name = "Inactive Profile", active = false)
         every { subscriberService.listProfiles(subscriberId) } returns listOf(activeProfile, inactiveProfile)
 
         mockMvc.perform(get(profilesUrl()))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.length()").value(2))
             .andExpect(jsonPath("$[0].id").value(activeProfile.id.toString()))
+            .andExpect(jsonPath("$[0].name").value("Active Profile"))
             .andExpect(jsonPath("$[0].active").value(true))
             .andExpect(jsonPath("$[1].id").value(inactiveProfile.id.toString()))
+            .andExpect(jsonPath("$[1].name").value("Inactive Profile"))
             .andExpect(jsonPath("$[1].active").value(false))
             .andExpect(jsonPath("$[0].subscriber").doesNotExist())
             .andExpect(jsonPath("$[0].subscriberId").doesNotExist())
             .andExpect(jsonPath("$[0].email").doesNotExist())
+    }
+
+    /**
+     * Issue #58, test case 4: a subscriber with 2 saved profiles gets both back from the list
+     * endpoint, each attributed by its own distinct name.
+     */
+    @Test
+    fun `list returns two profiles for the same subscriber each with their own name`() {
+        val profileA = InterestProfile(subscriber = subscriber, name = "Construction Tenders")
+        val profileB = InterestProfile(subscriber = subscriber, name = "IT Tenders")
+        every { subscriberService.listProfiles(subscriberId) } returns listOf(profileA, profileB)
+
+        mockMvc.perform(get(profilesUrl()))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.length()").value(2))
+            .andExpect(jsonPath("$[0].name").value("Construction Tenders"))
+            .andExpect(jsonPath("$[1].name").value("IT Tenders"))
     }
 
     @Test
@@ -379,6 +416,7 @@ class SubscriberControllerTest {
         val updated = InterestProfile(
             id = profileId,
             subscriber = subscriber,
+            name = "Test Profile",
             sectors = mutableSetOf(Sector.HEALTHCARE),
             region = "Bulawayo"
         )
@@ -401,7 +439,7 @@ class SubscriberControllerTest {
     @Test
     fun `update can deactivate a profile`() {
         val profileId = UUID.randomUUID()
-        val updated = InterestProfile(id = profileId, subscriber = subscriber, active = false)
+        val updated = InterestProfile(id = profileId, subscriber = subscriber, name = "Test Profile", active = false)
         every { subscriberService.updateProfile(subscriberId, profileId, any()) } returns updated
 
         mockMvc.perform(

@@ -89,7 +89,7 @@ class UnsubscribeIntegrationTest {
         mockMvc.perform(get("/api/v1/unsubscribe").param("token", rawToken)).andExpect(status().isOk)
 
         profileRepository.save(
-            InterestProfile(subscriber = subscriber, sectors = mutableSetOf(Sector.IT), active = true)
+            InterestProfile(subscriber = subscriber, name = "IT Profile", sectors = mutableSetOf(Sector.IT), active = true)
         )
         val tender = tenderRepository.save(
             Tender(
@@ -115,8 +115,8 @@ class UnsubscribeIntegrationTest {
         val rawToken = Regex("token=(\\S+)").find(link)!!.groupValues[1]
         mockMvc.perform(get("/api/v1/unsubscribe").param("token", rawToken)).andExpect(status().isOk)
 
-        profileRepository.save(InterestProfile(subscriber = optedOut, sectors = mutableSetOf(Sector.HEALTHCARE), active = true))
-        profileRepository.save(InterestProfile(subscriber = stillIn, sectors = mutableSetOf(Sector.HEALTHCARE), active = true))
+        profileRepository.save(InterestProfile(subscriber = optedOut, name = "Health Profile", sectors = mutableSetOf(Sector.HEALTHCARE), active = true))
+        profileRepository.save(InterestProfile(subscriber = stillIn, name = "Health Profile", sectors = mutableSetOf(Sector.HEALTHCARE), active = true))
         val tender = tenderRepository.save(
             Tender(
                 title = "Hospital equipment supply",

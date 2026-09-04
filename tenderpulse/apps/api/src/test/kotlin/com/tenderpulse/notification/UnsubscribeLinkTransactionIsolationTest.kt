@@ -81,7 +81,7 @@ class UnsubscribeLinkTransactionIsolationTest {
      */
     private fun matchingProfile(subscriber: Subscriber, marker: String): InterestProfile =
         interestProfileRepository.save(
-            InterestProfile(subscriber = subscriber, active = true, issuingAuthorityContains = marker)
+            InterestProfile(subscriber = subscriber, name = "Marker Profile", active = true, issuingAuthorityContains = marker)
         )
 
     private fun tender(sourceUrl: String, marker: String): Tender = tenderRepository.save(

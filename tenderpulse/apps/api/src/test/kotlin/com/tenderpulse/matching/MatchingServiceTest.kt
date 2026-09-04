@@ -38,11 +38,13 @@ class MatchingServiceTest {
         authority: String? = "Cape Town",
         region: String? = "Western Cape",
         keywords: Set<String> = setOf("network"),
-        active: Boolean = true
+        active: Boolean = true,
+        name: String = "Test Profile"
     ): InterestProfile {
         val sub = Subscriber(email = "test@example.com", tier = SubscriptionTier.PAID)
         return InterestProfile(
             subscriber = sub,
+            name = name,
             sectors = sectors.toMutableSet(),
             valueMin = valueMin,
             valueMax = valueMax,
