@@ -107,12 +107,24 @@ After `CHECKER_PASS`, the orchestrator performs these steps automatically before
 6. **Loop or Stop**: If yes → run next `/loop`; if no → stop and await direction
 
 **Conditional Reviewer Triggers**:
-- ✅ P0 priority tasks (TP-002, TP-003, TP-004, TP-011, TP-012)
-- ✅ First implementations (new adapters, new APIs)
+- ✅ Any task labeled P0 in its issue, regardless of task ID (do not rely on a fixed list of task numbers here — it will always go stale; check the issue's own priority label)
+- ✅ First implementations (new adapters, new APIs, new architectural surface such as a new frontend framework or auth mechanism)
 - ✅ Schema/database changes
 - ✅ Core logic changes (matching, notifications, aggregation)
+- ✅ Auth, security, or payment-handling logic, even at P1/P2 — a bug here has outsized blast radius regardless of the task's nominal priority
 - ❌ Docs-only changes
-- ❌ Simple fixes (typos, config tweaks)
+- ❌ Simple fixes (typos, config tweaks, cosmetic/UX-only changes with no logic change)
+
+When in doubt, route through Reviewer — the cost of an unnecessary pass is far lower than the cost of a missed one (see the TP-038 IDOR bug, caught only at Reviewer stage after Checker's narrower acceptance-criteria check passed cleanly).
+
+## Verification Standards
+
+Lessons from a multi-week session that shipped ~40 tasks through this loop (see PR history around the "session retrospective" docs update for the full writeup):
+
+- **Empirical proof, not plausible reasoning, for any claim about which layer/mechanism blocks or allows something.** "The firewall blocks this" or "this route pattern catches that" must be verified by actually reproducing it (capture `resolvedException` in a real Spring context, read the actual resolved library version's source, boot the real app and hit it) — not asserted because it sounds right. A single P2 hardening task needed 5 fix cycles specifically because two rounds of confident-but-wrong claims about this passed a Checker before a Reviewer caught them empirically.
+- **Prove a new regression test actually regresses.** Before trusting a new test, temporarily revert the fix it's meant to guard, confirm the test fails for the expected reason, then restore the fix and confirm it passes clean. This caught a real bug where a concurrency test was accidentally racing the wrong database constraint and would have passed even with no fix at all.
+- **A discarded return value with a side effect is a bug waiting to happen.** If code calls a method and discards its result "for future use," check what that method actually does — a discarded-but-still-called call silently minted a new, non-expiring database row on every notification cycle in this codebase before it was caught. Either remove the call until its result is used, or justify the side effect explicitly.
+- **On long-lived branches during parallel work, confirm genuine currency with `main`, not just absence of merge conflicts.** `git merge-base origin/main <branch>` should equal current `origin/main` HEAD before a PR is considered ready — a branch can show `MERGEABLE`/no-conflicts while still being several commits stale, especially when multiple parallel PRs are landing in quick succession.
 
 ## Success Criteria for a Run
 

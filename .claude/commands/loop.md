@@ -46,7 +46,8 @@ Example:
      - Final status: PASS
      - Key changes made
      - Any remaining notes
-   - Stop the loop.
+   - **Check the project's own `CLAUDE.md` for additional required steps before treating the task as fully done** — a repo may layer a Reviewer pass, spec-improvement step, or human gate on top of this base Builder↔Checker loop (see this repo's "Orchestrator Workflow: Enhanced /loop" section for an example). This file defines the mechanical build-check cycle only, not necessarily the complete definition of "done."
+   - Stop the loop (or proceed to the project's additional steps if any apply).
 
 4. **Hard Stop (max cycles)**
    - Output:
