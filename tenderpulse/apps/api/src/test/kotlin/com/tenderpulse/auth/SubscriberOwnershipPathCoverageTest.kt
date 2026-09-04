@@ -73,6 +73,10 @@ class SubscriberOwnershipPathCoverageTest {
         method.getAnnotation(PutMapping::class.java)?.let { return it.value.ifEmpty { arrayOf("") }.toList() }
         method.getAnnotation(DeleteMapping::class.java)?.let { return it.value.ifEmpty { arrayOf("") }.toList() }
         method.getAnnotation(PatchMapping::class.java)?.let { return it.value.ifEmpty { arrayOf("") }.toList() }
+        // Bare @RequestMapping(method = ..., value = ...) is a valid alternative to the shorthand
+        // annotations above (e.g. @RequestMapping(method = [RequestMethod.GET], value = ["/{id}/x"])) --
+        // without this, a route added this way would silently bypass this drift guard (issue #82).
+        method.getAnnotation(RequestMapping::class.java)?.let { return it.value.ifEmpty { arrayOf("") }.toList() }
         return emptyList()
     }
 }
