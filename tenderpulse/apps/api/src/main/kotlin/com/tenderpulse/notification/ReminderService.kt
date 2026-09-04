@@ -32,6 +32,14 @@ import java.time.Instant
  * been processed yet) is correctly excluded (AC: "a subscriber never notified of the original
  * match does not receive a reminder").
  *
+ * "Previously notified" is a historical fact only — it says nothing about whether the subscriber
+ * still wants email today. Before dispatching either the Paid immediate reminder or the Free
+ * digest-queue entry, each candidate's *current* [com.tenderpulse.domain.Subscriber.active] and
+ * [com.tenderpulse.domain.Subscriber.emailOptOut] flags are re-checked, mirroring the consent
+ * predicate [InterestProfileRepository.findAllActiveWithSubscriber] enforces for the initial-match
+ * path, so a subscriber who has since unsubscribed or been deactivated does not receive a live
+ * reminder.
+ *
  * [runReminderCycle] is deliberately **not** wrapped in one class-level `@Transactional`, mirroring
  * [DigestService]'s reasoning: each (tender, subscriber) pair is processed and persisted
  * independently (via each repository call's own per-call transaction) so a failure handling one
@@ -93,10 +101,19 @@ class ReminderService(
         // NotificationRecord rows only ever exist for PAID sends and DigestQueueEntry rows only
         // for FREE queues (see NotificationService.notifyMatchingSubscribers), so in practice
         // these two sets are disjoint by subscriber id — union defensively rather than assume it.
+        //
+        // "Previously notified" is a historical fact and says nothing about *current* consent: a
+        // subscriber may have unsubscribed (Subscriber.emailOptOut) or been deactivated
+        // (Subscriber.active) since the original match. Re-check both flags on the already-loaded
+        // Subscriber entity before treating them as reminder-eligible — the same
+        // active/emailOptOut predicate InterestProfileRepository.findAllActiveWithSubscriber()
+        // encodes for the initial-match path (the "TP-041 consent guarantee", extended in
+        // TP-057/#83), applied here without a second query since these Subscriber entities are
+        // already loaded via the NotificationRecord/DigestQueueEntry association.
         val candidateSubscribers = (
             paidNotifiedSubscribers.associateBy { it.id } +
                 freeQueueEntriesBySubscriberId.mapValues { it.value.subscriber }
-            ).values
+            ).values.filter { it.active && !it.emailOptOut }
 
         var sent = 0
         var queued = 0

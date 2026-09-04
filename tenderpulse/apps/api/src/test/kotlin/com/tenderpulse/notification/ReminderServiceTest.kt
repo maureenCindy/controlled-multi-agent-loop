@@ -210,6 +210,50 @@ class ReminderServiceTest {
         verify(exactly = 0) { digestQueueEntryRepository.save(any()) }
     }
 
+    // 6b. Subscriber WAS previously matched/notified but has SINCE opted out -> no reminder sent
+    //     and no tracking record created, even though the historical NotificationRecord exists.
+    @Test
+    fun `a Paid subscriber who has since opted out does not receive a reminder`() {
+        val t = tender(Instant.now().plus(Duration.ofDays(2)))
+        val sub = subscriber(SubscriptionTier.PAID).copy(emailOptOut = true)
+
+        every { tenderRepository.findByDeadlineBetween(any(), any()) } returns listOf(t)
+        every { notificationRecordRepository.findByTenderIdAndSuccessTrue(t.id) } returns listOf(
+            NotificationRecord(subscriber = sub, tender = t, channel = NotificationChannel.EMAIL, success = true)
+        )
+        every { digestQueueEntryRepository.findByTenderId(t.id) } returns emptyList()
+
+        val result = reminderService.runReminderCycle()
+
+        assertEquals(0, result.remindersSent)
+        assertEquals(0, result.failed)
+        verify(exactly = 0) { deadlineReminderRecordRepository.existsBySubscriberIdAndTenderId(any(), any()) }
+        verify(exactly = 0) { emailNotificationSender.send(any(), any(), any()) }
+        verify(exactly = 0) { deadlineReminderRecordRepository.save(any()) }
+    }
+
+    // 6c. Subscriber WAS previously matched/notified via the Free digest queue but has SINCE been
+    //     deactivated -> no new digest entry queued and no tracking record created.
+    @Test
+    fun `a Free subscriber who has since been deactivated does not receive a reminder digest entry`() {
+        val t = tender(Instant.now().plus(Duration.ofDays(2)))
+        val sub = subscriber(SubscriptionTier.FREE).copy(active = false)
+        val prof = profile(sub)
+        val originalEntry = DigestQueueEntry(subscriber = sub, tender = t, profile = prof, digestedAt = Instant.now())
+
+        every { tenderRepository.findByDeadlineBetween(any(), any()) } returns listOf(t)
+        every { notificationRecordRepository.findByTenderIdAndSuccessTrue(t.id) } returns emptyList()
+        every { digestQueueEntryRepository.findByTenderId(t.id) } returns listOf(originalEntry)
+
+        val result = reminderService.runReminderCycle()
+
+        assertEquals(0, result.digestEntriesQueued)
+        assertEquals(0, result.failed)
+        verify(exactly = 0) { deadlineReminderRecordRepository.existsBySubscriberIdAndTenderId(any(), any()) }
+        verify(exactly = 0) { digestQueueEntryRepository.save(any()) }
+        verify(exactly = 0) { deadlineReminderRecordRepository.save(any()) }
+    }
+
     // A previous Paid send that failed never actually reached the subscriber, so it shouldn't
     // count as "already told about this tender" for reminder-eligibility purposes.
     @Test
