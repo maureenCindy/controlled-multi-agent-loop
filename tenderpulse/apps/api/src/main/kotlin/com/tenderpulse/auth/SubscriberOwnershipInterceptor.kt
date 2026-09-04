@@ -7,14 +7,28 @@ import org.springframework.http.MediaType
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
 import org.springframework.web.servlet.HandlerInterceptor
+import org.springframework.web.servlet.HandlerMapping
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import java.util.UUID
-import java.util.regex.Pattern
 
 /**
  * Enforces "a request can only act on the subscriber tied to its authenticated token, not any
  * UUID in the path" (TP-038 AC) for `/api/v1/subscribers/{id}/profiles...`.
+ *
+ * Deliberately does NOT re-parse [HttpServletRequest.getRequestURI] itself: an earlier version
+ * matched a hand-rolled regex against the *raw* (possibly percent-encoded) URI, which a
+ * reviewer showed could be bypassed by encoding a single character of `profiles` (e.g.
+ * `prof%69les`) — the raw string didn't match the guard's own regex, so it returned "not
+ * guarded", while Spring's request-mapping machinery decoded the path and dispatched to
+ * [com.tenderpulse.api.SubscriberController] anyway, completely skipping the ownership check.
+ * Instead this reads the `id` path variable from the same, already-decoded
+ * [HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE] map that Spring's own handler mapping
+ * resolved *before* invoking this interceptor — i.e. the same source of truth the controller
+ * itself will use — so there is no separate parse of the URI to disagree with it. Path scoping
+ * (which requests reach this interceptor at all) is still handled by
+ * [WebMvcConfig.addInterceptors]'s `addPathPatterns`, which — unlike the removed regex — is
+ * Spring's own decoded-path matcher.
  *
  * Kept out of [com.tenderpulse.api.SubscriberController] deliberately: [SecurityConfig] already
  * guarantees only *authenticated* requests reach this far for these paths (an unauthenticated
@@ -25,11 +39,12 @@ import java.util.regex.Pattern
 @Component
 class SubscriberOwnershipInterceptor : HandlerInterceptor {
 
+    @Suppress("UNCHECKED_CAST")
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
-        val matcher = PROFILE_PATH_PATTERN.matcher(request.requestURI)
-        if (!matcher.matches()) return true
+        val pathVariables = request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE) as? Map<String, String>
+        val rawSubscriberId = pathVariables?.get(SUBSCRIBER_ID_PATH_VARIABLE) ?: return true
 
-        val pathSubscriberId = runCatching { UUID.fromString(matcher.group(1)) }.getOrNull() ?: return true
+        val pathSubscriberId = runCatching { UUID.fromString(rawSubscriberId) }.getOrNull() ?: return true
         val principal = SecurityContextHolder.getContext().authentication?.principal as? UUID
 
         if (principal == null || principal != pathSubscriberId) {
@@ -44,11 +59,8 @@ class SubscriberOwnershipInterceptor : HandlerInterceptor {
     }
 
     companion object {
-        // Matches /api/v1/subscribers/{uuid}/profiles and /api/v1/subscribers/{uuid}/profiles/{profileId}.
-        // Deliberately does NOT match plain /api/v1/subscribers/{uuid} (no such endpoint) or
-        // /api/v1/subscribers (signup, which must stay unauthenticated).
-        private val PROFILE_PATH_PATTERN: Pattern =
-            Pattern.compile("^/api/v1/subscribers/([0-9a-fA-F-]{36})/profiles(?:/.*)?$")
+        // Matches SubscriberController's `@PathVariable id: UUID` on the profile endpoints.
+        private const val SUBSCRIBER_ID_PATH_VARIABLE = "id"
     }
 }
 

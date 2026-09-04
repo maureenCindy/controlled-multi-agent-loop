@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.web.servlet.HandlerMapping
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.util.UUID
@@ -17,6 +18,13 @@ import java.util.UUID
 /**
  * Unit tests for [SubscriberOwnershipInterceptor] (TP-038 AC: "a request can only act on the
  * subscriber tied to its authenticated token, not any UUID in the path").
+ *
+ * Deliberately drives the interceptor via the same
+ * [HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE] request attribute Spring's own handler
+ * mapping populates — not [HttpServletRequest.getRequestURI] — because a prior version compared
+ * against the raw URI directly and could be bypassed by percent-encoding a path segment (see
+ * [SubscriberOwnershipInterceptor]'s class doc and [com.tenderpulse.api.AuthIntegrationTest]'s
+ * `percent-encoded path segment` regression test for the full-stack proof).
  */
 class SubscriberOwnershipInterceptorTest {
 
@@ -35,10 +43,15 @@ class SubscriberOwnershipInterceptorTest {
             UsernamePasswordAuthenticationToken(subscriberId, null, emptyList())
     }
 
+    private fun stubPathVariables(vararg pairs: Pair<String, String>) {
+        every { request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE) } returns
+            if (pairs.isEmpty()) null else mapOf(*pairs)
+    }
+
     @Test
     fun `allows a request whose token subscriber matches the path subscriber`() {
         val subscriberId = UUID.randomUUID()
-        every { request.requestURI } returns "/api/v1/subscribers/$subscriberId/profiles"
+        stubPathVariables("id" to subscriberId.toString())
         authenticateAs(subscriberId)
 
         assertTrue(interceptor.preHandle(request, response, handler))
@@ -48,7 +61,7 @@ class SubscriberOwnershipInterceptorTest {
     fun `allows a request against a specific profile id when the subscriber matches`() {
         val subscriberId = UUID.randomUUID()
         val profileId = UUID.randomUUID()
-        every { request.requestURI } returns "/api/v1/subscribers/$subscriberId/profiles/$profileId"
+        stubPathVariables("id" to subscriberId.toString(), "profileId" to profileId.toString())
         authenticateAs(subscriberId)
 
         assertTrue(interceptor.preHandle(request, response, handler))
@@ -58,7 +71,7 @@ class SubscriberOwnershipInterceptorTest {
     fun `rejects with 403 when the authenticated subscriber differs from the path subscriber`() {
         val pathSubscriberId = UUID.randomUUID()
         val tokenSubscriberId = UUID.randomUUID()
-        every { request.requestURI } returns "/api/v1/subscribers/$pathSubscriberId/profiles"
+        stubPathVariables("id" to pathSubscriberId.toString())
         authenticateAs(tokenSubscriberId)
 
         val writer = StringWriter()
@@ -72,7 +85,7 @@ class SubscriberOwnershipInterceptorTest {
     @Test
     fun `rejects with 403 when there is no authenticated principal at all`() {
         val pathSubscriberId = UUID.randomUUID()
-        every { request.requestURI } returns "/api/v1/subscribers/$pathSubscriberId/profiles"
+        stubPathVariables("id" to pathSubscriberId.toString())
         // No authentication set in the security context.
 
         val writer = StringWriter()
@@ -82,16 +95,25 @@ class SubscriberOwnershipInterceptorTest {
     }
 
     @Test
-    fun `does not apply to paths outside the subscriber profiles namespace`() {
-        every { request.requestURI } returns "/api/v1/tenders"
+    fun `does not apply when there is no id path variable at all`() {
+        stubPathVariables()
         // No authentication needed — this path isn't guarded at all.
 
         assertTrue(interceptor.preHandle(request, response, handler))
     }
 
     @Test
-    fun `does not apply to the bare subscriber signup path`() {
-        every { request.requestURI } returns "/api/v1/subscribers"
+    fun `does not apply when the path variables attribute itself is absent`() {
+        every { request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE) } returns null
+
+        assertTrue(interceptor.preHandle(request, response, handler))
+    }
+
+    @Test
+    fun `a malformed id path variable is let through rather than guarded`() {
+        // Not a valid UUID — Spring's own @PathVariable UUID conversion will 400 this downstream;
+        // this interceptor isn't the place to duplicate that validation.
+        stubPathVariables("id" to "not-a-uuid")
 
         assertTrue(interceptor.preHandle(request, response, handler))
     }

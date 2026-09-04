@@ -2,8 +2,10 @@ package com.tenderpulse.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.tenderpulse.auth.BearerTokenService
+import com.tenderpulse.domain.InterestProfileRepository
 import com.tenderpulse.domain.Subscriber
 import com.tenderpulse.domain.SubscriberRepository
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
 import org.mockito.Mockito.verify
@@ -20,6 +22,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.net.URI
 
 /**
  * Full-context tests for TP-038's security wiring: boots the real [com.tenderpulse.auth.SecurityConfig]
@@ -42,6 +45,9 @@ class AuthIntegrationTest {
 
     @Autowired
     private lateinit var subscriberRepository: SubscriberRepository
+
+    @Autowired
+    private lateinit var profileRepository: InterestProfileRepository
 
     @Autowired
     private lateinit var bearerTokenService: BearerTokenService
@@ -136,5 +142,57 @@ class AuthIntegrationTest {
         ).andExpect(status().isOk)
 
         verify(javaMailSender, org.mockito.Mockito.never()).send(org.mockito.ArgumentMatchers.any(SimpleMailMessage::class.java))
+    }
+
+    // ---- Regression: ownership check must not be bypassable via URI encoding ----
+    //
+    // A prior version of SubscriberOwnershipInterceptor compared the ownership check against
+    // the raw (possibly percent-encoded) request URI. Percent-encoding a single character of
+    // "profiles" (e.g. "prof%69les", which decodes to "profiles") made that regex miss even
+    // though Spring's own decoded-path request mapping still routed the request to
+    // SubscriberController — a full 403 bypass. These tests hit that exact encoded path and
+    // assert the request is still rejected for a token that isn't the path subscriber's own.
+
+    @Test
+    fun `a read via a percent-encoded 'profiles' segment is still rejected for a non-owning token`() {
+        val owner = createSubscriber("encoded-read-owner@example.com")
+        val intruder = createSubscriber("encoded-read-intruder@example.com")
+        val intruderToken = bearerTokenService.issue(intruder.id)
+
+        // "prof%69les" percent-decodes to "profiles" — must resolve to the same guarded route.
+        val encodedUri = URI("/api/v1/subscribers/${owner.id}/prof%69les")
+
+        mockMvc.perform(get(encodedUri).header("Authorization", "Bearer $intruderToken"))
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `a write via a percent-encoded 'profiles' segment is still rejected and plants nothing`() {
+        val owner = createSubscriber("encoded-write-owner@example.com")
+        val intruder = createSubscriber("encoded-write-intruder@example.com")
+        val intruderToken = bearerTokenService.issue(intruder.id)
+        val profilesBefore = profileRepository.findBySubscriberId(owner.id).size
+
+        val encodedUri = URI("/api/v1/subscribers/${owner.id}/prof%69les")
+
+        mockMvc.perform(
+            post(encodedUri)
+                .header("Authorization", "Bearer $intruderToken")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"sectors":["IT"]}""")
+        ).andExpect(status().isForbidden)
+
+        assertEquals(profilesBefore, profileRepository.findBySubscriberId(owner.id).size)
+    }
+
+    @Test
+    fun `the owner's own token still works against the percent-encoded path`() {
+        val owner = createSubscriber("encoded-self@example.com")
+        val ownerToken = bearerTokenService.issue(owner.id)
+
+        val encodedUri = URI("/api/v1/subscribers/${owner.id}/prof%69les")
+
+        mockMvc.perform(get(encodedUri).header("Authorization", "Bearer $ownerToken"))
+            .andExpect(status().isOk)
     }
 }
