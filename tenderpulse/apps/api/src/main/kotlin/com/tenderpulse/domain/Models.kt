@@ -75,6 +75,17 @@ data class Subscriber(
 
     val active: Boolean = true,
 
+    /**
+     * True once the subscriber has clicked the unsubscribe link embedded in an outbound email
+     * (TP-057) — see [com.tenderpulse.auth.UnsubscribeService]. Deliberately a separate field
+     * from [active]: [active] governs tier/account status elsewhere (e.g.
+     * [com.tenderpulse.admin.AdminService]), and conflating "opted out of email" with "account
+     * active" would let one flag silently mean two different things. Checked by
+     * [InterestProfileRepository.findAllActiveWithSubscriber] so an opted-out subscriber is
+     * excluded from matching/notification cycles going forward without needing to touch [active].
+     */
+    val emailOptOut: Boolean = false,
+
     val createdAt: Instant = Instant.now(),
 
     /**

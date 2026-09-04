@@ -62,6 +62,9 @@ tenderpulse:
     magic-link-ttl-ms: 86400000
     access-token-ttl-ms: 86400000
     verify-base-url: http://localhost:8080/api/v1/auth/verify
+  # TP-057: fixed test base URL so unsubscribe-link tests can assert the link deterministically.
+  unsubscribe:
+    base-url: http://localhost:8080/api/v1/unsubscribe
   # TP-034: fixed test origin so WebsiteCorsIntegrationTest can assert both the allow and the
   # deny path deterministically, without depending on an env var being set.
   website:

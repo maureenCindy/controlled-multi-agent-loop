@@ -183,7 +183,7 @@ class AlertContentTest {
             sourceName = "praz-egp"
         )
 
-        val body = buildAlertBody(t)
+        val body = buildAlertBody(t, "https://api.tenderpulse.example/api/v1/unsubscribe?token=raw")
 
         assertTrue(body.contains("Ministry of Finance"), "should attribute the issuing authority")
         assertTrue(body.contains("https://egp.praz.org.zw/tender/123"), "should link to the official source")
@@ -200,14 +200,30 @@ class AlertContentTest {
             deadline = null
         )
 
-        val body = buildAlertBody(t)
+        val body = buildAlertBody(t, "https://api.tenderpulse.example/api/v1/unsubscribe?token=raw")
 
         assertTrue(body.contains("n/a"))
     }
 
+    /** TP-057: every alert email must include a working, no-login-required unsubscribe link. */
+    @Test
+    fun `alert body includes the unsubscribe link`() {
+        val t = Tender(
+            title = "Road maintenance works",
+            issuingAuthority = "Ministry of Transport",
+            sourceUrl = "https://egp.praz.org.zw/tender/456",
+            sourceName = "praz-egp"
+        )
+        val unsubscribeLink = "https://api.tenderpulse.example/api/v1/unsubscribe?token=raw-unsub-token"
+
+        val body = buildAlertBody(t, unsubscribeLink)
+
+        assertTrue(body.contains(unsubscribeLink), "should include the unsubscribe link")
+    }
+
     @Test
     fun `EmailNotificationSender send succeeds and content includes attribution and link`() {
-        val sender = EmailNotificationSender()
+        val unsubscribeService = mockk<com.tenderpulse.auth.UnsubscribeService>()
         val t = Tender(
             title = "IT equipment supply",
             issuingAuthority = "Zimbabwe Revenue Authority",
@@ -216,10 +232,14 @@ class AlertContentTest {
         )
         val sub = Subscriber(email = "biz@example.co.zw")
         val prof = InterestProfile(subscriber = sub)
+        every { unsubscribeService.buildUnsubscribeLink(sub) } returns
+            "https://api.tenderpulse.example/api/v1/unsubscribe?token=raw-unsub-token"
 
+        val sender = EmailNotificationSender(unsubscribeService)
         val result = sender.send(sub, t, prof)
 
         assertTrue(result.success)
         assertNull(result.error)
+        verify(exactly = 1) { unsubscribeService.buildUnsubscribeLink(sub) }
     }
 }

@@ -9,8 +9,11 @@ import com.tenderpulse.admin.AdminTierUpdateRequest
 import com.tenderpulse.aggregation.AggregationService
 import com.tenderpulse.auth.AuthService
 import com.tenderpulse.auth.InvalidMagicLinkTokenException
+import com.tenderpulse.auth.InvalidUnsubscribeTokenException
 import com.tenderpulse.auth.MagicLinkRequest
 import com.tenderpulse.auth.MagicLinkResponse
+import com.tenderpulse.auth.UnsubscribeResponse
+import com.tenderpulse.auth.UnsubscribeService
 import com.tenderpulse.auth.VerifyResponse
 import com.tenderpulse.domain.Sector
 import com.tenderpulse.subscriber.InterestProfileResponse
@@ -171,4 +174,35 @@ class AuthController(
     fun handleInvalidToken(ex: InvalidMagicLinkTokenException): ResponseEntity<Map<String, String>> =
         ResponseEntity.status(HttpStatus.UNAUTHORIZED)
             .body(mapOf("error" to ex.reason, "message" to (ex.message ?: "Invalid token")))
+}
+
+/**
+ * Unsubscribe / email preference management (TP-057, issue #57): opts a subscriber out of future
+ * emails via the link embedded in every outbound email (see
+ * [com.tenderpulse.notification.EmailNotificationSender]) — no login required. permitAll in
+ * [com.tenderpulse.auth.SecurityConfig]'s default "anyRequest" rule, same reasoning as the two
+ * magic-link endpoints above: you can't hold a bearer token before signing in, and an
+ * unsubscribe token is not a bearer token in the first place (see
+ * [com.tenderpulse.auth.UnsubscribeService]).
+ */
+@RestController
+@RequestMapping("/api/v1")
+class UnsubscribeController(
+    private val unsubscribeService: UnsubscribeService
+) {
+    /**
+     * Idempotent: an unknown/already-clicked distinction is deliberately not surfaced here — a
+     * repeat click of the same valid link returns the same 200 (AC: idempotent). Only a
+     * tampered/invalid token (never issued) is rejected, via [handleInvalidToken] below.
+     */
+    @GetMapping("/unsubscribe")
+    fun unsubscribe(@RequestParam token: String): UnsubscribeResponse {
+        unsubscribeService.unsubscribe(token)
+        return UnsubscribeResponse()
+    }
+
+    @ExceptionHandler(InvalidUnsubscribeTokenException::class)
+    fun handleInvalidToken(ex: InvalidUnsubscribeTokenException): ResponseEntity<Map<String, String>> =
+        ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(mapOf("error" to "invalid_token", "message" to (ex.message ?: "Invalid token")))
 }

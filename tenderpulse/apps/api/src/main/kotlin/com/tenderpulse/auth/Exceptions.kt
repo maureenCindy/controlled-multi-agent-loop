@@ -16,3 +16,13 @@ class MagicLinkTokenExpiredException :
 
 class MagicLinkTokenAlreadyUsedException :
     InvalidMagicLinkTokenException("already_used", "This link has already been used. Request a new one.")
+
+/**
+ * Thrown by [UnsubscribeService.unsubscribe] when the raw token doesn't correspond to any issued
+ * [UnsubscribeToken] (unknown or tampered — [TokenHasher] means a tampered raw value simply
+ * hashes to something no row matches). [UnsubscribeController] maps this to 400. Deliberately no
+ * "already used" variant, unlike [MagicLinkTokenAlreadyUsedException]: re-clicking an
+ * already-used unsubscribe link must be a harmless no-op (TP-057 AC: idempotent), not an error.
+ */
+class InvalidUnsubscribeTokenException :
+    RuntimeException("This unsubscribe link is invalid.")

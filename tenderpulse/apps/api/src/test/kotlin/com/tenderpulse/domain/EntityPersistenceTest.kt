@@ -70,6 +70,20 @@ class EntityPersistenceTest {
         assertEquals(true, reloaded.active)
     }
 
+    /** TP-057 schema change: `emailOptOut` persists and reloads through a real JPA context. */
+    @Test
+    fun `Subscriber emailOptOut round trips against a real JPA context`() {
+        val saved = subscriberRepository.save(
+            Subscriber(email = "opted-out-roundtrip@example.co.zw", emailOptOut = true)
+        )
+        entityManager.flush()
+        entityManager.clear()
+
+        val reloaded = subscriberRepository.findById(saved.id).orElseThrow()
+
+        assertEquals(true, reloaded.emailOptOut)
+    }
+
     /** TP-042 schema change: `paypalSubscriptionId` persists and reloads through a real JPA context. */
     @Test
     fun `Subscriber paypalSubscriptionId round trips against a real JPA context`() {
