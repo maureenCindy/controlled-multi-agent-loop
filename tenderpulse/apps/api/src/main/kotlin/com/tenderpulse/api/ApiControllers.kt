@@ -1,6 +1,11 @@
 package com.tenderpulse.api
 
 import com.tenderpulse.aggregation.AggregationService
+import com.tenderpulse.auth.AuthService
+import com.tenderpulse.auth.InvalidMagicLinkTokenException
+import com.tenderpulse.auth.MagicLinkRequest
+import com.tenderpulse.auth.MagicLinkResponse
+import com.tenderpulse.auth.VerifyResponse
 import com.tenderpulse.domain.NotFoundException
 import com.tenderpulse.domain.Sector
 import com.tenderpulse.domain.Tender
@@ -12,6 +17,7 @@ import com.tenderpulse.subscriber.SubscriberResponse
 import com.tenderpulse.subscriber.SubscriberService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.UUID
 
@@ -81,4 +87,36 @@ class AdminController(
     /** Trigger one aggregation cycle (for ops / scheduled jobs). */
     @PostMapping("/aggregate")
     fun aggregate() = aggregationService.runAggregationCycle()
+}
+
+/**
+ * Magic-link authentication (TP-038): passwordless sign-in for subscribers, closing #25's
+ * guessable-UUID gap. Both endpoints are permitAll in [com.tenderpulse.auth.SecurityConfig] —
+ * you can't hold a bearer token before you've verified a magic link, and you can't request one
+ * while already authenticated as anyone in particular.
+ */
+@RestController
+@RequestMapping("/api/v1/auth")
+class AuthController(
+    private val authService: AuthService
+) {
+    /**
+     * Always returns the same [MagicLinkResponse] whether or not [req.email] matches a
+     * subscriber (see [AuthService.requestMagicLink]) — no account-enumeration leak.
+     */
+    @PostMapping("/magic-link")
+    fun requestMagicLink(@Valid @RequestBody req: MagicLinkRequest): MagicLinkResponse {
+        authService.requestMagicLink(req.email)
+        return MagicLinkResponse()
+    }
+
+    @GetMapping("/verify")
+    fun verify(@RequestParam token: String): VerifyResponse =
+        VerifyResponse(accessToken = authService.verify(token))
+
+    /** Maps every single-use/expiry failure to 401 with the reason spelled out (AC: "clear expired/reused error path"). */
+    @ExceptionHandler(InvalidMagicLinkTokenException::class)
+    fun handleInvalidToken(ex: InvalidMagicLinkTokenException): ResponseEntity<Map<String, String>> =
+        ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            .body(mapOf("error" to ex.reason, "message" to (ex.message ?: "Invalid token")))
 }

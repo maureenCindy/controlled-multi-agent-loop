@@ -15,6 +15,12 @@
 spring:
   application:
     name: tenderpulse
+  # TP-038: explicit "test" marker — not load-bearing for com.tenderpulse.auth.InsecureDefaultSecretGuard
+  # today (the token-secret below already differs from the checked-in dev default, so the guard
+  # never even reaches its profile check here), but keeps this file self-documenting and defends
+  # against that no longer being true if the secret below is ever changed to match the default.
+  profiles:
+    active: test
   datasource:
     url: jdbc:h2:mem:tenderpulse;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
     driver-class-name: org.h2.Driver
@@ -31,6 +37,9 @@ spring:
     console:
       enabled: true
       path: /h2-console
+  mail:
+    host: localhost
+    port: 25
 
 server:
   port: 8080
@@ -44,3 +53,8 @@ tenderpulse:
     scheduled-enabled: false
     scheduled-initial-delay-ms: 0
     scheduled-interval-ms: 10800000  # 3 hours
+  auth:
+    token-secret: test-only-fixed-secret-used-for-jvm-test-runs-only-32b
+    magic-link-ttl-ms: 86400000
+    access-token-ttl-ms: 86400000
+    verify-base-url: http://localhost:8080/api/v1/auth/verify
