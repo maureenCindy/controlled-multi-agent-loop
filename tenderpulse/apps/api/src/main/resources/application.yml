@@ -65,6 +65,12 @@ tenderpulse:
     # Bearer access token returned by /verify: also 24h, no refresh flow (out of scope for TP-038).
     access-token-ttl-ms: 86400000
     verify-base-url: ${TENDERPULSE_VERIFY_BASE_URL:http://localhost:8080/api/v1/auth/verify}
+  # TP-034: CORS for the marketing site's signup flow (com.tenderpulse.auth.WebsiteCorsConfig).
+  # Comma-separated list of allowed origins, e.g. "https://tenderpulse.co,http://localhost:4321"
+  # (4321 is Astro's default `npm run dev` port). Empty by default (no origin whitelisted) so
+  # cross-origin signup fails closed until this is explicitly configured for a real deployment.
+  website:
+    allowed-origins: ${WEBSITE_ALLOWED_ORIGINS:}
 
 # TP-042: PayPal Client ID/Secret/Plan ID are credentials — loaded from env vars only, never
 # committed. Empty defaults let the app boot without them; POST /api/v1/subscribers/pro will fail

@@ -1,0 +1,60 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+<BaseLayout
+  title="How it works"
+  description="How TenderPulse aggregates PRAZ e-GP tenders and matches them to your business."
+>
+  <section class="section">
+    <div class="container">
+      <span class="eyebrow">How it works</span>
+      <h1>From PRAZ's portal to your inbox</h1>
+      <p class="lede">
+        TenderPulse is deliberately simple: one trustworthy source, a clear matching profile,
+        and a notification schedule that fits your plan.
+      </p>
+    </div>
+  </section>
+
+  <section class="section section--subtle">
+    <div class="container">
+      <div class="grid grid-3">
+        <div class="card">
+          <span class="step-number">1</span>
+          <h3>We fetch PRAZ e-GP</h3>
+          <p>
+            TenderPulse's MVP tracks a single, official source: Zimbabwe's PRAZ e-Government
+            Procurement portal (egp.praz.org.zw). We fetch it on a shared schedule, with polite
+            rate limits, and normalize each listing's public summary fields and its official link.
+          </p>
+        </div>
+        <div class="card">
+          <span class="step-number">2</span>
+          <h3>You tell us what matters</h3>
+          <p>
+            Set up an interest profile: sector, value range, issuing authority, region, and
+            keywords. TenderPulse matches new tenders against it — you only hear about what's
+            actually relevant to your business.
+          </p>
+        </div>
+        <div class="card">
+          <span class="step-number">3</span>
+          <h3>You get notified</h3>
+          <p>
+            Free subscribers get a daily digest of everything that matched. Pro subscribers are
+            notified after each aggregation run, as soon as a match is found. Every notification
+            links back to the official PRAZ listing — we never host or resell the underlying bid
+            documents.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container" style="text-align:center;">
+      <h2>Ready to stop checking manually?</h2>
+      <a class="btn btn-accent" href="/signup">Set up your alerts</a>
+    </div>
+  </section>
+</BaseLayout>
