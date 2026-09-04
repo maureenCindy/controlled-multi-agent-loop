@@ -179,11 +179,20 @@ import BaseLayout from "../layouts/BaseLayout.astro";
             return email;
           },
           {
+            // TP-071: lock the email input once the PayPal popup opens (onClick's validation
+            // has already passed by then), and re-enable it once checkout settles either way —
+            // closing the window where editing/clearing the email mid-popup could produce an
+            // orphaned PayPal subscription.
+            onCheckoutStart: () => {
+              proEmailInput.disabled = true;
+            },
             onSuccess: () => {
+              proEmailInput.disabled = false;
               proStatus.dataset.state = "success";
               proStatus.textContent = "Subscription verified! You're on the Pro plan.";
             },
             onError: (message) => {
+              proEmailInput.disabled = false;
               proStatus.dataset.state = "error";
               proStatus.textContent = message;
             },
