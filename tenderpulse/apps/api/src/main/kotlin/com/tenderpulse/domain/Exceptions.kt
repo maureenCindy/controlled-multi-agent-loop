@@ -45,3 +45,13 @@ class PayPalApiException(message: String, cause: Throwable? = null) : RuntimeExc
  */
 @ResponseStatus(HttpStatus.BAD_REQUEST)
 class PayPalPlanPricingException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
+
+/**
+ * A `planId` path variable (admin plan-pricing update, TP-044) didn't match PayPal's expected
+ * plan ID shape (issue #68) — rejected by [com.tenderpulse.api.AdminController] before it can
+ * reach [com.tenderpulse.paypal.PayPalClient.updatePlanPricing], which builds the outbound PayPal
+ * request URL from it. Distinct from [PayPalPlanPricingException]: this means the request never
+ * left TenderPulse, PayPal was never called at all.
+ */
+@ResponseStatus(HttpStatus.BAD_REQUEST)
+class InvalidPlanIdException(message: String) : RuntimeException(message)

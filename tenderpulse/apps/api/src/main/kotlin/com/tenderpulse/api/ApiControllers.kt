@@ -15,6 +15,7 @@ import com.tenderpulse.auth.MagicLinkResponse
 import com.tenderpulse.auth.UnsubscribeResponse
 import com.tenderpulse.auth.UnsubscribeService
 import com.tenderpulse.auth.VerifyResponse
+import com.tenderpulse.domain.InvalidPlanIdException
 import com.tenderpulse.domain.Sector
 import com.tenderpulse.subscriber.InterestProfileResponse
 import com.tenderpulse.subscriber.ProSubscribeRequest
@@ -136,12 +137,60 @@ class AdminController(
         @Valid @RequestBody req: AdminTierUpdateRequest
     ): AdminSubscriberResponse = AdminSubscriberResponse.from(adminService.updateSubscriberTier(id, req.tier))
 
-    /** Update a PayPal Plan's pricing scheme via PayPal's `update-pricing-schemes` endpoint. */
+    /**
+     * Update a PayPal Plan's pricing scheme via PayPal's `update-pricing-schemes` endpoint.
+     *
+     * `planId` is checked against PayPal's own plan ID shape (issue #68: it previously flowed
+     * unvalidated into a string-interpolated PayPal request URL, so a caller could inject a
+     * URL-structural character to redirect the outbound call). A mismatch throws
+     * [InvalidPlanIdException] (400) here — checked explicitly in the method body, rather than
+     * relying on `@Pattern` + Bean Validation, since method-parameter constraint validation
+     * requires either an AOP proxy (`@Validated` + `MethodValidationPostProcessor`, only present
+     * with a full Spring context) or Spring MVC's newer built-in handler-method validation;
+     * neither reliably intercepts a plain, non-Spring-managed instance of this controller, so an
+     * explicit check is the only way to *guarantee* [adminService] /
+     * [com.tenderpulse.paypal.PayPalClient] are never reached with a malformed value.
+     *
+     * This check is what actually rejects most of issue #68's malicious `planId` shapes, since
+     * they normally *do* reach this method: `P-FAKE..EVIL` (a `..` substring within one path
+     * segment) and `P-FAKE%3FEVIL` (a genuinely single-encoded `?`) both route here like any other
+     * value and are rejected by this check — [com.tenderpulse.api.AdminPlanIdValidationIntegrationTest]
+     * verifies both empirically (via `resolvedException`, not just an HTTP status), against a
+     * request built with raw `URI` construction so the payload isn't silently re-encoded before
+     * being sent.
+     *
+     * The one case *not* covered by this check reaching this method: a genuinely single-encoded
+     * `%2F` (raw `/`) is rejected earlier, by [com.tenderpulse.auth.SecurityConfig]'s default
+     * `StrictHttpFirewall`, before `DispatcherServlet` resolves a handler at all — pre-existing
+     * platform behavior this PR doesn't add or depend on. That firewall blocklist is *not* pinned
+     * or tested anywhere in this repo (see [com.tenderpulse.api.AdminPlanIdValidationIntegrationTest]'s
+     * kdoc); it was verified once, directly against this project's pinned Spring Security 6.4.2, as
+     * of this PR. If it were ever reconfigured or changed upstream, this method's own regex would
+     * still independently reject a `/` too (it's not in `PLAN_ID_PATTERN`'s allowed set), so that
+     * drift wouldn't reopen the original vulnerability — it would just mean the rejection happens
+     * one layer later than it does today.
+     */
     @PostMapping("/plans/{planId}/pricing")
     fun updatePlanPricing(
         @PathVariable planId: String,
         @Valid @RequestBody req: AdminPlanPricingRequest
-    ): AdminPlanPricingResponse = adminService.updatePlanPricing(planId, req)
+    ): AdminPlanPricingResponse {
+        if (!PLAN_ID_PATTERN.matches(planId)) {
+            throw InvalidPlanIdException(
+                "planId must be alphanumeric with hyphens only (PayPal plan ID format), e.g. 'P-5ML4271244454362WXNWU5NQ'"
+            )
+        }
+        return adminService.updatePlanPricing(planId, req)
+    }
+
+    companion object {
+        /** PayPal plan IDs are alphanumeric, conventionally `P-`-prefixed; this also rejects any
+         * character disallowed in that shape (e.g. `.`, `?`, `/`) that reaches this method within
+         * a single path segment (issue #68) — in practice this is what catches `..` and a raw `?`,
+         * since only a raw `/` is intercepted earlier, by the platform's `StrictHttpFirewall` (see
+         * this class's `updatePlanPricing` kdoc). */
+        private val PLAN_ID_PATTERN = Regex("^[A-Za-z0-9-]+$")
+    }
 }
 
 /**

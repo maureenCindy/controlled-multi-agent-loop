@@ -19,24 +19,29 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
+import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import java.math.BigDecimal
+import java.net.URI
 import java.util.UUID
 
 /**
  * Standalone MockMvc tests for [AdminController] (TP-044): [AdminService] and
  * [AggregationService] are mockk mocks, no Spring context/security filter chain is booted (that
- * is covered separately by [AdminApiSecurityIntegrationTest]) — this class exercises only the
- * controller's own responsibilities (request validation, delegation, HTTP status/DTO mapping),
- * mirroring [SubscriberControllerTest]'s pattern.
+ * is covered separately by [AdminApiSecurityIntegrationTest], and — specifically for issue #68's
+ * `planId` payloads that a real `HttpFirewall` intercepts before this controller ever runs — by
+ * [AdminPlanIdValidationIntegrationTest]) — this class exercises only the controller's own
+ * responsibilities (request validation, delegation, HTTP status/DTO mapping), mirroring
+ * [SubscriberControllerTest]'s pattern.
  */
 class AdminControllerTest {
 
@@ -206,6 +211,61 @@ class AdminControllerTest {
             post("/api/v1/admin/plans/P-VALIDPLAN/pricing")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"currencyCode":"USD","fixedPrice":0}""")
+        ).andExpect(status().isBadRequest)
+
+        verify(exactly = 0) { adminService.updatePlanPricing(any(), any()) }
+    }
+
+    // ---- planId validation (issue #68: planId flowed unvalidated into the PayPal request URL) ----
+
+    /**
+     * `P-FAKE..EVIL` is a single path segment containing a `..` substring, so it reaches
+     * [AdminController.updatePlanPricing] unaffected by any servlet/security-layer path
+     * normalization, and is rejected by this method's own
+     * [com.tenderpulse.domain.InvalidPlanIdException] check — a genuinely standalone-testable
+     * claim, no security filter chain required.
+     *
+     * A `planId` containing a raw `/` is *not* covered here — see
+     * [AdminPlanIdValidationIntegrationTest] instead, which boots the real security filter chain
+     * (including Spring Security's default `StrictHttpFirewall`, which is what actually rejects a
+     * `/` — confirmed there against this project's pinned Spring Security 6.4.2): this standalone
+     * setup has no `HttpFirewall` in play at all, and (unlike the `?` case just below) how a
+     * container-level servlet would even route an encoded `/` without a firewall in front of it
+     * isn't something this standalone setup can answer either way.
+     */
+    @Test
+    fun `updatePlanPricing with a planId containing dot-dot returns 400 and never calls the service`() {
+        mockMvc.perform(
+            post("/api/v1/admin/plans/P-FAKE..EVIL/pricing")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"currencyCode":"USD","fixedPrice":19.99}""")
+        ).andExpect(status().isBadRequest)
+
+        verify(exactly = 0) { adminService.updatePlanPricing(any(), any()) }
+    }
+
+    /**
+     * Built with `request(HttpMethod.POST, URI.create(...))`, not `post(String)`: the latter
+     * re-encodes a literal `%` in its argument through `UriComponentsBuilder`, so
+     * `post(".../P-FAKE%3FEVIL/...")` would actually send `%253FEVIL` (double-encoded) on the
+     * wire, not the single-encoded `%3F` this test's name claims — see
+     * [AdminPlanIdValidationIntegrationTest]'s kdoc for the full explanation (a previous revision
+     * of this PR made exactly that mistake in a different test). `URI.create` parses its argument
+     * as an already-escaped URI and sends it as-is.
+     *
+     * A genuinely single-encoded `%3F` isn't stopped by any container/security layer here (there
+     * is none in this standalone setup, and — verified separately in
+     * [AdminPlanIdValidationIntegrationTest] — Spring Security's default `StrictHttpFirewall`
+     * doesn't block it either); it reaches [AdminController.updatePlanPricing] like any other
+     * value, and it's this method's own [com.tenderpulse.domain.InvalidPlanIdException] check that
+     * rejects it.
+     */
+    @Test
+    fun `updatePlanPricing with a genuinely single-encoded question mark returns 400 and never calls the service`() {
+        mockMvc.perform(
+            request(HttpMethod.POST, URI.create("/api/v1/admin/plans/P-FAKE%3FEVIL/pricing"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"currencyCode":"USD","fixedPrice":19.99}""")
         ).andExpect(status().isBadRequest)
 
         verify(exactly = 0) { adminService.updatePlanPricing(any(), any()) }
