@@ -1,5 +1,6 @@
 package com.tenderpulse.notification
 
+import com.tenderpulse.auth.UnsubscribeService
 import com.tenderpulse.domain.*
 import com.tenderpulse.matching.MatchingService
 import org.slf4j.LoggerFactory
@@ -87,13 +88,16 @@ interface NotificationChannelSender {
 data class SendResult(val success: Boolean, val error: String? = null)
 
 @Service
-class EmailNotificationSender : NotificationChannelSender {
+class EmailNotificationSender(
+    private val unsubscribeService: UnsubscribeService
+) : NotificationChannelSender {
     override val channel = NotificationChannel.EMAIL
     private val log = LoggerFactory.getLogger(javaClass)
 
     override fun send(subscriber: Subscriber, tender: Tender, profile: InterestProfile): SendResult {
         // Scaffold: log only. Wire JavaMailSender in production.
-        log.info("EMAIL → {} | {}", subscriber.email, buildAlertBody(tender))
+        val unsubscribeLink = unsubscribeService.buildUnsubscribeLink(subscriber)
+        log.info("EMAIL → {} | {}", subscriber.email, buildAlertBody(tender, unsubscribeLink))
         return SendResult(success = true)
     }
 }
@@ -106,10 +110,15 @@ class EmailNotificationSender : NotificationChannelSender {
  * bid document ourselves — see tenderpulse/docs/specs/zw-tender-sources.md. Pulled out as a standalone function
  * (instead of inline string formatting inside [EmailNotificationSender.send]) so this
  * requirement is independently unit-testable.
+ *
+ * TP-057: also includes a working, no-login-required unsubscribe link
+ * ([com.tenderpulse.auth.UnsubscribeService.buildUnsubscribeLink]) so every outbound email lets
+ * the recipient opt out without contacting support.
  */
-fun buildAlertBody(tender: Tender): String =
+fun buildAlertBody(tender: Tender, unsubscribeLink: String): String =
     "Tender: ${tender.title} | Issued by: ${tender.issuingAuthority} | " +
-        "Deadline: ${tender.deadline ?: "n/a"} | Official source: ${tender.sourceUrl}"
+        "Deadline: ${tender.deadline ?: "n/a"} | Official source: ${tender.sourceUrl} | " +
+        "Unsubscribe: $unsubscribeLink"
 
 @Service
 class SmsNotificationSender : NotificationChannelSender {

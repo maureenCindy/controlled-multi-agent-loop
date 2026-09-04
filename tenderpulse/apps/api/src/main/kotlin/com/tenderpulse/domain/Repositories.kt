@@ -23,7 +23,16 @@ interface InterestProfileRepository : JpaRepository<InterestProfile, UUID> {
     fun findBySubscriberIdAndActiveTrue(subscriberId: UUID): List<InterestProfile>
     fun findBySubscriberId(subscriberId: UUID): List<InterestProfile>
 
-    @Query("SELECT p FROM InterestProfile p JOIN FETCH p.subscriber WHERE p.active = true AND p.subscriber.active = true")
+    /**
+     * TP-057: also excludes subscribers who have clicked the unsubscribe link
+     * ([Subscriber.emailOptOut]), on top of the pre-existing active-profile/active-subscriber
+     * filters, so opted-out subscribers are excluded from matching/notification cycles going
+     * forward without any further caller-side filtering.
+     */
+    @Query(
+        "SELECT p FROM InterestProfile p JOIN FETCH p.subscriber " +
+            "WHERE p.active = true AND p.subscriber.active = true AND p.subscriber.emailOptOut = false"
+    )
     fun findAllActiveWithSubscriber(): List<InterestProfile>
 }
 
