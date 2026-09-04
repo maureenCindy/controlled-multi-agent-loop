@@ -22,6 +22,11 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  mail:
+    host: ${SMTP_HOST:localhost}
+    port: ${SMTP_PORT:25}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
 
 server:
   port: 8080
@@ -35,3 +40,12 @@ tenderpulse:
     scheduled-enabled: false
     scheduled-initial-delay-ms: 0
     scheduled-interval-ms: 10800000  # 3 hours
+  auth:
+    # TP-038: HMAC key signing the stateless bearer access token issued after magic-link verify.
+    # MUST be overridden in any real deployment; the default is only safe for local dev.
+    token-secret: ${TENDERPULSE_AUTH_SECRET:dev-only-insecure-secret-change-me-before-deploying-32b}
+    # Magic-link token: single-use, expires 24h after it's issued (see issue #39 assumptions).
+    magic-link-ttl-ms: 86400000
+    # Bearer access token returned by /verify: also 24h, no refresh flow (out of scope for TP-038).
+    access-token-ttl-ms: 86400000
+    verify-base-url: ${TENDERPULSE_VERIFY_BASE_URL:http://localhost:8080/api/v1/auth/verify}
