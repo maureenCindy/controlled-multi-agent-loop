@@ -4,6 +4,7 @@ import com.tenderpulse.domain.Subscriber
 import com.tenderpulse.domain.SubscriberRepository
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 
@@ -32,8 +33,21 @@ class UnsubscribeService(
      * A new token is minted per call/per email rather than reused, mirroring
      * [AuthService.requestMagicLink] — but unlike a magic-link token, this one is never
      * invalidated by use (see [UnsubscribeToken]), so an old email's link keeps working.
+     *
+     * Issue #96: runs in its own [Propagation.REQUIRES_NEW] transaction, independent of any
+     * caller's outer transaction (e.g. [com.tenderpulse.notification.NotificationService
+     * .notifyMatchingSubscribers], which processes a whole batch of subscribers inside a single
+     * `@Transactional`). Before this fix, a DB-level failure here (an unchecked exception thrown
+     * from inside a default-propagation `@Transactional` method) would mark the *caller's*
+     * transaction rollback-only — even though [com.tenderpulse.notification.EmailNotificationSender
+     * .send] catches the exception and converts it to a failed [com.tenderpulse.notification.SendResult]
+     * — so the outer transaction would later fail to commit with `UnexpectedRollbackException`,
+     * silently discarding every other subscriber's already-completed work in the same batch.
+     * `REQUIRES_NEW` isolates this method's own DB write into a separate transaction: if it fails,
+     * only that write rolls back, and the caller's transaction is left untouched to continue and
+     * commit normally.
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun buildUnsubscribeLink(subscriber: Subscriber): String {
         val rawToken = RawTokenGenerator.generate()
         tokenRepository.save(
