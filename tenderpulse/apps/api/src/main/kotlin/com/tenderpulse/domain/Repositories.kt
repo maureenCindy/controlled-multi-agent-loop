@@ -2,10 +2,20 @@ package com.tenderpulse.domain
 
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
+import java.time.Instant
 import java.util.UUID
 
 interface TenderRepository : JpaRepository<Tender, UUID> {
     fun findBySourceUrl(sourceUrl: String): Tender?
+
+    /**
+     * TP-056: tenders whose deadline falls within [from, to] inclusive — used by
+     * [com.tenderpulse.notification.ReminderService] to find tenders whose deadline is within the
+     * reminder window and has not yet passed. Callers pass `from = Instant.now()` so a tender
+     * whose deadline already passed (deadline < now) is never returned, and `to = now + window`
+     * so a tender too far in the future is excluded too.
+     */
+    fun findByDeadlineBetween(from: Instant, to: Instant): List<Tender>
 }
 
 interface SubscriberRepository : JpaRepository<Subscriber, UUID> {
@@ -36,7 +46,17 @@ interface InterestProfileRepository : JpaRepository<InterestProfile, UUID> {
     fun findAllActiveWithSubscriber(): List<InterestProfile>
 }
 
-interface NotificationRecordRepository : JpaRepository<NotificationRecord, UUID>
+interface NotificationRecordRepository : JpaRepository<NotificationRecord, UUID> {
+    /**
+     * TP-056: every successful Paid-tier send for a given tender — used by
+     * [com.tenderpulse.notification.ReminderService] to find which Paid subscribers were
+     * previously (successfully) notified of this tender's original match, and are therefore
+     * eligible for a deadline reminder. Filtered to `success = true` deliberately: a failed
+     * original send never actually reached the subscriber, so it shouldn't count as "already
+     * told about this tender" for reminder-eligibility purposes.
+     */
+    fun findByTenderIdAndSuccessTrue(tenderId: UUID): List<NotificationRecord>
+}
 
 interface DigestQueueEntryRepository : JpaRepository<DigestQueueEntry, UUID> {
     fun findBySubscriberIdAndDigestedAtIsNull(subscriberId: UUID): List<DigestQueueEntry>
@@ -49,4 +69,22 @@ interface DigestQueueEntryRepository : JpaRepository<DigestQueueEntry, UUID> {
      * given the expected low volume of undigested entries at this stage of the product.
      */
     fun findAllByDigestedAtIsNull(): List<DigestQueueEntry>
+
+    /**
+     * TP-056: every digest-queue entry (digested or not) for a given tender — used by
+     * [com.tenderpulse.notification.ReminderService] to find which Free-tier subscribers were
+     * previously notified of this tender's original match (queuing itself, not the eventual
+     * digest send, is what "notified" means for the Free tier per TP-012/TP-013), and are
+     * therefore eligible for a deadline reminder.
+     */
+    fun findByTenderId(tenderId: UUID): List<DigestQueueEntry>
+}
+
+interface DeadlineReminderRecordRepository : JpaRepository<DeadlineReminderRecord, UUID> {
+    /**
+     * TP-056: the sole guard against sending more than one deadline reminder for the same
+     * (subscriber, tender) pair across multiple [com.tenderpulse.notification.ReminderService]
+     * job runs.
+     */
+    fun existsBySubscriberIdAndTenderId(subscriberId: UUID, tenderId: UUID): Boolean
 }
