@@ -36,8 +36,8 @@ class InterestProfileRepositoryTest {
         val stillIn = subscriberRepository.save(
             Subscriber(email = "still-subscribed@example.co.zw", emailOptOut = false)
         )
-        profileRepository.save(InterestProfile(subscriber = optedOut, active = true))
-        val keptProfile = profileRepository.save(InterestProfile(subscriber = stillIn, active = true))
+        profileRepository.save(InterestProfile(subscriber = optedOut, name = "Opted Out Profile", active = true))
+        val keptProfile = profileRepository.save(InterestProfile(subscriber = stillIn, name = "Kept Profile", active = true))
         entityManager.flush()
         entityManager.clear()
 
@@ -51,7 +51,7 @@ class InterestProfileRepositoryTest {
     @Test
     fun `an active, not-opted-out subscriber's active profile is still returned`() {
         val subscriber = subscriberRepository.save(Subscriber(email = "regular@example.co.zw"))
-        val profile = profileRepository.save(InterestProfile(subscriber = subscriber, active = true))
+        val profile = profileRepository.save(InterestProfile(subscriber = subscriber, name = "Regular Profile", active = true))
         entityManager.flush()
         entityManager.clear()
 

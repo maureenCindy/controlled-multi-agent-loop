@@ -116,7 +116,7 @@ class EmailNotificationSender(
             val message = SimpleMailMessage().apply {
                 setTo(subscriber.email)
                 subject = "TenderPulse alert: ${tender.title}"
-                text = buildAlertBody(tender, unsubscribeLink)
+                text = buildAlertBody(tender, profile, unsubscribeLink)
             }
             mailSender.send(message)
         }.fold(
@@ -153,13 +153,19 @@ class EmailNotificationSender(
  * (instead of inline string formatting inside [EmailNotificationSender.send]) so this
  * requirement is independently unit-testable.
  *
+ * Issue #58: also attributes which of the subscriber's (possibly several) named interest
+ * profiles triggered this particular match, via [profile]'s [InterestProfile.name] — necessary
+ * once a subscriber can maintain more than one profile, so a match on profile A cannot be
+ * mistaken for one on profile B.
+ *
  * TP-057: also includes a working, no-login-required unsubscribe link
  * ([com.tenderpulse.auth.UnsubscribeService.buildUnsubscribeLink]) so every outbound email lets
  * the recipient opt out without contacting support.
  */
-fun buildAlertBody(tender: Tender, unsubscribeLink: String): String =
+fun buildAlertBody(tender: Tender, profile: InterestProfile, unsubscribeLink: String): String =
     "Tender: ${tender.title} | Issued by: ${tender.issuingAuthority} | " +
         "Deadline: ${tender.deadline ?: "n/a"} | Official source: ${tender.sourceUrl} | " +
+        "Matched profile: ${profile.name} | " +
         "Unsubscribe: $unsubscribeLink"
 
 @Service

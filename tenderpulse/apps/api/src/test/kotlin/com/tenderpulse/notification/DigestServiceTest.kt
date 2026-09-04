@@ -36,7 +36,7 @@ class DigestServiceTest {
             sourceUrl = sourceUrl,
             sourceName = "praz-egp"
         ),
-        profile = InterestProfile(subscriber = subscriber)
+        profile = InterestProfile(subscriber = subscriber, name = "Digest Test Profile")
     )
 
     @BeforeEach

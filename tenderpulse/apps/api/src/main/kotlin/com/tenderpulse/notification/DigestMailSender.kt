@@ -49,12 +49,17 @@ class SmtpDigestMailSender(private val mailSender: JavaMailSender) : DigestMailS
  * followed by a single unsubscribe link for the whole digest (not one per tender, since this is
  * one email covering every accumulated match — see
  * [com.tenderpulse.auth.UnsubscribeService.buildUnsubscribeLink]).
+ *
+ * Issue #58: each line also attributes which of the subscriber's named interest profiles
+ * ([DigestQueueEntry.profile]) triggered that particular match — a subscriber digesting matches
+ * from more than one profile in the same email needs to be able to tell them apart.
  */
 fun buildDigestEmailBody(entries: List<DigestQueueEntry>, unsubscribeLink: String): String {
     val tenderLines = entries.joinToString("\n\n") { entry ->
         val tender = entry.tender
         "Tender: ${tender.title} | Issued by: ${tender.issuingAuthority} | " +
-            "Deadline: ${tender.deadline ?: "n/a"} | Official source: ${tender.sourceUrl}"
+            "Deadline: ${tender.deadline ?: "n/a"} | Official source: ${tender.sourceUrl} | " +
+            "Matched profile: ${entry.profile.name}"
     }
     return "Your TenderPulse daily digest — ${entries.size} matching tender(s):\n\n" +
         tenderLines +

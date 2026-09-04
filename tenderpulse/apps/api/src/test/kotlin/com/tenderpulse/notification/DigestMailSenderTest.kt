@@ -26,7 +26,7 @@ class DigestMailSenderTest {
     private val sender = SmtpDigestMailSender(javaMailSender)
     private val subscriber = Subscriber(email = "sub@example.com")
 
-    private fun entry(title: String, sourceUrl: String) = DigestQueueEntry(
+    private fun entry(title: String, sourceUrl: String, profileName: String = "Digest Test Profile") = DigestQueueEntry(
         subscriber = subscriber,
         tender = Tender(
             title = title,
@@ -34,7 +34,7 @@ class DigestMailSenderTest {
             sourceUrl = sourceUrl,
             sourceName = "praz-egp"
         ),
-        profile = InterestProfile(subscriber = subscriber)
+        profile = InterestProfile(subscriber = subscriber, name = profileName)
     )
 
     @Test
@@ -81,6 +81,20 @@ class DigestMailSenderTest {
         assertTrue(body.contains("Road resurfacing works"))
         assertTrue(body.contains("Ministry of Finance"))
         assertTrue(body.contains("https://egp.praz.org.zw/tender/456"))
+    }
+
+    /** Issue #58: each digest line must attribute which named profile triggered that match. */
+    @Test
+    fun `digest body attributes each tender to the profile that matched it`() {
+        val entries = listOf(
+            entry("Road resurfacing works", "https://egp.praz.org.zw/tender/456", profileName = "Roadworks Profile"),
+            entry("IT equipment supply", "https://egp.praz.org.zw/tender/789", profileName = "IT Profile")
+        )
+
+        val body = buildDigestEmailBody(entries, "https://api.example.com/api/v1/unsubscribe?token=abc")
+
+        assertTrue(body.contains("Matched profile: Roadworks Profile"))
+        assertTrue(body.contains("Matched profile: IT Profile"))
     }
 
     @Test

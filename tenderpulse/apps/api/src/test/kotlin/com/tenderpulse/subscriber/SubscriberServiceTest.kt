@@ -20,6 +20,7 @@ import io.mockk.slot
 import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -276,6 +277,7 @@ class SubscriberServiceTest {
         val result = service.createProfile(
             subscriberId,
             ProfileRequest(
+                name = "Harare IT Profile",
                 sectors = setOf(Sector.IT),
                 valueMin = BigDecimal("100000"),
                 valueMax = BigDecimal("500000"),
@@ -283,6 +285,7 @@ class SubscriberServiceTest {
             )
         )
 
+        assertEquals("Harare IT Profile", result.name)
         assertEquals(setOf(Sector.IT), result.sectors)
         assertEquals(BigDecimal("100000"), result.valueMin)
         assertEquals(BigDecimal("500000"), result.valueMax)
@@ -296,9 +299,33 @@ class SubscriberServiceTest {
         every { subscriberRepository.findById(subscriberId) } returns Optional.empty()
 
         assertThrows(NotFoundException::class.java) {
-            service.createProfile(subscriberId, ProfileRequest())
+            service.createProfile(subscriberId, ProfileRequest(name = "Test Profile"))
         }
         verify(exactly = 0) { profileRepository.save(any()) }
+    }
+
+    /**
+     * Issue #58, test case 1: a subscriber can create a second, differently-named profile —
+     * there is no artificial limit of one profile per subscriber.
+     */
+    @Test
+    fun `createProfile allows a second, differently-named profile for the same subscriber`() {
+        every { subscriberRepository.findById(subscriberId) } returns Optional.of(subscriber)
+        val savedProfiles = mutableListOf<InterestProfile>()
+        every { profileRepository.save(any()) } answers {
+            (firstArg() as InterestProfile).also { savedProfiles.add(it) }
+        }
+
+        val first = service.createProfile(subscriberId, ProfileRequest(name = "Construction Tenders"))
+        val second = service.createProfile(subscriberId, ProfileRequest(name = "IT Tenders"))
+
+        assertEquals("Construction Tenders", first.name)
+        assertEquals("IT Tenders", second.name)
+        assertNotEquals(first.id, second.id)
+        assertEquals(subscriberId, first.subscriber.id)
+        assertEquals(subscriberId, second.subscriber.id)
+        verify(exactly = 2) { profileRepository.save(any()) }
+        assertEquals(2, savedProfiles.size)
     }
 
     // ---- listProfiles ----
@@ -306,13 +333,27 @@ class SubscriberServiceTest {
     @Test
     fun `listProfiles returns all profiles for the subscriber including inactive ones`() {
         every { subscriberRepository.findById(subscriberId) } returns Optional.of(subscriber)
-        val activeProfile = InterestProfile(subscriber = subscriber, active = true)
-        val inactiveProfile = InterestProfile(subscriber = subscriber, active = false)
+        val activeProfile = InterestProfile(subscriber = subscriber, name = "Active Profile", active = true)
+        val inactiveProfile = InterestProfile(subscriber = subscriber, name = "Inactive Profile", active = false)
         every { profileRepository.findBySubscriberId(subscriberId) } returns listOf(activeProfile, inactiveProfile)
 
         val result = service.listProfiles(subscriberId)
 
         assertEquals(listOf(activeProfile, inactiveProfile), result)
+    }
+
+    /** Issue #58, test case 4: listing a subscriber's 2 profiles returns both, with their names. */
+    @Test
+    fun `listProfiles returns two profiles for the same subscriber each with their own name`() {
+        every { subscriberRepository.findById(subscriberId) } returns Optional.of(subscriber)
+        val profileA = InterestProfile(subscriber = subscriber, name = "Construction Tenders")
+        val profileB = InterestProfile(subscriber = subscriber, name = "IT Tenders")
+        every { profileRepository.findBySubscriberId(subscriberId) } returns listOf(profileA, profileB)
+
+        val result = service.listProfiles(subscriberId)
+
+        assertEquals(2, result.size)
+        assertEquals(setOf("Construction Tenders", "IT Tenders"), result.map { it.name }.toSet())
     }
 
     @Test
@@ -330,6 +371,7 @@ class SubscriberServiceTest {
         val existing = InterestProfile(
             id = profileId,
             subscriber = subscriber,
+            name = "Old Name",
             sectors = mutableSetOf(Sector.IT),
             region = "Harare"
         )
@@ -341,10 +383,11 @@ class SubscriberServiceTest {
         val result = service.updateProfile(
             subscriberId,
             profileId,
-            ProfileRequest(sectors = setOf(Sector.HEALTHCARE), region = "Bulawayo")
+            ProfileRequest(name = "New Name", sectors = setOf(Sector.HEALTHCARE), region = "Bulawayo")
         )
 
         assertEquals(profileId, result.id)
+        assertEquals("New Name", result.name)
         assertEquals(setOf(Sector.HEALTHCARE), result.sectors)
         assertEquals("Bulawayo", result.region)
     }
@@ -352,12 +395,12 @@ class SubscriberServiceTest {
     @Test
     fun `updateProfile can deactivate a profile`() {
         val profileId = UUID.randomUUID()
-        val existing = InterestProfile(id = profileId, subscriber = subscriber, active = true)
+        val existing = InterestProfile(id = profileId, subscriber = subscriber, name = "Test Profile", active = true)
         every { subscriberRepository.findById(subscriberId) } returns Optional.of(subscriber)
         every { profileRepository.findById(profileId) } returns Optional.of(existing)
         every { profileRepository.save(any()) } answers { firstArg() }
 
-        val result = service.updateProfile(subscriberId, profileId, ProfileRequest(active = false))
+        val result = service.updateProfile(subscriberId, profileId, ProfileRequest(name = "Test Profile", active = false))
 
         assertFalse(result.active)
     }
@@ -368,7 +411,7 @@ class SubscriberServiceTest {
         every { subscriberRepository.findById(subscriberId) } returns Optional.empty()
 
         assertThrows(NotFoundException::class.java) {
-            service.updateProfile(subscriberId, profileId, ProfileRequest())
+            service.updateProfile(subscriberId, profileId, ProfileRequest(name = "Test Profile"))
         }
         verify(exactly = 0) { profileRepository.save(any()) }
     }
@@ -380,7 +423,7 @@ class SubscriberServiceTest {
         every { profileRepository.findById(profileId) } returns Optional.empty()
 
         assertThrows(NotFoundException::class.java) {
-            service.updateProfile(subscriberId, profileId, ProfileRequest())
+            service.updateProfile(subscriberId, profileId, ProfileRequest(name = "Test Profile"))
         }
         verify(exactly = 0) { profileRepository.save(any()) }
     }
@@ -389,12 +432,12 @@ class SubscriberServiceTest {
     fun `updateProfile for a profile belonging to a different subscriber throws NotFoundException`() {
         val otherSubscriber = Subscriber(id = UUID.randomUUID(), email = "other@example.com")
         val profileId = UUID.randomUUID()
-        val existing = InterestProfile(id = profileId, subscriber = otherSubscriber)
+        val existing = InterestProfile(id = profileId, subscriber = otherSubscriber, name = "Test Profile")
         every { subscriberRepository.findById(subscriberId) } returns Optional.of(subscriber)
         every { profileRepository.findById(profileId) } returns Optional.of(existing)
 
         assertThrows(NotFoundException::class.java) {
-            service.updateProfile(subscriberId, profileId, ProfileRequest())
+            service.updateProfile(subscriberId, profileId, ProfileRequest(name = "Test Profile"))
         }
         verify(exactly = 0) { profileRepository.save(any()) }
     }
@@ -402,7 +445,7 @@ class SubscriberServiceTest {
     @Test
     fun `updateProfile with an empty preferredChannels request defaults to EMAIL`() {
         val profileId = UUID.randomUUID()
-        val existing = InterestProfile(id = profileId, subscriber = subscriber)
+        val existing = InterestProfile(id = profileId, subscriber = subscriber, name = "Test Profile")
         every { subscriberRepository.findById(subscriberId) } returns Optional.of(subscriber)
         every { profileRepository.findById(profileId) } returns Optional.of(existing)
         every { profileRepository.save(any()) } answers { firstArg() }
@@ -410,7 +453,7 @@ class SubscriberServiceTest {
         val result = service.updateProfile(
             subscriberId,
             profileId,
-            ProfileRequest(preferredChannels = emptySet())
+            ProfileRequest(name = "Test Profile", preferredChannels = emptySet())
         )
 
         assertEquals(setOf(NotificationChannel.EMAIL), result.preferredChannels)

@@ -112,6 +112,17 @@ data class InterestProfile(
     @JoinColumn(name = "subscriber_id", nullable = false)
     val subscriber: Subscriber,
 
+    /**
+     * Subscriber-chosen label distinguishing this profile from any others they maintain (issue
+     * #58: a subscriber may keep more than one named interest profile — matching and notification
+     * already iterate every active profile independently, so this is the field that lets an alert
+     * be attributed back to *which* profile triggered it). Required at both the entity and
+     * [com.tenderpulse.subscriber.ProfileRequest] level (`@NotBlank`), so every profile — including
+     * a subscriber's only one — has a meaningful label from creation.
+     */
+    @Column(nullable = false)
+    val name: String,
+
     @ElementCollection
     @CollectionTable(name = "profile_sectors")
     @Enumerated(EnumType.STRING)
