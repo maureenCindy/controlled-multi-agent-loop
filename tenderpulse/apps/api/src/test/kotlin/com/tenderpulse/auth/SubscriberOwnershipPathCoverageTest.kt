@@ -3,6 +3,7 @@ package com.tenderpulse.auth
 import com.tenderpulse.api.SubscriberController
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.springframework.core.annotation.AnnotatedElementUtils
 import org.springframework.util.AntPathMatcher
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -66,17 +67,36 @@ class SubscriberOwnershipPathCoverageTest {
         }
     }
 
-    /** The path suffix(es) (relative to the class-level @RequestMapping) a method is mapped to, or empty if none. */
+    /**
+     * The path suffix(es) (relative to the class-level @RequestMapping) a method is mapped to, or empty if none.
+     *
+     * Uses [AnnotatedElementUtils.findMergedAnnotation] rather than [Method.getAnnotation] for every lookup
+     * below (issue #89). `getAnnotation` only finds an annotation that is *directly present* on the method and
+     * reads its `value` attribute completely literally -- it doesn't know that `@GetMapping` etc. are themselves
+     * meta-annotated with `@RequestMapping`, and it doesn't resolve `@AliasFor`, so a route declared with
+     * `path = [...]` instead of `value = [...]` (both are valid, `@AliasFor`-linked attributes on every mapping
+     * annotation here) would silently read as `value = []` and be missed by this drift guard. `findMergedAnnotation`
+     * walks the method's meta-annotation hierarchy (so a custom composed annotation that is itself meta-annotated
+     * with one of these mapping annotations is found too) and synthesizes a merged annotation instance where
+     * `@AliasFor`-paired attributes (`value`/`path`) are already reconciled, however the route was actually
+     * declared.
+     */
     private fun mappingSuffixes(method: Method): List<String> {
-        method.getAnnotation(GetMapping::class.java)?.let { return it.value.ifEmpty { arrayOf("") }.toList() }
-        method.getAnnotation(PostMapping::class.java)?.let { return it.value.ifEmpty { arrayOf("") }.toList() }
-        method.getAnnotation(PutMapping::class.java)?.let { return it.value.ifEmpty { arrayOf("") }.toList() }
-        method.getAnnotation(DeleteMapping::class.java)?.let { return it.value.ifEmpty { arrayOf("") }.toList() }
-        method.getAnnotation(PatchMapping::class.java)?.let { return it.value.ifEmpty { arrayOf("") }.toList() }
+        AnnotatedElementUtils.findMergedAnnotation(method, GetMapping::class.java)
+            ?.let { return it.value.ifEmpty { arrayOf("") }.toList() }
+        AnnotatedElementUtils.findMergedAnnotation(method, PostMapping::class.java)
+            ?.let { return it.value.ifEmpty { arrayOf("") }.toList() }
+        AnnotatedElementUtils.findMergedAnnotation(method, PutMapping::class.java)
+            ?.let { return it.value.ifEmpty { arrayOf("") }.toList() }
+        AnnotatedElementUtils.findMergedAnnotation(method, DeleteMapping::class.java)
+            ?.let { return it.value.ifEmpty { arrayOf("") }.toList() }
+        AnnotatedElementUtils.findMergedAnnotation(method, PatchMapping::class.java)
+            ?.let { return it.value.ifEmpty { arrayOf("") }.toList() }
         // Bare @RequestMapping(method = ..., value = ...) is a valid alternative to the shorthand
         // annotations above (e.g. @RequestMapping(method = [RequestMethod.GET], value = ["/{id}/x"])) --
         // without this, a route added this way would silently bypass this drift guard (issue #82).
-        method.getAnnotation(RequestMapping::class.java)?.let { return it.value.ifEmpty { arrayOf("") }.toList() }
+        AnnotatedElementUtils.findMergedAnnotation(method, RequestMapping::class.java)
+            ?.let { return it.value.ifEmpty { arrayOf("") }.toList() }
         return emptyList()
     }
 }
