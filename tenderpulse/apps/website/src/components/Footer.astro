@@ -1,0 +1,11 @@
+---
+const year = new Date().getFullYear();
+// The privacy note (TP-041) is served by the API app as a static resource, not by this site.
+const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL ?? "http://localhost:8080";
+---
+<footer class="site-footer">
+  <div class="container">
+    <span>&copy; {year} TenderPulse. Built for Zimbabwean businesses tracking PRAZ e-GP tenders.</span>
+    <span><a href={`${apiBaseUrl}/privacy.html`}>Privacy</a></span>
+  </div>
+</footer>

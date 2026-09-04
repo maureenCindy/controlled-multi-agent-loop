@@ -62,3 +62,7 @@ tenderpulse:
     magic-link-ttl-ms: 86400000
     access-token-ttl-ms: 86400000
     verify-base-url: http://localhost:8080/api/v1/auth/verify
+  # TP-034: fixed test origin so WebsiteCorsIntegrationTest can assert both the allow and the
+  # deny path deterministically, without depending on an env var being set.
+  website:
+    allowed-origins: http://localhost:4321

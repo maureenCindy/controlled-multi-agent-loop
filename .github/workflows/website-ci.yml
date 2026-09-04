@@ -1,0 +1,45 @@
+name: Website CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "tenderpulse/apps/website/**"
+      - ".github/workflows/website-ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "tenderpulse/apps/website/**"
+      - ".github/workflows/website-ci.yml"
+
+concurrency:
+  group: website-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build & test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tenderpulse/apps/website
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: tenderpulse/apps/website/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Unit tests
+        run: npm run test
+
+      - name: Build (static output)
+        run: npm run build

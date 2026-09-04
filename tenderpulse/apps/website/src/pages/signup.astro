@@ -1,0 +1,192 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+<BaseLayout
+  title="Get started"
+  description="Sign up for free PRAZ tender alerts, or subscribe to Pro for instant per-match notifications via PayPal."
+>
+  <section class="section">
+    <div class="container" style="max-width:34rem;">
+      <span class="eyebrow">Get started</span>
+      <h1>Start tracking PRAZ tenders</h1>
+      <p class="lede">
+        Free gets you a daily digest of matching tenders. Pro gets you notified as soon as a
+        match is found, via a recurring PayPal subscription.
+      </p>
+
+      <div class="tier-toggle" role="tablist" aria-label="Choose a plan">
+        <button type="button" id="tier-free-btn" role="tab" aria-pressed="true">Free</button>
+        <button type="button" id="tier-pro-btn" role="tab" aria-pressed="false">Pro</button>
+      </div>
+
+      <!-- Free tier: direct POST to /api/v1/subscribers, tier: FREE, no payment. -->
+      <div id="free-panel" class="tier-panel">
+        <form id="free-form" novalidate>
+          <div class="form-field">
+            <label for="free-email">Email address</label>
+            <input
+              type="email"
+              id="free-email"
+              name="email"
+              placeholder="you@business.co.zw"
+              autocomplete="email"
+              required
+            />
+            <div class="field-error" id="free-email-error"></div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Get free alerts</button>
+        </form>
+        <div class="form-status" id="free-status" role="status"></div>
+      </div>
+
+      <!--
+        Pro tier: a real PayPal Subscription button (PayPal JS SDK, vault=true&intent=subscription).
+        onApprove sends the resulting subscription ID to POST /api/v1/subscribers/pro, which
+        independently verifies it against PayPal's API before upgrading anyone to PAID — the tier
+        is never trusted from this page directly. See src/lib/paypal.ts.
+
+        Known limitation (deliberate MVP trade-off, tracked, not silently accepted as solved):
+        there is no webhook listener yet, so a later PayPal-side cancellation or failed renewal
+        will NOT automatically downgrade the subscriber.
+      -->
+      <div id="pro-panel" class="tier-panel" hidden>
+        <div class="form-field">
+          <label for="pro-email">Email address</label>
+          <input
+            type="email"
+            id="pro-email"
+            name="email"
+            placeholder="you@business.co.zw"
+            autocomplete="email"
+            required
+          />
+          <div class="field-error" id="pro-email-error"></div>
+        </div>
+        <div id="paypal-button-container" style="min-height:2.75rem;"></div>
+        <div class="form-status" id="pro-status" role="status"></div>
+        <p class="limitation-note">
+          Pro subscriptions are verified with PayPal at signup. If your subscription is later
+          cancelled or a renewal fails on PayPal's side, your account is not yet automatically
+          downgraded (no webhook listener in this MVP) — a known, tracked limitation, not a bug.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    import { isValidEmail, submitFreeSignup } from "../lib/signup";
+    import { loadPayPalSdk, renderPayPalSubscribeButton } from "../lib/paypal";
+
+    // PLACEHOLDER until real PayPal dashboard credentials are provided — see
+    // apps/website/README.md and apps/website/.env.example. Pro signup will show a
+    // "not configured yet" message in the button container until these are set for real.
+    const PAYPAL_CLIENT_ID = import.meta.env.PUBLIC_PAYPAL_CLIENT_ID;
+    const PAYPAL_PLAN_ID = import.meta.env.PUBLIC_PAYPAL_PLAN_ID;
+
+    const freeBtn = document.getElementById("tier-free-btn") as HTMLButtonElement;
+    const proBtn = document.getElementById("tier-pro-btn") as HTMLButtonElement;
+    const freePanel = document.getElementById("free-panel") as HTMLDivElement;
+    const proPanel = document.getElementById("pro-panel") as HTMLDivElement;
+
+    function showTier(tier: "free" | "pro") {
+      const isFree = tier === "free";
+      freePanel.hidden = !isFree;
+      proPanel.hidden = isFree;
+      freeBtn.setAttribute("aria-pressed", String(isFree));
+      proBtn.setAttribute("aria-pressed", String(!isFree));
+      if (!isFree) initProTier();
+    }
+
+    freeBtn.addEventListener("click", () => showTier("free"));
+    proBtn.addEventListener("click", () => showTier("pro"));
+
+    // --- Free tier form ---
+    const freeForm = document.getElementById("free-form") as HTMLFormElement;
+    const freeEmailInput = document.getElementById("free-email") as HTMLInputElement;
+    const freeEmailError = document.getElementById("free-email-error") as HTMLDivElement;
+    const freeStatus = document.getElementById("free-status") as HTMLDivElement;
+
+    freeForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      freeEmailError.textContent = "";
+      delete freeStatus.dataset.state;
+      freeStatus.textContent = "";
+
+      const email = freeEmailInput.value;
+      if (!isValidEmail(email)) {
+        freeEmailError.textContent = "Enter a valid email address.";
+        return;
+      }
+
+      const submitBtn = freeForm.querySelector("button[type=submit]") as HTMLButtonElement;
+      submitBtn.disabled = true;
+      try {
+        const result = await submitFreeSignup(email);
+        if (result.ok) {
+          freeStatus.dataset.state = "success";
+          freeStatus.textContent = "You're on the list! Check your inbox for confirmation.";
+          freeForm.reset();
+        } else {
+          freeStatus.dataset.state = "error";
+          const body = result.body as { message?: string } | null;
+          freeStatus.textContent = body?.message ?? "Something went wrong. Please try again.";
+        }
+      } catch {
+        freeStatus.dataset.state = "error";
+        freeStatus.textContent = "Could not reach the server. Please try again shortly.";
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    // --- Pro tier: PayPal Subscription button ---
+    let proInitialized = false;
+
+    async function initProTier() {
+      if (proInitialized) return;
+      proInitialized = true;
+
+      const proEmailInput = document.getElementById("pro-email") as HTMLInputElement;
+      const proEmailError = document.getElementById("pro-email-error") as HTMLDivElement;
+      const proStatus = document.getElementById("pro-status") as HTMLDivElement;
+      const container = document.getElementById("paypal-button-container") as HTMLDivElement;
+
+      if (!PAYPAL_CLIENT_ID || !PAYPAL_PLAN_ID) {
+        container.innerHTML =
+          '<p class="field-error">Pro signup is not configured yet (missing PayPal credentials). Please use Free for now.</p>';
+        return;
+      }
+
+      try {
+        const paypalSdk = await loadPayPalSdk(PAYPAL_CLIENT_ID);
+        renderPayPalSubscribeButton(
+          paypalSdk,
+          "#paypal-button-container",
+          PAYPAL_PLAN_ID,
+          () => {
+            const email = proEmailInput.value;
+            if (!isValidEmail(email)) {
+              proEmailError.textContent = "Enter a valid email address before subscribing.";
+              throw new Error("Enter a valid email address before subscribing.");
+            }
+            proEmailError.textContent = "";
+            return email;
+          },
+          {
+            onSuccess: () => {
+              proStatus.dataset.state = "success";
+              proStatus.textContent = "Subscription verified! You're on the Pro plan.";
+            },
+            onError: (message) => {
+              proStatus.dataset.state = "error";
+              proStatus.textContent = message;
+            },
+          }
+        );
+      } catch {
+        proStatus.dataset.state = "error";
+        proStatus.textContent = "Could not load PayPal. Please refresh and try again.";
+      }
+    }
+  </script>
+</BaseLayout>
