@@ -95,9 +95,23 @@ class EmailNotificationSender(
     private val log = LoggerFactory.getLogger(javaClass)
 
     override fun send(subscriber: Subscriber, tender: Tender, profile: InterestProfile): SendResult {
-        // Scaffold: log only. Wire JavaMailSender in production.
-        val unsubscribeLink = unsubscribeService.buildUnsubscribeLink(subscriber)
-        log.info("EMAIL → {} | {}", subscriber.email, buildAlertBody(tender, unsubscribeLink))
+        // Scaffold: log only, no real email is ever sent here. Deliberately do NOT call
+        // unsubscribeService.buildUnsubscribeLink(...) until a real mail sender (TP-013) is
+        // wired and actually needs the link for the email body: buildUnsubscribeLink is
+        // @Transactional and mints + persists a real, non-expiring UnsubscribeToken row per
+        // call, so calling it here and discarding the result would silently accumulate one
+        // orphaned token row per notification cycle for as long as this stays a scaffold.
+        //
+        // TP-083: this also means the log line below never has access to the unsubscribe
+        // link/token (which would embed the raw token via buildAlertBody(...)) — it logs
+        // tender/subscriber identifiers instead, which is enough to identify which alert this
+        // was without leaking a token that grants unauthenticated unsubscribe access.
+        log.info(
+            "EMAIL → subscriber={} | tenderId={} | tenderTitle={}",
+            subscriber.id,
+            tender.id,
+            tender.title
+        )
         return SendResult(success = true)
     }
 }
