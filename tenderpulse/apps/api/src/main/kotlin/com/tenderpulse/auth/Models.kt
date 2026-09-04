@@ -57,8 +57,15 @@ interface MagicLinkTokenRepository : JpaRepository<MagicLinkToken, UUID> {
      * caller, e.g. [AuthService.verify]'s own `@Transactional`) makes this method safe to call
      * standalone too, joining the caller's transaction if there is one (default `REQUIRED`
      * propagation) or opening its own otherwise.
+     *
+     * `clearAutomatically = true` (#84): a defensive one-liner against Hibernate's first-level
+     * (session) cache going stale after this bulk `UPDATE`. `verify()` never re-reads the entity
+     * in the same transaction today, so this has no observable effect right now, but without it,
+     * any future code that re-fetches this same [MagicLinkToken] later in the same transaction
+     * would silently get back the stale, pre-update (`usedAt == null`) entity from the session
+     * cache instead of a fresh read reflecting this `UPDATE`.
      */
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Transactional
     @Query("update MagicLinkToken t set t.usedAt = :now where t.id = :id and t.usedAt is null")
     fun markUsed(@Param("id") id: UUID, @Param("now") now: Instant): Int
