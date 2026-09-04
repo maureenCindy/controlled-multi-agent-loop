@@ -86,8 +86,10 @@ class AuthServiceTest {
             expiresAt = Instant.now().plusSeconds(3600)
         )
         every { tokenRepository.findByTokenHash(TokenHasher.hash("raw-token")) } returns record
-        val saved = slot<MagicLinkToken>()
-        every { tokenRepository.save(capture(saved)) } answers { saved.captured }
+        // TP-070: single-use is now enforced via an atomic conditional UPDATE (see
+        // MagicLinkTokenRepository.markUsed) rather than a plain save() of the mutated entity —
+        // 1 row affected means this call is the one that claimed the token.
+        every { tokenRepository.markUsed(record.id, any()) } returns 1
         // BearerTokenService.issue has a defaulted `now` param, evaluated fresh at each call
         // site — match it with any() rather than eq() so the stub isn't pinned to the exact
         // Instant captured when the `every {}` block itself ran.
@@ -96,7 +98,7 @@ class AuthServiceTest {
         val result = service.verify("raw-token")
 
         assertEquals("bearer-token-value", result)
-        assertNotNull(saved.captured.usedAt)
+        verify(exactly = 1) { tokenRepository.markUsed(record.id, any()) }
     }
 
     @Test
@@ -121,7 +123,7 @@ class AuthServiceTest {
         assertThrows(MagicLinkTokenExpiredException::class.java) {
             service.verify("raw-token")
         }
-        verify(exactly = 0) { tokenRepository.save(any()) }
+        verify(exactly = 0) { tokenRepository.markUsed(any(), any()) }
         verify(exactly = 0) { bearerTokenService.issue(any(), any()) }
     }
 
@@ -138,7 +140,30 @@ class AuthServiceTest {
         assertThrows(MagicLinkTokenAlreadyUsedException::class.java) {
             service.verify("raw-token")
         }
-        verify(exactly = 0) { tokenRepository.save(any()) }
+        verify(exactly = 0) { tokenRepository.markUsed(any(), any()) }
+        verify(exactly = 0) { bearerTokenService.issue(any(), any()) }
+    }
+
+    // ---- TP-070: TOCTOU fix ----
+
+    @Test
+    fun `verify with a token consumed by a concurrent request between the read and the atomic claim throws MagicLinkTokenAlreadyUsedException`() {
+        // Simulates the race #70 closes: the read below still sees usedAt == null (this request
+        // "lost" the race but hasn't found out yet), but by the time the atomic markUsed()
+        // conditional UPDATE runs, another request has already claimed the row — 0 rows
+        // affected. This is the codepath that makes verify() safe under concurrency; see
+        // AuthServiceConcurrencyTest for the equivalent test against a real, racing DB.
+        val record = MagicLinkToken(
+            subscriberId = subscriberId,
+            tokenHash = TokenHasher.hash("raw-token"),
+            expiresAt = Instant.now().plusSeconds(3600)
+        )
+        every { tokenRepository.findByTokenHash(any()) } returns record
+        every { tokenRepository.markUsed(record.id, any()) } returns 0
+
+        assertThrows(MagicLinkTokenAlreadyUsedException::class.java) {
+            service.verify("raw-token")
+        }
         verify(exactly = 0) { bearerTokenService.issue(any(), any()) }
     }
 }

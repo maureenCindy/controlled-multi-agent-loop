@@ -9,11 +9,20 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.scheduling.annotation.EnableAsync
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.web.client.RestTemplate
 
+/**
+ * `@EnableAsync` (TP-070/#70) backs [com.tenderpulse.auth.AuthService.requestMagicLink]'s
+ * `@Async` — Spring Boot's `TaskExecutionAutoConfiguration` already provides a
+ * `ThreadPoolTaskExecutor` bean (`applicationTaskExecutor`) out of the box whenever no other
+ * `Executor` bean is defined, so no extra executor config is needed here at current scale (see
+ * issue #70's "Assumptions": an in-process async executor is sufficient, no message queue).
+ */
 @SpringBootApplication
 @EnableScheduling
+@EnableAsync
 class TenderPulseApplication
 
 fun main(args: Array<String>) {

@@ -5,6 +5,10 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
+import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 import java.util.UUID
 
@@ -40,6 +44,24 @@ data class MagicLinkToken(
 
 interface MagicLinkTokenRepository : JpaRepository<MagicLinkToken, UUID> {
     fun findByTokenHash(tokenHash: String): MagicLinkToken?
+
+    /**
+     * Atomically claims a token for single use (TP-070/#70): sets [MagicLinkToken.usedAt] to
+     * [now] only if it is still null, in one conditional `UPDATE`, and returns the number of
+     * rows affected (0 or 1, [id] being a primary key). A plain find-then-check-then-save from
+     * the caller's side has a TOCTOU window between the read and the write where two concurrent
+     * callers can both observe "not used yet"; a single `UPDATE ... WHERE used_at IS NULL`
+     * doesn't have that window — the database guarantees only one concurrent transaction can win
+     * the row lock and see its own `WHERE` clause still match, so at most one caller ever gets
+     * `1` back for a given token. `@Transactional` here (rather than relying solely on the
+     * caller, e.g. [AuthService.verify]'s own `@Transactional`) makes this method safe to call
+     * standalone too, joining the caller's transaction if there is one (default `REQUIRED`
+     * propagation) or opening its own otherwise.
+     */
+    @Modifying
+    @Transactional
+    @Query("update MagicLinkToken t set t.usedAt = :now where t.id = :id and t.usedAt is null")
+    fun markUsed(@Param("id") id: UUID, @Param("now") now: Instant): Int
 }
 
 /**

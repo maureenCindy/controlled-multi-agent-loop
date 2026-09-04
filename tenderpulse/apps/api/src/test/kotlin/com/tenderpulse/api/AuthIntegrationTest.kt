@@ -8,6 +8,7 @@ import com.tenderpulse.domain.SubscriberRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
+import org.mockito.Mockito.timeout
 import org.mockito.Mockito.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -129,8 +130,12 @@ class AuthIntegrationTest {
                 .content("""{"email":"roundtrip@example.com"}""")
         ).andExpect(status().isOk)
 
+        // TP-070: requestMagicLink is now @Async (closes a timing side-channel — see
+        // MagicLinkTimingTest), so the mockMvc.perform() above returns before the background
+        // save()+send() necessarily finishes. verify(..., timeout(...)) polls rather than
+        // asserting immediately, so this isn't flaky against that.
         val messageCaptor = ArgumentCaptor.forClass(SimpleMailMessage::class.java)
-        verify(javaMailSender).send(messageCaptor.capture())
+        verify(javaMailSender, timeout(5000)).send(messageCaptor.capture())
         val rawToken = Regex("token=(\\S+)").find(messageCaptor.value.text!!)!!.groupValues[1]
 
         val verifyResult = mockMvc.perform(get("/api/v1/auth/verify").param("token", rawToken))
