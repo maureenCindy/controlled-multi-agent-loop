@@ -21,6 +21,7 @@ import org.springframework.web.client.HttpServerErrorException
 import org.springframework.web.client.ResourceAccessException
 import org.springframework.web.client.RestTemplate
 import java.math.BigDecimal
+import java.net.URI
 
 /**
  * Unit tests for [PayPalClient] (TP-042). No live network calls — [RestTemplate] is a mockk mock,
@@ -229,7 +230,7 @@ class PayPalClientTest {
         val entityCaptor = slot<HttpEntity<UpdatePricingSchemesRequest>>()
         every {
             restTemplate.exchange(
-                "https://api-m.sandbox.paypal.com/v1/billing/plans/P-VALIDPLAN/update-pricing-schemes",
+                URI.create("https://api-m.sandbox.paypal.com/v1/billing/plans/P-VALIDPLAN/update-pricing-schemes"),
                 HttpMethod.POST,
                 capture(entityCaptor),
                 Void::class.java
@@ -255,7 +256,7 @@ class PayPalClientTest {
         stubToken()
         val entityCaptor = slot<HttpEntity<UpdatePricingSchemesRequest>>()
         every {
-            restTemplate.exchange(any<String>(), HttpMethod.POST, capture(entityCaptor), Void::class.java)
+            restTemplate.exchange(any<URI>(), HttpMethod.POST, capture(entityCaptor), Void::class.java)
         } returns ResponseEntity.noContent().build()
 
         client.updatePlanPricing(
@@ -273,7 +274,7 @@ class PayPalClientTest {
     fun `updatePlanPricing for a nonexistent plan id throws PayPalPlanPricingException`() {
         stubToken()
         every {
-            restTemplate.exchange(any<String>(), HttpMethod.POST, any<HttpEntity<*>>(), Void::class.java)
+            restTemplate.exchange(any<URI>(), HttpMethod.POST, any<HttpEntity<*>>(), Void::class.java)
         } throws HttpClientErrorException.NotFound.create(
             HttpStatus.NOT_FOUND, "Not Found", HttpHeaders.EMPTY, ByteArray(0), null
         )
@@ -289,7 +290,7 @@ class PayPalClientTest {
     fun `updatePlanPricing for an invalid pricing scheme throws PayPalPlanPricingException`() {
         stubToken()
         every {
-            restTemplate.exchange(any<String>(), HttpMethod.POST, any<HttpEntity<*>>(), Void::class.java)
+            restTemplate.exchange(any<URI>(), HttpMethod.POST, any<HttpEntity<*>>(), Void::class.java)
         } throws HttpClientErrorException.UnprocessableEntity.create(
             HttpStatus.UNPROCESSABLE_ENTITY, "Unprocessable Entity", HttpHeaders.EMPTY, ByteArray(0), null
         )
@@ -303,7 +304,7 @@ class PayPalClientTest {
     fun `updatePlanPricing wraps a PayPal 5xx failure as PayPalApiException, not PayPalPlanPricingException`() {
         stubToken()
         every {
-            restTemplate.exchange(any<String>(), HttpMethod.POST, any<HttpEntity<*>>(), Void::class.java)
+            restTemplate.exchange(any<URI>(), HttpMethod.POST, any<HttpEntity<*>>(), Void::class.java)
         } throws HttpServerErrorException.create(
             HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error", HttpHeaders.EMPTY, ByteArray(0), null
         )
@@ -317,11 +318,38 @@ class PayPalClientTest {
     fun `updatePlanPricing wraps a network timeout as PayPalApiException`() {
         stubToken()
         every {
-            restTemplate.exchange(any<String>(), HttpMethod.POST, any<HttpEntity<*>>(), Void::class.java)
+            restTemplate.exchange(any<URI>(), HttpMethod.POST, any<HttpEntity<*>>(), Void::class.java)
         } throws ResourceAccessException("Read timed out")
 
         assertThrows(PayPalApiException::class.java) {
             client.updatePlanPricing("P-VALIDPLAN", "USD", BigDecimal("10.00"))
         }
+    }
+
+    /**
+     * Issue #68 defense-in-depth: even if a `/`-bearing planId ever reached this client (it
+     * shouldn't — [com.tenderpulse.api.AdminController.updatePlanPricing] rejects it first), the
+     * request URL is built via [org.springframework.web.util.UriComponentsBuilder.pathSegment]
+     * rather than string interpolation, so the `/` is percent-encoded *within* the plan-id
+     * segment rather than being treated as a path separator that could redirect the call to a
+     * different PayPal resource.
+     */
+    @Test
+    fun `updatePlanPricing percent-encodes a slash in planId instead of letting it restructure the URL`() {
+        stubToken()
+        val uriCaptor = slot<URI>()
+        every {
+            restTemplate.exchange(capture(uriCaptor), HttpMethod.POST, any<HttpEntity<*>>(), Void::class.java)
+        } returns ResponseEntity.noContent().build()
+
+        client.updatePlanPricing("P-VALID/../admin-only", "USD", BigDecimal("10.00"))
+
+        val requestedUri = uriCaptor.captured
+        // The slash lands inside one percent-encoded path segment, never splitting the path.
+        assertEquals(
+            "https://api-m.sandbox.paypal.com/v1/billing/plans/P-VALID%2F..%2Fadmin-only/update-pricing-schemes",
+            requestedUri.toString()
+        )
+        assertEquals(5, requestedUri.rawPath.split("/").size - 1)
     }
 }

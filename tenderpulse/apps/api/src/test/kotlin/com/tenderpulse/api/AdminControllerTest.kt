@@ -210,4 +210,39 @@ class AdminControllerTest {
 
         verify(exactly = 0) { adminService.updatePlanPricing(any(), any()) }
     }
+
+    // ---- planId validation (issue #68: planId flowed unvalidated into the PayPal request URL) ----
+
+    @Test
+    fun `updatePlanPricing with a planId containing a slash returns 400 and never calls the service`() {
+        mockMvc.perform(
+            post("/api/v1/admin/plans/P-VALID%2FEVIL/pricing")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"currencyCode":"USD","fixedPrice":19.99}""")
+        ).andExpect(status().isBadRequest)
+
+        verify(exactly = 0) { adminService.updatePlanPricing(any(), any()) }
+    }
+
+    @Test
+    fun `updatePlanPricing with a planId containing dot-dot returns 400 and never calls the service`() {
+        mockMvc.perform(
+            post("/api/v1/admin/plans/P-FAKE..EVIL/pricing")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"currencyCode":"USD","fixedPrice":19.99}""")
+        ).andExpect(status().isBadRequest)
+
+        verify(exactly = 0) { adminService.updatePlanPricing(any(), any()) }
+    }
+
+    @Test
+    fun `updatePlanPricing with a planId containing a question mark returns 400 and never calls the service`() {
+        mockMvc.perform(
+            post("/api/v1/admin/plans/P-FAKE%3FEVIL/pricing")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"currencyCode":"USD","fixedPrice":19.99}""")
+        ).andExpect(status().isBadRequest)
+
+        verify(exactly = 0) { adminService.updatePlanPricing(any(), any()) }
+    }
 }

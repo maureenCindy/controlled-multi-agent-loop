@@ -12,6 +12,7 @@ import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClientException
 import org.springframework.web.client.RestTemplate
+import org.springframework.web.util.UriComponentsBuilder
 import java.math.BigDecimal
 import java.time.Instant
 
@@ -102,9 +103,21 @@ class PayPalClient(
                 )
             )
         )
+        // Built via UriComponentsBuilder.pathSegment (issue #68) rather than string
+        // interpolation: pathSegment treats each argument as one opaque segment, and `.encode()`
+        // percent-encodes any reserved character (e.g. `/`, `?`) *within* planId instead of
+        // letting it restructure the URL, so a malformed planId can only ever reach here as an
+        // inert value, not a path-altering payload. planId is also validated at the controller
+        // (AdminController.updatePlanPricing) before this is ever called, so this is
+        // defense-in-depth, not the only line of protection.
+        val uri = UriComponentsBuilder.fromUriString(baseUrl)
+            .pathSegment("v1", "billing", "plans", planId, "update-pricing-schemes")
+            .build()
+            .encode()
+            .toUri()
         try {
             restTemplate.exchange(
-                "$baseUrl/v1/billing/plans/$planId/update-pricing-schemes",
+                uri,
                 HttpMethod.POST,
                 HttpEntity(body, headers),
                 Void::class.java
