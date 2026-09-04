@@ -81,7 +81,13 @@ data class Subscriber(
      * PayPal subscription ID for a PAID-tier signup (TP-042), stored only after the backend has
      * independently verified the subscription with PayPal's API (never trusted from the client).
      * Null for FREE subscribers and any subscriber that has never completed Pro checkout.
+     *
+     * `unique = true` (multiple NULLs still allowed) so the same PayPal subscription ID cannot be
+     * linked to more than one Subscriber row — defence in depth alongside the explicit
+     * check-before-save in [com.tenderpulse.subscriber.SubscriberService.registerPro], which is
+     * what actually rejects a reused ID with a 400 rather than a raw constraint-violation 500.
      */
+    @Column(unique = true)
     val paypalSubscriptionId: String? = null
 )
 

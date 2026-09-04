@@ -43,15 +43,25 @@ class SubscriberService(
      * upgrades the matching [Subscriber] to `tier = PAID`, storing the PayPal subscription ID.
      *
      * The client's claim that checkout succeeded is never trusted directly: this fetches the
-     * subscription from PayPal by ID and confirms both that its `status` is `ACTIVE` and that its
-     * `plan_id` matches the configured expected plan — a fabricated or unrelated subscription ID
-     * (e.g. for a different PayPal product) is rejected the same way a non-existent one is.
+     * subscription from PayPal by ID and confirms all of the following before touching any
+     * subscriber record:
+     * - its `status` is `ACTIVE`
+     * - its `plan_id` matches the configured expected plan — a fabricated or unrelated
+     *   subscription ID (e.g. for a different PayPal product) is rejected the same way a
+     *   non-existent one is
+     * - its own payer email (`subscriber.email_address`, from PayPal — not the request body)
+     *   matches the requested `email`, case-insensitively — otherwise one genuinely-ACTIVE
+     *   subscription could be replayed against arbitrary emails to mint unlimited free upgrades
+     * - it isn't already linked to a *different* subscriber — otherwise the same subscription ID
+     *   could be reused across multiple emails one at a time, bypassing the check above by
+     *   changing which email is "current" on each call
      *
      * An existing FREE subscriber with this email is upgraded in place (their [Subscriber.id] is
      * preserved); a first-time Pro signup creates a new subscriber.
      *
      * @throws SubscriptionVerificationException if the subscription doesn't exist, is for the
-     *   wrong plan, or isn't ACTIVE — no subscriber is created or changed in any of those cases.
+     *   wrong plan, isn't ACTIVE, doesn't belong to the requested email, or is already linked to a
+     *   different subscriber — no subscriber is created or changed in any of those cases.
      * @throws com.tenderpulse.domain.PayPalApiException if the call to PayPal itself fails.
      */
     fun registerPro(req: ProSubscribeRequest): Subscriber {
@@ -70,8 +80,21 @@ class SubscriberService(
                 "PayPal subscription '${req.paypalSubscriptionId}' is not active (status: ${subscription.status})"
             )
         }
+        val payerEmail = subscription.subscriber?.emailAddress
+        if (payerEmail == null || !payerEmail.equals(req.email, ignoreCase = true)) {
+            throw SubscriptionVerificationException(
+                "PayPal subscription '${req.paypalSubscriptionId}' does not belong to '${req.email}'"
+            )
+        }
 
         val existing = subscriberRepository.findByEmail(req.email)
+        val linkedElsewhere = subscriberRepository.findByPaypalSubscriptionId(req.paypalSubscriptionId)
+        if (linkedElsewhere != null && linkedElsewhere.id != existing?.id) {
+            throw SubscriptionVerificationException(
+                "PayPal subscription '${req.paypalSubscriptionId}' is already linked to another subscriber"
+            )
+        }
+
         val toSave = existing?.copy(
             tier = SubscriptionTier.PAID,
             paypalSubscriptionId = req.paypalSubscriptionId

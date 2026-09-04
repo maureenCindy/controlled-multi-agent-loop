@@ -117,9 +117,20 @@ data class PayPalTokenResponse(
  * Response shape of `GET /v1/billing/subscriptions/{id}` (only the fields TP-042 needs).
  * `status` is expected to be one of `APPROVAL_PENDING`, `APPROVED`, `ACTIVE`, `SUSPENDED`,
  * `CANCELLED`, `EXPIRED` — only `ACTIVE` is treated as sufficient to upgrade a subscriber's tier.
+ *
+ * `subscriber.email_address` (the PayPal payer's own email) is required so
+ * [com.tenderpulse.subscriber.SubscriberService.registerPro] can confirm the subscription
+ * actually belongs to the email being upgraded — otherwise one genuinely-ACTIVE subscription
+ * could be replayed against arbitrary emails to mint unlimited free Pro accounts.
  */
 data class PayPalSubscriptionResponse(
     val id: String,
     val status: String,
-    @JsonProperty("plan_id") val planId: String
+    @JsonProperty("plan_id") val planId: String,
+    val subscriber: PayPalSubscriberInfo? = null
+)
+
+/** The `subscriber` object nested in [PayPalSubscriptionResponse] — the PayPal payer's own details. */
+data class PayPalSubscriberInfo(
+    @JsonProperty("email_address") val emailAddress: String? = null
 )

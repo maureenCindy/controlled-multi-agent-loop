@@ -11,6 +11,12 @@ interface TenderRepository : JpaRepository<Tender, UUID> {
 interface SubscriberRepository : JpaRepository<Subscriber, UUID> {
     fun findByEmail(email: String): Subscriber?
     fun findByActiveTrue(): List<Subscriber>
+
+    /**
+     * Used by [com.tenderpulse.subscriber.SubscriberService.registerPro] (TP-042) to reject
+     * reusing the same PayPal subscription ID to upgrade more than one Subscriber record.
+     */
+    fun findByPaypalSubscriptionId(paypalSubscriptionId: String): Subscriber?
 }
 
 interface InterestProfileRepository : JpaRepository<InterestProfile, UUID> {

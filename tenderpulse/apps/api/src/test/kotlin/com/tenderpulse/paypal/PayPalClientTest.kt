@@ -54,7 +54,12 @@ class PayPalClientTest {
                 PayPalSubscriptionResponse::class.java
             )
         } returns ResponseEntity.ok(
-            PayPalSubscriptionResponse(id = "I-VALID123", status = "ACTIVE", planId = "P-EXPECTED")
+            PayPalSubscriptionResponse(
+                id = "I-VALID123",
+                status = "ACTIVE",
+                planId = "P-EXPECTED",
+                subscriber = PayPalSubscriberInfo(emailAddress = "payer@example.com")
+            )
         )
 
         val result = client.fetchSubscription("I-VALID123")
@@ -62,6 +67,7 @@ class PayPalClientTest {
         assertEquals("I-VALID123", result?.id)
         assertEquals("ACTIVE", result?.status)
         assertEquals("P-EXPECTED", result?.planId)
+        assertEquals("payer@example.com", result?.subscriber?.emailAddress)
     }
 
     @Test
