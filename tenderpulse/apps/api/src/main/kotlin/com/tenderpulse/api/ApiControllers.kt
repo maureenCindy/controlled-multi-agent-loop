@@ -12,42 +12,40 @@ import com.tenderpulse.auth.InvalidMagicLinkTokenException
 import com.tenderpulse.auth.MagicLinkRequest
 import com.tenderpulse.auth.MagicLinkResponse
 import com.tenderpulse.auth.VerifyResponse
-import com.tenderpulse.domain.NotFoundException
 import com.tenderpulse.domain.Sector
-import com.tenderpulse.domain.Tender
-import com.tenderpulse.domain.TenderRepository
 import com.tenderpulse.subscriber.InterestProfileResponse
 import com.tenderpulse.subscriber.ProSubscribeRequest
 import com.tenderpulse.subscriber.ProfileRequest
 import com.tenderpulse.subscriber.RegisterRequest
 import com.tenderpulse.subscriber.SubscriberResponse
 import com.tenderpulse.subscriber.SubscriberService
+import com.tenderpulse.tender.TenderResponse
+import com.tenderpulse.tender.TenderService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.UUID
 
+/**
+ * Thin controller (TP-052): validates input, delegates all persistence/business logic to
+ * [TenderService], and maps the returned entity to a response DTO. No repository is injected
+ * here, mirroring [SubscriberController] (TP-037).
+ */
 @RestController
 @RequestMapping("/api/v1")
 class TenderController(
-    private val tenderRepository: TenderRepository
+    private val tenderService: TenderService
 ) {
     @GetMapping("/tenders")
     fun list(
         @RequestParam(required = false) sector: Sector?,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int
-    ): List<Tender> {
-        // Scaffold: simple findAll; add pagination/spec in production
-        return tenderRepository.findAll().let { list ->
-            if (sector != null) list.filter { it.sector == sector } else list
-        }.take(size)
-    }
+    ): List<TenderResponse> = tenderService.list(sector, page, size).map { TenderResponse.from(it) }
 
     @GetMapping("/tenders/{id}")
-    fun get(@PathVariable id: UUID): Tender =
-        tenderRepository.findById(id).orElseThrow { NotFoundException("Tender $id") }
+    fun get(@PathVariable id: UUID): TenderResponse = TenderResponse.from(tenderService.get(id))
 }
 
 /**
