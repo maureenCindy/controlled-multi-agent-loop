@@ -102,6 +102,23 @@ class AuthIntegrationTest {
         ).andExpect(status().isCreated)
     }
 
+    // TP-042 regression (post-#63-rebase check): /api/v1/subscribers/pro must NOT be swept up by
+    // the /api/v1/subscribers/{id}/profiles/** security matcher -- it's the Pro-tier equivalent
+    // of the open FREE signup path above, not a profile-management endpoint. A blank
+    // paypalSubscriptionId is intentional here: it fails @Valid with 400, which -- since a
+    // request blocked by Spring Security would 401 before ever reaching the controller/validator
+    // -- is proof this route isn't gated by auth, without making any real call to PayPal's API
+    // (real PayPalClient/RestTemplate beans are wired in this full context, so a valid request
+    // here would be a live network call, which this suite deliberately avoids).
+    @Test
+    fun `POST subscribers pro remains open and unauthenticated`() {
+        mockMvc.perform(
+            post("/api/v1/subscribers/pro")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"email":"pro-open@example.com","paypalSubscriptionId":""}""")
+        ).andExpect(status().isBadRequest)
+    }
+
     @Test
     fun `full round trip - request magic link, verify the emailed token, use the bearer token, token is then single-use`() {
         val subscriber = createSubscriber("roundtrip@example.com")
