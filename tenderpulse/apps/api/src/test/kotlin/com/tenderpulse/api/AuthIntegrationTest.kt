@@ -212,4 +212,147 @@ class AuthIntegrationTest {
         mockMvc.perform(get(encodedUri).header("Authorization", "Bearer $ownerToken"))
             .andExpect(status().isOk)
     }
+
+    // ---- TP-065: committed bypass-variant regression suite ----
+    //
+    // During TP-038's review, a Checker independently probed several more path-mangling bypass
+    // techniques (beyond the single-character percent-encoding above) against this same
+    // ownership check, none of which were committed as tests. This suite closes that gap.
+    //
+    // Every case below uses a non-owning ("intruder") bearer token against the *owner's*
+    // subscriber id, exactly like the percent-encoding tests above -- if any of these techniques
+    // bypassed the ownership check, the response would be 200 with the owner's (empty, but
+    // real) profile list. None of them are: each is rejected before a non-owning caller could
+    // ever reach [com.tenderpulse.api.SubscriberController], by one of two independent layers,
+    // and this suite asserts the actual status each layer produces rather than assuming both
+    // layers behave identically:
+    //
+    // - Spring Security's default `StrictHttpFirewall` rejects several of these techniques
+    //   itself, before routing/dispatch -- responding 400 (via `RequestRejectedException`,
+    //   converted to a plain 400 response by Spring Security's own filter) without this
+    //   application's filters or [SubscriberOwnershipInterceptor] ever running at all. This is a
+    //   *stronger* defence than a 401/403 from our own code would be, not a weaker one: the
+    //   request never reaches application logic in the first place.
+    // - The remaining techniques aren't blocked by the firewall, but also don't decode/normalize
+    //   to anything Spring's request mapping considers equivalent to the real
+    //   `/api/v1/subscribers/{id}/profiles` route, so they 404 -- again, never reaching the
+    //   controller or returning any subscriber data.
+    //
+    // Either outcome is a pass for this suite's purpose (proving no cross-subscriber data leak);
+    // what would constitute an actual regression is any of these ever returning 200.
+
+    @Test
+    fun `double-encoded path segment is rejected, not routed to the profiles endpoint`() {
+        val owner = createSubscriber("bypass-double-encoding@example.com")
+        val intruderToken = bearerTokenService.issue(createSubscriber("bypass-double-encoding-intruder@example.com").id)
+
+        // "%2570rofiles" single-decodes to the literal "%70rofiles" (the firewall's own decode
+        // pass), not "profiles" -- a second decode would be needed to reach "profiles", which
+        // neither the firewall nor Spring's routing performs. Spring Security's
+        // StrictHttpFirewall rejects the encoded '%' (`allowUrlEncodedPercent = false` by
+        // default) before this even reaches routing.
+        val uri = URI("/api/v1/subscribers/${owner.id}/%2570rofiles")
+
+        mockMvc.perform(get(uri).header("Authorization", "Bearer $intruderToken"))
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `literal dot-dot path traversal segment is rejected`() {
+        val owner = createSubscriber("bypass-traversal-literal@example.com")
+        val intruderToken = bearerTokenService.issue(createSubscriber("bypass-traversal-literal-intruder@example.com").id)
+
+        val uri = URI("/api/v1/subscribers/${owner.id}/../${owner.id}/profiles")
+
+        mockMvc.perform(get(uri).header("Authorization", "Bearer $intruderToken"))
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `percent-encoded dot-dot path traversal segment is rejected`() {
+        val owner = createSubscriber("bypass-traversal-encoded@example.com")
+        val intruderToken = bearerTokenService.issue(createSubscriber("bypass-traversal-encoded-intruder@example.com").id)
+
+        val uri = URI("/api/v1/subscribers/${owner.id}/%2e%2e/${owner.id}/profiles")
+
+        mockMvc.perform(get(uri).header("Authorization", "Bearer $intruderToken"))
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `a null byte in the path is rejected`() {
+        val owner = createSubscriber("bypass-null-byte@example.com")
+        val intruderToken = bearerTokenService.issue(createSubscriber("bypass-null-byte-intruder@example.com").id)
+
+        val uri = URI("/api/v1/subscribers/${owner.id}/profiles%00")
+
+        mockMvc.perform(get(uri).header("Authorization", "Bearer $intruderToken"))
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `an overlong UTF-8 encoded slash does not smuggle a route past the real profiles path`() {
+        val owner = createSubscriber("bypass-overlong-utf8@example.com")
+        val intruderToken = bearerTokenService.issue(createSubscriber("bypass-overlong-utf8-intruder@example.com").id)
+
+        // "%c0%af" is a classic overlong (invalid, non-canonical) UTF-8 encoding of '/', historically
+        // used to smuggle path separators past naive decoders/WAFs. It is not decoded as '/' here,
+        // so this never matches the "profiles" route at all -- 404, not a bypass.
+        val uri = URI("/api/v1/subscribers/${owner.id}/%c0%afprofiles")
+
+        mockMvc.perform(get(uri).header("Authorization", "Bearer $intruderToken"))
+            .andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun `a matrix parameter on the subscriber id segment is rejected`() {
+        val owner = createSubscriber("bypass-matrix-param@example.com")
+        val intruderToken = bearerTokenService.issue(createSubscriber("bypass-matrix-param-intruder@example.com").id)
+
+        // ";foo=bar" is a matrix (path) parameter appended to the {id} segment -- a technique
+        // sometimes used to make a raw-URI-parsing guard mis-tokenize the path. StrictHttpFirewall
+        // rejects semicolons in the path by default (`allowSemicolon = false`).
+        val uri = URI("/api/v1/subscribers/${owner.id};foo=bar/profiles")
+
+        mockMvc.perform(get(uri).header("Authorization", "Bearer $intruderToken"))
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `an uppercase path segment does not case-insensitively match the profiles route`() {
+        val owner = createSubscriber("bypass-case-variation@example.com")
+        val intruderToken = bearerTokenService.issue(createSubscriber("bypass-case-variation-intruder@example.com").id)
+
+        // Spring's path matching is case-sensitive by default -- "PROFILES" simply doesn't match
+        // the "profiles" route (404), it isn't silently normalized to it.
+        val uri = URI("/api/v1/subscribers/${owner.id}/PROFILES")
+
+        mockMvc.perform(get(uri).header("Authorization", "Bearer $intruderToken"))
+            .andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun `a trailing slash after profiles does not match the route`() {
+        val owner = createSubscriber("bypass-trailing-slash@example.com")
+        val intruderToken = bearerTokenService.issue(createSubscriber("bypass-trailing-slash-intruder@example.com").id)
+
+        // Spring Boot 3 / Spring MVC 6 no longer treat a trailing slash as equivalent to the
+        // same path without one by default, so this 404s rather than reaching the controller.
+        val uri = URI("/api/v1/subscribers/${owner.id}/profiles/")
+
+        mockMvc.perform(get(uri).header("Authorization", "Bearer $intruderToken"))
+            .andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun `a double slash before profiles is rejected`() {
+        val owner = createSubscriber("bypass-double-slash@example.com")
+        val intruderToken = bearerTokenService.issue(createSubscriber("bypass-double-slash-intruder@example.com").id)
+
+        // StrictHttpFirewall rejects "//" in the path by default.
+        val uri = URI("/api/v1/subscribers/${owner.id}//profiles")
+
+        mockMvc.perform(get(uri).header("Authorization", "Bearer $intruderToken"))
+            .andExpect(status().isBadRequest)
+    }
 }

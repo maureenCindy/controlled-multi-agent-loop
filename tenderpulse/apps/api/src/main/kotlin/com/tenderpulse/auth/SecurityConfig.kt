@@ -56,7 +56,10 @@ class SecurityConfig(
             .authorizeHttpRequests { authorize ->
                 authorize
                     .requestMatchers("/api/v1/admin/**").hasAuthority(AdminKeyAuthFilter.ADMIN_AUTHORITY)
-                    .requestMatchers("/api/v1/subscribers/*/profiles/**", "/api/v1/subscribers/*/profiles")
+                    // TP-065: shared with SubscriberOwnershipInterceptor via SubscriberOwnershipPaths
+                    // so the two path-pattern lists can't silently drift apart -- see that object's
+                    // kdoc (in SubscriberOwnershipInterceptor.kt) for why.
+                    .requestMatchers(*SubscriberOwnershipPaths.PROTECTED_PATH_PATTERNS.toTypedArray())
                     .authenticated()
                     .anyRequest().permitAll()
             }

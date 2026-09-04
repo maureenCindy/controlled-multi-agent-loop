@@ -13,6 +13,27 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import java.util.UUID
 
 /**
+ * Single source of truth for which paths are "subscriber-owned" -- i.e. must both (a) require an
+ * authenticated caller ([SecurityConfig]'s `authorizeHttpRequests`) and (b) have that caller's
+ * principal match the `{id}` path variable ([SubscriberOwnershipInterceptor]).
+ *
+ * TP-065: before this existed, [SecurityConfig] and [SubscriberOwnershipInterceptor] each
+ * hand-maintained their own literal copy of this pattern list, which could silently drift apart
+ * (e.g. a new `/api/v1/subscribers/{id}/...` route added to
+ * [com.tenderpulse.api.SubscriberController] and wired into one list but not the other). Both
+ * now reference this single list instead, so there is nothing left to keep in sync by hand.
+ * [SubscriberOwnershipPathCoverageTest] is the independent second line of defence: it reflects
+ * over [com.tenderpulse.api.SubscriberController]'s actual mappings and fails if a new
+ * subscriber-id-scoped route is ever added without being covered here.
+ */
+object SubscriberOwnershipPaths {
+    val PROTECTED_PATH_PATTERNS = listOf(
+        "/api/v1/subscribers/*/profiles/**",
+        "/api/v1/subscribers/*/profiles"
+    )
+}
+
+/**
  * Enforces "a request can only act on the subscriber tied to its authenticated token, not any
  * UUID in the path" (TP-038 AC) for `/api/v1/subscribers/{id}/profiles...`.
  *
@@ -68,6 +89,6 @@ class SubscriberOwnershipInterceptor : HandlerInterceptor {
 class WebMvcConfig(private val subscriberOwnershipInterceptor: SubscriberOwnershipInterceptor) : WebMvcConfigurer {
     override fun addInterceptors(registry: InterceptorRegistry) {
         registry.addInterceptor(subscriberOwnershipInterceptor)
-            .addPathPatterns("/api/v1/subscribers/*/profiles/**", "/api/v1/subscribers/*/profiles")
+            .addPathPatterns(*SubscriberOwnershipPaths.PROTECTED_PATH_PATTERNS.toTypedArray())
     }
 }
