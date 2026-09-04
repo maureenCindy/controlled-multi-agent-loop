@@ -4,6 +4,8 @@ import com.tenderpulse.auth.UnsubscribeService
 import com.tenderpulse.domain.*
 import com.tenderpulse.matching.MatchingService
 import org.slf4j.LoggerFactory
+import org.springframework.mail.SimpleMailMessage
+import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -89,30 +91,56 @@ data class SendResult(val success: Boolean, val error: String? = null)
 
 @Service
 class EmailNotificationSender(
+    private val mailSender: JavaMailSender,
     private val unsubscribeService: UnsubscribeService
 ) : NotificationChannelSender {
     override val channel = NotificationChannel.EMAIL
     private val log = LoggerFactory.getLogger(javaClass)
 
+    /**
+     * TP-090: sends a real, immediate email for Paid-tier matches via the same [JavaMailSender]
+     * infrastructure already proven by [com.tenderpulse.auth.SmtpMagicLinkMailSender] (TP-038).
+     *
+     * A fresh unsubscribe link is minted per send via [UnsubscribeService.buildUnsubscribeLink]
+     * — this is now the real consumer of that link that TP-083 (#83) was waiting on, so calling
+     * it here (unlike the discarded call TP-083 removed) is correct: the link is actually
+     * embedded in a real outbound email via [buildAlertBody], not minted and thrown away.
+     *
+     * Any failure (mail sender exception, e.g. SMTP unreachable) is caught, logged, and reported
+     * as a failed [SendResult] rather than propagated, so one subscriber's failed send never
+     * aborts the rest of [NotificationService.notifyMatchingSubscribers]'s cycle.
+     */
     override fun send(subscriber: Subscriber, tender: Tender, profile: InterestProfile): SendResult {
-        // Scaffold: log only, no real email is ever sent here. Deliberately do NOT call
-        // unsubscribeService.buildUnsubscribeLink(...) until a real mail sender (TP-013) is
-        // wired and actually needs the link for the email body: buildUnsubscribeLink is
-        // @Transactional and mints + persists a real, non-expiring UnsubscribeToken row per
-        // call, so calling it here and discarding the result would silently accumulate one
-        // orphaned token row per notification cycle for as long as this stays a scaffold.
-        //
-        // TP-083: this also means the log line below never has access to the unsubscribe
-        // link/token (which would embed the raw token via buildAlertBody(...)) — it logs
-        // tender/subscriber identifiers instead, which is enough to identify which alert this
-        // was without leaking a token that grants unauthenticated unsubscribe access.
-        log.info(
-            "EMAIL → subscriber={} | tenderId={} | tenderTitle={}",
-            subscriber.id,
-            tender.id,
-            tender.title
+        return runCatching {
+            val unsubscribeLink = unsubscribeService.buildUnsubscribeLink(subscriber)
+            val message = SimpleMailMessage().apply {
+                setTo(subscriber.email)
+                subject = "TenderPulse alert: ${tender.title}"
+                text = buildAlertBody(tender, unsubscribeLink)
+            }
+            mailSender.send(message)
+        }.fold(
+            onSuccess = {
+                // TP-083: never log the unsubscribe link/token itself (it grants unauthenticated
+                // unsubscribe access) — only identifiers, sufficient to trace which alert this was.
+                log.info(
+                    "EMAIL → subscriber={} | tenderId={} | tenderTitle={}",
+                    subscriber.id,
+                    tender.id,
+                    tender.title
+                )
+                SendResult(success = true)
+            },
+            onFailure = { ex ->
+                log.warn(
+                    "Failed to send email alert to subscriber={} for tenderId={}: {}",
+                    subscriber.id,
+                    tender.id,
+                    ex.message
+                )
+                SendResult(success = false, error = ex.message)
+            }
         )
-        return SendResult(success = true)
     }
 }
 
