@@ -35,6 +35,15 @@ export function loadPayPalSdk(clientId: string, doc: Document = document): Promi
 }
 
 export interface PayPalButtonHandlers {
+  /**
+   * TP-071: called once `onClick`'s email validation has passed and PayPal's checkout popup is
+   * about to open (i.e. right before `actions.resolve()`). Callers use this to lock the email
+   * input for the duration of the popup, closing the residual window where a user could edit or
+   * clear the email *after* the `onClick` gate but *before* `onApprove`/`onError` settles — which
+   * could otherwise produce a real, ACTIVE PayPal subscription with a stale/blank email attached.
+   * Optional so existing callers/tests that don't care about the lock/unlock UX keep working.
+   */
+  onCheckoutStart?: () => void;
   onSuccess: (result: SignupResult) => void;
   onError: (message: string) => void;
 }
@@ -64,6 +73,12 @@ export interface PayPalButtonHandlers {
  * when valid, or throw when it isn't (see src/pages/signup.astro's usage) — `onClick` and
  * `onApprove` both treat a throw as "invalid, do not proceed."
  *
+ * TP-071: `handlers.onCheckoutStart` (if provided) fires right after `onClick` resolves, i.e.
+ * once the popup is actually opening — callers use it to lock the email input for the duration
+ * of the popup. `handlers.onSuccess`/`handlers.onError` (already called on every settle path —
+ * `onApprove` success, `onApprove` failure, and the SDK's own `onError`/cancel) are where callers
+ * re-enable it, so no separate "checkout ended" hook is needed here.
+ *
  * Known limitation (see README and the issue): there is no webhook listener yet, so a
  * cancellation or failed renewal on PayPal's side later will not automatically downgrade the
  * subscriber. That's a deliberate MVP trade-off, not handled here.
@@ -84,6 +99,9 @@ export function renderPayPalSubscribeButton(
         } catch {
           return actions.reject();
         }
+        // TP-071: lock the email input now that the popup is actually about to open, so it
+        // can't be edited/cleared out from under `onApprove` while checkout is in flight.
+        handlers.onCheckoutStart?.();
         return actions.resolve();
       },
       createSubscription: (_data: unknown, actions: any) =>

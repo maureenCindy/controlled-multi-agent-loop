@@ -116,6 +116,167 @@ describe("renderPayPalSubscribeButton", () => {
     expect(reject).not.toHaveBeenCalled();
   });
 
+  /**
+   * TP-071: onClick's email gate stops an invalid email from ever opening the popup (tested
+   * above); these cover the *residual* window after that gate passes — the email input must be
+   * locked while the popup is open, and unlocked again once checkout settles, on both the
+   * success and failure/cancellation paths. `onCheckoutStart` is optional on the handlers type,
+   * so callers that don't care about the lock/unlock UX (e.g. the older tests above) keep
+   * working unchanged.
+   */
+  describe("TP-071: locking the email input for the duration of the popup", () => {
+    it("onClick calls handlers.onCheckoutStart once the popup is about to open (email valid)", () => {
+      const { Buttons } = fakeSdk();
+      const onCheckoutStart = vi.fn();
+
+      renderPayPalSubscribeButton({ Buttons }, "#c", "PLAN-1", () => "valid@example.com", {
+        onCheckoutStart,
+        onSuccess: vi.fn(),
+        onError: vi.fn(),
+      });
+
+      const config = Buttons.mock.calls[0][0];
+      const reject = vi.fn();
+      const resolve = vi.fn();
+      config.onClick(undefined, { reject, resolve });
+
+      expect(onCheckoutStart).toHaveBeenCalledTimes(1);
+      // The lock must be applied before the popup opens, not after.
+      expect(onCheckoutStart.mock.invocationCallOrder[0]).toBeLessThan(
+        resolve.mock.invocationCallOrder[0]
+      );
+    });
+
+    it("onClick does NOT call handlers.onCheckoutStart when the email is invalid (no popup opens)", () => {
+      const { Buttons } = fakeSdk();
+      const onCheckoutStart = vi.fn();
+
+      renderPayPalSubscribeButton(
+        { Buttons },
+        "#c",
+        "PLAN-1",
+        () => {
+          throw new Error("Enter a valid email address before subscribing.");
+        },
+        { onCheckoutStart, onSuccess: vi.fn(), onError: vi.fn() }
+      );
+
+      const config = Buttons.mock.calls[0][0];
+      config.onClick(undefined, { reject: vi.fn(), resolve: vi.fn() });
+
+      expect(onCheckoutStart).not.toHaveBeenCalled();
+    });
+
+    it("input is disabled while the popup is open and re-enabled once onApprove succeeds", async () => {
+      const { Buttons } = fakeSdk();
+      const submitPro = vi.fn().mockResolvedValue({ ok: true, status: 200, body: { tier: "PAID" } });
+      // Stand-in for the real <input>, mutated by the handlers exactly as signup.astro does.
+      const emailInput = { disabled: false };
+
+      renderPayPalSubscribeButton(
+        { Buttons },
+        "#c",
+        "PLAN-1",
+        () => "pro@example.com",
+        {
+          onCheckoutStart: () => {
+            emailInput.disabled = true;
+          },
+          onSuccess: () => {
+            emailInput.disabled = false;
+          },
+          onError: () => {
+            emailInput.disabled = false;
+          },
+        },
+        submitPro
+      );
+
+      const config = Buttons.mock.calls[0][0];
+      config.onClick(undefined, { reject: vi.fn(), resolve: vi.fn() });
+      expect(emailInput.disabled).toBe(true);
+
+      await config.onApprove({ subscriptionID: "I-SUB-999" });
+      expect(emailInput.disabled).toBe(false);
+    });
+
+    it("input is disabled while the popup is open and re-enabled once onApprove fails (backend rejects the subscription)", async () => {
+      const { Buttons } = fakeSdk();
+      const submitPro = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 400,
+        body: { message: "PayPal subscription 'I-FAKE' was not found" },
+      });
+      const emailInput = { disabled: false };
+
+      renderPayPalSubscribeButton(
+        { Buttons },
+        "#c",
+        "PLAN-1",
+        () => "pro@example.com",
+        {
+          onCheckoutStart: () => {
+            emailInput.disabled = true;
+          },
+          onSuccess: () => {
+            emailInput.disabled = false;
+          },
+          onError: () => {
+            emailInput.disabled = false;
+          },
+        },
+        submitPro
+      );
+
+      const config = Buttons.mock.calls[0][0];
+      config.onClick(undefined, { reject: vi.fn(), resolve: vi.fn() });
+      expect(emailInput.disabled).toBe(true);
+
+      await config.onApprove({ subscriptionID: "I-FAKE" });
+      expect(emailInput.disabled).toBe(false);
+    });
+
+    it("input is disabled while the popup is open and re-enabled when the SDK's own onError fires (e.g. popup cancelled/closed)", () => {
+      const { Buttons } = fakeSdk();
+      const emailInput = { disabled: false };
+
+      renderPayPalSubscribeButton({ Buttons }, "#c", "PLAN-1", () => "pro@example.com", {
+        onCheckoutStart: () => {
+          emailInput.disabled = true;
+        },
+        onSuccess: () => {
+          emailInput.disabled = false;
+        },
+        onError: () => {
+          emailInput.disabled = false;
+        },
+      });
+
+      const config = Buttons.mock.calls[0][0];
+      config.onClick(undefined, { reject: vi.fn(), resolve: vi.fn() });
+      expect(emailInput.disabled).toBe(true);
+
+      config.onError(new Error("popup closed by user"));
+      expect(emailInput.disabled).toBe(false);
+    });
+
+    it("no regression: renders and gates checkout correctly when handlers.onCheckoutStart is omitted", () => {
+      const { Buttons } = fakeSdk();
+
+      expect(() =>
+        renderPayPalSubscribeButton({ Buttons }, "#c", "PLAN-1", () => "valid@example.com", {
+          onSuccess: vi.fn(),
+          onError: vi.fn(),
+        })
+      ).not.toThrow();
+
+      const config = Buttons.mock.calls[0][0];
+      const resolve = vi.fn();
+      expect(() => config.onClick(undefined, { reject: vi.fn(), resolve })).not.toThrow();
+      expect(resolve).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it("createSubscription creates a PayPal subscription against the configured plan id", () => {
     const { Buttons } = fakeSdk();
 
