@@ -70,6 +70,24 @@ class EntityPersistenceTest {
         assertEquals(true, reloaded.active)
     }
 
+    /** TP-042 schema change: `paypalSubscriptionId` persists and reloads through a real JPA context. */
+    @Test
+    fun `Subscriber paypalSubscriptionId round trips against a real JPA context`() {
+        val saved = subscriberRepository.save(
+            Subscriber(
+                email = "pro-subscriber-roundtrip@example.co.zw",
+                tier = SubscriptionTier.PAID,
+                paypalSubscriptionId = "I-VALIDSUB123"
+            )
+        )
+        entityManager.flush()
+        entityManager.clear()
+
+        val reloaded = subscriberRepository.findById(saved.id).orElseThrow()
+
+        assertEquals("I-VALIDSUB123", reloaded.paypalSubscriptionId)
+    }
+
     @Test
     fun `Tender save-read round trip against a real JPA context`() {
         val saved = tenderRepository.save(

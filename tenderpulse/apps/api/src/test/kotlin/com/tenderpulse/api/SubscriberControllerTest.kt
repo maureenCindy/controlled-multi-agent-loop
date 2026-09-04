@@ -6,9 +6,11 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.tenderpulse.domain.ConflictException
 import com.tenderpulse.domain.InterestProfile
 import com.tenderpulse.domain.NotFoundException
+import com.tenderpulse.domain.PayPalApiException
 import com.tenderpulse.domain.Sector
 import com.tenderpulse.domain.Subscriber
 import com.tenderpulse.domain.SubscriptionTier
+import com.tenderpulse.domain.SubscriptionVerificationException
 import com.tenderpulse.subscriber.SubscriberService
 import io.mockk.every
 import io.mockk.mockk
@@ -110,6 +112,66 @@ class SubscriberControllerTest {
         ).andExpect(status().isBadRequest)
 
         verify(exactly = 0) { subscriberService.register(any()) }
+    }
+
+    // ---- registerPro (TP-042) ----
+
+    private fun proJson(email: String = "pro@example.com", subscriptionId: String = "I-VALIDSUB123") =
+        """{"email":"$email","paypalSubscriptionId":"$subscriptionId"}"""
+
+    @Test
+    fun `registerPro returns 200 with the upgraded subscriber DTO, including the stored subscription id`() {
+        every { subscriberService.registerPro(any()) } returns Subscriber(
+            email = "pro@example.com",
+            tier = SubscriptionTier.PAID,
+            paypalSubscriptionId = "I-VALIDSUB123"
+        )
+
+        mockMvc.perform(
+            post("/api/v1/subscribers/pro")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(proJson())
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.email").value("pro@example.com"))
+            .andExpect(jsonPath("$.tier").value("PAID"))
+            .andExpect(jsonPath("$.paypalSubscriptionId").value("I-VALIDSUB123"))
+    }
+
+    @Test
+    fun `registerPro with an unverifiable subscription returns 400 and does not touch the free path`() {
+        every { subscriberService.registerPro(any()) } throws
+            SubscriptionVerificationException("PayPal subscription 'I-FAKE' was not found")
+
+        mockMvc.perform(
+            post("/api/v1/subscribers/pro")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(proJson(subscriptionId = "I-FAKE"))
+        ).andExpect(status().isBadRequest)
+
+        verify(exactly = 0) { subscriberService.register(any()) }
+    }
+
+    @Test
+    fun `registerPro when PayPal's API call itself fails returns 502`() {
+        every { subscriberService.registerPro(any()) } throws PayPalApiException("PayPal timed out")
+
+        mockMvc.perform(
+            post("/api/v1/subscribers/pro")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(proJson())
+        ).andExpect(status().isBadGateway)
+    }
+
+    @Test
+    fun `registerPro with a missing subscription id returns 400 and never calls the service`() {
+        mockMvc.perform(
+            post("/api/v1/subscribers/pro")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"email":"pro@example.com","paypalSubscriptionId":""}""")
+        ).andExpect(status().isBadRequest)
+
+        verify(exactly = 0) { subscriberService.registerPro(any()) }
     }
 
     // ---- create profile ----

@@ -5,10 +5,15 @@ import com.tenderpulse.domain.InterestProfile
 import com.tenderpulse.domain.InterestProfileRepository
 import com.tenderpulse.domain.NotFoundException
 import com.tenderpulse.domain.NotificationChannel
+import com.tenderpulse.domain.PayPalApiException
 import com.tenderpulse.domain.Sector
 import com.tenderpulse.domain.Subscriber
 import com.tenderpulse.domain.SubscriberRepository
 import com.tenderpulse.domain.SubscriptionTier
+import com.tenderpulse.domain.SubscriptionVerificationException
+import com.tenderpulse.paypal.PayPalClient
+import com.tenderpulse.paypal.PayPalSubscriberInfo
+import com.tenderpulse.paypal.PayPalSubscriptionResponse
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -31,7 +36,9 @@ class SubscriberServiceTest {
 
     private val subscriberRepository = mockk<SubscriberRepository>()
     private val profileRepository = mockk<InterestProfileRepository>()
-    private val service = SubscriberService(subscriberRepository, profileRepository)
+    private val payPalClient = mockk<PayPalClient>()
+    private val expectedPlanId = "P-EXPECTED-PLAN"
+    private val service = SubscriberService(subscriberRepository, profileRepository, payPalClient, expectedPlanId)
 
     private val subscriberId: UUID = UUID.randomUUID()
     private val subscriber = Subscriber(id = subscriberId, email = "sub@example.com")
@@ -68,6 +75,194 @@ class SubscriberServiceTest {
             service.register(RegisterRequest(email = "sub@example.com"))
         }
         verify(exactly = 0) { subscriberRepository.save(any()) }
+    }
+
+    // ---- registerPro (TP-042) ----
+
+    private fun proRequest(
+        email: String = "pro@example.com",
+        subscriptionId: String = "I-VALIDSUB123"
+    ) = ProSubscribeRequest(email = email, paypalSubscriptionId = subscriptionId)
+
+    private fun paypalSubscription(
+        id: String = "I-VALIDSUB123",
+        status: String = "ACTIVE",
+        planId: String = expectedPlanId,
+        payerEmail: String? = "pro@example.com"
+    ) = PayPalSubscriptionResponse(
+        id = id,
+        status = status,
+        planId = planId,
+        subscriber = payerEmail?.let { PayPalSubscriberInfo(emailAddress = it) }
+    )
+
+    /** Test case 1: valid, active, matching-plan subscription -> subscriber created as PAID. */
+    @Test
+    fun `registerPro creates a new PAID subscriber for a valid active matching-plan subscription`() {
+        every { payPalClient.fetchSubscription("I-VALIDSUB123") } returns paypalSubscription()
+        every { subscriberRepository.findByEmail("pro@example.com") } returns null
+        every { subscriberRepository.findByPaypalSubscriptionId("I-VALIDSUB123") } returns null
+        val saved = slot<Subscriber>()
+        every { subscriberRepository.save(capture(saved)) } answers { saved.captured }
+
+        val result = service.registerPro(proRequest())
+
+        assertEquals("pro@example.com", result.email)
+        assertEquals(SubscriptionTier.PAID, result.tier)
+        assertEquals("I-VALIDSUB123", result.paypalSubscriptionId)
+    }
+
+    /** The payer email match is case-insensitive (PayPal and the request may differ in casing). */
+    @Test
+    fun `registerPro accepts a payer email that differs only in case from the request email`() {
+        every { payPalClient.fetchSubscription("I-VALIDSUB123") } returns
+            paypalSubscription(payerEmail = "Pro@Example.com")
+        every { subscriberRepository.findByEmail("pro@example.com") } returns null
+        every { subscriberRepository.findByPaypalSubscriptionId("I-VALIDSUB123") } returns null
+        every { subscriberRepository.save(any()) } answers { firstArg() }
+
+        val result = service.registerPro(proRequest())
+
+        assertEquals(SubscriptionTier.PAID, result.tier)
+    }
+
+    /** Test case 1 (upgrade variant): an existing FREE subscriber is upgraded in place, not duplicated. */
+    @Test
+    fun `registerPro upgrades an existing FREE subscriber to PAID, preserving their id`() {
+        val freeSubscriber = Subscriber(id = subscriberId, email = "pro@example.com", tier = SubscriptionTier.FREE)
+        every { payPalClient.fetchSubscription("I-VALIDSUB123") } returns paypalSubscription()
+        every { subscriberRepository.findByEmail("pro@example.com") } returns freeSubscriber
+        every { subscriberRepository.findByPaypalSubscriptionId("I-VALIDSUB123") } returns null
+        val saved = slot<Subscriber>()
+        every { subscriberRepository.save(capture(saved)) } answers { saved.captured }
+
+        val result = service.registerPro(proRequest())
+
+        assertEquals(subscriberId, result.id)
+        assertEquals(SubscriptionTier.PAID, result.tier)
+        assertEquals("I-VALIDSUB123", result.paypalSubscriptionId)
+    }
+
+    /** Test case 2: nonexistent subscription id -> rejected, no subscriber change. */
+    @Test
+    fun `registerPro with a nonexistent PayPal subscription id throws and saves nothing`() {
+        every { payPalClient.fetchSubscription("I-FAKE") } returns null
+
+        assertThrows(SubscriptionVerificationException::class.java) {
+            service.registerPro(proRequest(subscriptionId = "I-FAKE"))
+        }
+        verify(exactly = 0) { subscriberRepository.save(any()) }
+    }
+
+    /** Test case 3: subscription exists but for a different plan -> rejected, no subscriber change. */
+    @Test
+    fun `registerPro with a subscription for the wrong plan throws and saves nothing`() {
+        every { payPalClient.fetchSubscription("I-WRONGPLAN") } returns
+            paypalSubscription(id = "I-WRONGPLAN", planId = "P-SOME-OTHER-PRODUCT")
+
+        assertThrows(SubscriptionVerificationException::class.java) {
+            service.registerPro(proRequest(subscriptionId = "I-WRONGPLAN"))
+        }
+        verify(exactly = 0) { subscriberRepository.save(any()) }
+        verify(exactly = 0) { subscriberRepository.findByEmail(any()) }
+    }
+
+    /** Test case 4: subscription exists but is not ACTIVE -> rejected, no subscriber change. */
+    @Test
+    fun `registerPro with a non-ACTIVE subscription throws and saves nothing`() {
+        every { payPalClient.fetchSubscription("I-PENDING") } returns
+            paypalSubscription(id = "I-PENDING", status = "APPROVAL_PENDING")
+
+        assertThrows(SubscriptionVerificationException::class.java) {
+            service.registerPro(proRequest(subscriptionId = "I-PENDING"))
+        }
+        verify(exactly = 0) { subscriberRepository.save(any()) }
+    }
+
+    /** Test case 5: the call to PayPal itself fails -> propagates, no subscriber change. */
+    @Test
+    fun `registerPro propagates a PayPal API failure without saving anything`() {
+        every { payPalClient.fetchSubscription("I-VALIDSUB123") } throws
+            PayPalApiException("PayPal timed out")
+
+        assertThrows(PayPalApiException::class.java) {
+            service.registerPro(proRequest())
+        }
+        verify(exactly = 0) { subscriberRepository.save(any()) }
+    }
+
+    /**
+     * Security fix (post-merge review of #62): an ACTIVE, matching-plan subscription that
+     * belongs to a *different* PayPal payer must still be rejected — otherwise the same genuine
+     * subscription could be replayed against an arbitrary victim email.
+     */
+    @Test
+    fun `registerPro with a subscription whose PayPal payer email does not match the request email is rejected`() {
+        every { payPalClient.fetchSubscription("I-VALIDSUB123") } returns
+            paypalSubscription(payerEmail = "someone-else@example.com")
+
+        val ex = assertThrows(SubscriptionVerificationException::class.java) {
+            service.registerPro(proRequest(email = "pro@example.com"))
+        }
+        assertTrue(ex.message!!.contains("pro@example.com"))
+        verify(exactly = 0) { subscriberRepository.save(any()) }
+        verify(exactly = 0) { subscriberRepository.findByEmail(any()) }
+    }
+
+    /** A subscription with no payer email at all on PayPal's response is also rejected, not assumed to match. */
+    @Test
+    fun `registerPro with no payer email on the PayPal subscription is rejected`() {
+        every { payPalClient.fetchSubscription("I-VALIDSUB123") } returns paypalSubscription(payerEmail = null)
+
+        assertThrows(SubscriptionVerificationException::class.java) {
+            service.registerPro(proRequest())
+        }
+        verify(exactly = 0) { subscriberRepository.save(any()) }
+    }
+
+    /**
+     * Security fix (post-merge review of #62): the same PayPal subscription ID cannot be used to
+     * upgrade a second, different subscriber — one real payment must not mint unlimited Pro
+     * accounts across different emails. (The payer-email check alone wouldn't catch this if
+     * PayPal ever returned a shared/aliased payer email, so this is an independent check.)
+     */
+    @Test
+    fun `registerPro rejects reusing a PayPal subscription id already linked to a different subscriber`() {
+        val firstSubscriber = Subscriber(
+            id = UUID.randomUUID(),
+            email = "first@example.com",
+            tier = SubscriptionTier.PAID,
+            paypalSubscriptionId = "I-VALIDSUB123"
+        )
+        every { payPalClient.fetchSubscription("I-VALIDSUB123") } returns
+            paypalSubscription(payerEmail = "second@example.com")
+        every { subscriberRepository.findByEmail("second@example.com") } returns null
+        every { subscriberRepository.findByPaypalSubscriptionId("I-VALIDSUB123") } returns firstSubscriber
+
+        assertThrows(SubscriptionVerificationException::class.java) {
+            service.registerPro(proRequest(email = "second@example.com"))
+        }
+        verify(exactly = 0) { subscriberRepository.save(any()) }
+    }
+
+    /** The same subscriber re-submitting their own already-linked subscription id is allowed (idempotent). */
+    @Test
+    fun `registerPro allows the same subscriber to resubmit their own already-linked subscription id`() {
+        val existingPaid = Subscriber(
+            id = subscriberId,
+            email = "pro@example.com",
+            tier = SubscriptionTier.PAID,
+            paypalSubscriptionId = "I-VALIDSUB123"
+        )
+        every { payPalClient.fetchSubscription("I-VALIDSUB123") } returns paypalSubscription()
+        every { subscriberRepository.findByEmail("pro@example.com") } returns existingPaid
+        every { subscriberRepository.findByPaypalSubscriptionId("I-VALIDSUB123") } returns existingPaid
+        every { subscriberRepository.save(any()) } answers { firstArg() }
+
+        val result = service.registerPro(proRequest())
+
+        assertEquals(subscriberId, result.id)
+        assertEquals(SubscriptionTier.PAID, result.tier)
     }
 
     // ---- createProfile ----

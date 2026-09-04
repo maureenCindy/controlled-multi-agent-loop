@@ -11,6 +11,7 @@ import com.tenderpulse.domain.Sector
 import com.tenderpulse.domain.Tender
 import com.tenderpulse.domain.TenderRepository
 import com.tenderpulse.subscriber.InterestProfileResponse
+import com.tenderpulse.subscriber.ProSubscribeRequest
 import com.tenderpulse.subscriber.ProfileRequest
 import com.tenderpulse.subscriber.RegisterRequest
 import com.tenderpulse.subscriber.SubscriberResponse
@@ -57,6 +58,20 @@ class SubscriberController(
     @ResponseStatus(HttpStatus.CREATED)
     fun register(@Valid @RequestBody req: RegisterRequest): SubscriberResponse =
         SubscriberResponse.from(subscriberService.register(req))
+
+    /**
+     * PayPal-verified Pro (PAID tier) signup (TP-042). Creates or upgrades the subscriber to
+     * PAID only after [SubscriberService.registerPro] has independently confirmed the given
+     * PayPal subscription ID with PayPal's API (active, matching plan) — a 200 rather than 201
+     * because this may upgrade an existing FREE subscriber in place rather than create a new one.
+     * Verification failures (not found / wrong plan / not active) surface as 400 via
+     * [com.tenderpulse.domain.SubscriptionVerificationException]; a failed call to PayPal itself
+     * surfaces as 502 via [com.tenderpulse.domain.PayPalApiException] — both mapped by their
+     * `@ResponseStatus` annotation, same as every other domain exception in this API.
+     */
+    @PostMapping("/pro")
+    fun registerPro(@Valid @RequestBody req: ProSubscribeRequest): SubscriberResponse =
+        SubscriberResponse.from(subscriberService.registerPro(req))
 
     @PostMapping("/{id}/profiles")
     @ResponseStatus(HttpStatus.CREATED)
