@@ -120,13 +120,13 @@ fun readReportInstructionCounter(reportFile: File): Pair<Long, Long>? {
 }
 
 // Minimum instruction coverage the build enforces. Override on the command line or in CI with
-// -PminCoverage=0.80.
+// -PminCoverage=<value> if it ever needs to move — if you do, update the CI step label in
+// .github/workflows/ci.yml ("Verify code coverage threshold (≥N%)") to match the new number so
+// the label never drifts from what's actually enforced again (see TP-028).
 //
-// This is a ratchet set just under the current measured figure (57%), not the project target.
-// The target remains 80%; the notification and api packages are currently at 0% because the
-// features they hold are still unbuilt (TP-010, TP-012). Raise this number as those land — it
-// exists to stop coverage sliding backwards, not to certify that 80% has been reached.
-val minCoverage: String by extra((findProperty("minCoverage") as String?) ?: "0.55")
+// Set to the 80% project target (TP-028): measured coverage is ~93% as of this change, well
+// above the floor, so this enforces the real target rather than a lower ratchet.
+val minCoverage: String by extra((findProperty("minCoverage") as String?) ?: "0.80")
 
 tasks.jacocoTestCoverageVerification {
     dependsOn(tasks.jacocoTestReport)
