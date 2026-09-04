@@ -151,16 +151,24 @@ class AdminController(
      * explicit check is the only way to *guarantee* [adminService] /
      * [com.tenderpulse.paypal.PayPalClient] are never reached with a malformed value.
      *
-     * This check is the layer of defense for a `planId` that reaches this method at all — e.g.
-     * `P-FAKE..EVIL` (a `..` substring within a single path segment, which Spring MVC routes here
-     * normally). It is *not* the only thing standing between a raw `/` or `?` and this method: the
-     * default path variable here only ever binds a single URL path segment (a route regex such as
-     * `{planId:.+}` does **not** make Spring's `PathPatternParser` span raw `/` characters across
-     * segments — see [com.tenderpulse.api.AdminPlanIdValidationIntegrationTest]'s kdoc for the
-     * verified layer-by-layer breakdown), and a percent-encoded `%2F`/`%3F` payload is rejected
-     * even earlier, by [com.tenderpulse.auth.SecurityConfig]'s default `StrictHttpFirewall`,
-     * before `DispatcherServlet` resolves a handler at all — pre-existing protection this PR
-     * doesn't add or depend on.
+     * This check is what actually rejects most of issue #68's malicious `planId` shapes, since
+     * they normally *do* reach this method: `P-FAKE..EVIL` (a `..` substring within one path
+     * segment) and `P-FAKE%3FEVIL` (a genuinely single-encoded `?`) both route here like any other
+     * value and are rejected by this check — [com.tenderpulse.api.AdminPlanIdValidationIntegrationTest]
+     * verifies both empirically (via `resolvedException`, not just an HTTP status), against a
+     * request built with raw `URI` construction so the payload isn't silently re-encoded before
+     * being sent.
+     *
+     * The one case *not* covered by this check reaching this method: a genuinely single-encoded
+     * `%2F` (raw `/`) is rejected earlier, by [com.tenderpulse.auth.SecurityConfig]'s default
+     * `StrictHttpFirewall`, before `DispatcherServlet` resolves a handler at all — pre-existing
+     * platform behavior this PR doesn't add or depend on. That firewall blocklist is *not* pinned
+     * or tested anywhere in this repo (see [com.tenderpulse.api.AdminPlanIdValidationIntegrationTest]'s
+     * kdoc); it was verified once, directly against this project's pinned Spring Security 6.4.2, as
+     * of this PR. If it were ever reconfigured or changed upstream, this method's own regex would
+     * still independently reject a `/` too (it's not in `PLAN_ID_PATTERN`'s allowed set), so that
+     * drift wouldn't reopen the original vulnerability — it would just mean the rejection happens
+     * one layer later than it does today.
      */
     @PostMapping("/plans/{planId}/pricing")
     fun updatePlanPricing(
@@ -177,8 +185,10 @@ class AdminController(
 
     companion object {
         /** PayPal plan IDs are alphanumeric, conventionally `P-`-prefixed; this also rejects any
-         * character disallowed in that shape (e.g. `.`) that reaches this method within a single
-         * path segment (issue #68). */
+         * character disallowed in that shape (e.g. `.`, `?`, `/`) that reaches this method within
+         * a single path segment (issue #68) — in practice this is what catches `..` and a raw `?`,
+         * since only a raw `/` is intercepted earlier, by the platform's `StrictHttpFirewall` (see
+         * this class's `updatePlanPricing` kdoc). */
         private val PLAN_ID_PATTERN = Regex("^[A-Za-z0-9-]+$")
     }
 }
