@@ -225,8 +225,17 @@ class AlertContentTest {
         assertTrue(body.contains(unsubscribeLink), "should include the unsubscribe link")
     }
 
+    /**
+     * TP-083: EmailNotificationSender is a log-only scaffold — it never sends a real email, so it
+     * must not call UnsubscribeService.buildUnsubscribeLink(...) either. That method is
+     * @Transactional and mints + persists a real, non-expiring UnsubscribeToken row per call (see
+     * UnsubscribeService.buildUnsubscribeLink), so calling it here and discarding the result would
+     * silently accumulate one orphaned DB row per notification cycle for as long as this stays a
+     * scaffold. The real mail sender (TP-013) should call it itself once it actually builds and
+     * sends the email body.
+     */
     @Test
-    fun `EmailNotificationSender send succeeds and content includes attribution and link`() {
+    fun `EmailNotificationSender send succeeds without minting an unsubscribe token`() {
         val unsubscribeService = mockk<com.tenderpulse.auth.UnsubscribeService>()
         val t = Tender(
             title = "IT equipment supply",
@@ -236,15 +245,13 @@ class AlertContentTest {
         )
         val sub = Subscriber(email = "biz@example.co.zw")
         val prof = InterestProfile(subscriber = sub)
-        every { unsubscribeService.buildUnsubscribeLink(sub) } returns
-            "https://api.tenderpulse.example/api/v1/unsubscribe?token=raw-unsub-token"
 
         val sender = EmailNotificationSender(unsubscribeService)
         val result = sender.send(sub, t, prof)
 
         assertTrue(result.success)
         assertNull(result.error)
-        verify(exactly = 1) { unsubscribeService.buildUnsubscribeLink(sub) }
+        verify(exactly = 0) { unsubscribeService.buildUnsubscribeLink(any()) }
     }
 
     /**
@@ -265,9 +272,10 @@ class AlertContentTest {
         )
         val sub = Subscriber(email = "watcher@example.co.zw")
         val prof = InterestProfile(subscriber = sub)
-        val rawToken = "super-secret-unsub-token"
-        every { unsubscribeService.buildUnsubscribeLink(sub) } returns
-            "https://api.tenderpulse.example/api/v1/unsubscribe?token=$rawToken"
+        // Deliberately no stub for unsubscribeService.buildUnsubscribeLink(...): send() must not
+        // call it at all (see the "without minting an unsubscribe token" test above), so an
+        // unstubbed mockk call here would fail the test outright if that regressed.
+        val rawToken = "super-secret-unsub-token-that-would-be-embedded-if-a-link-were-built"
 
         val logger = LoggerFactory.getLogger(EmailNotificationSender::class.java) as Logger
         val appender = ListAppender<ILoggingEvent>()
@@ -291,5 +299,6 @@ class AlertContentTest {
             messages.any { it.contains(t.id.toString()) && it.contains(sub.id.toString()) },
             "log line should still identify which tender/subscriber the alert was for"
         )
+        verify(exactly = 0) { unsubscribeService.buildUnsubscribeLink(any()) }
     }
 }
