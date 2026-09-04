@@ -46,6 +46,13 @@ tenderpulse:
     scheduled-enabled: false
     scheduled-initial-delay-ms: 0
     scheduled-interval-ms: 10800000  # 3 hours
+  # TP-044: shared admin-key secret guarding every /api/v1/admin/** route (see
+  # com.tenderpulse.auth.AdminKeyAuthFilter / SecurityConfig) — loaded from an env var only, never
+  # committed. No fallback value on purpose: an unset TENDERPULSE_ADMIN_KEY leaves this blank, and
+  # AdminKeyAuthFilter always rejects a blank configured key, so the admin API fails closed rather
+  # than booting with a guessable/known default.
+  admin:
+    key: ${TENDERPULSE_ADMIN_KEY:}
   auth:
     # TP-038: HMAC key signing the stateless bearer access token issued after magic-link verify.
     # MUST be overridden (TENDERPULSE_AUTH_SECRET) in any real deployment; the fallback below is

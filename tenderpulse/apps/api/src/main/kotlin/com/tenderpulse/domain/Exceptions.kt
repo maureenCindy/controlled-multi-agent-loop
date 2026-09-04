@@ -35,3 +35,13 @@ class SubscriptionVerificationException(message: String) : RuntimeException(mess
  */
 @ResponseStatus(HttpStatus.BAD_GATEWAY)
 class PayPalApiException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
+
+/**
+ * PayPal rejected an admin plan-pricing update (TP-044) — covers both "no such plan" and
+ * "invalid pricing scheme for that plan" alike, since in both cases PayPal answered but the
+ * *request* (plan ID / pricing values) is what's invalid, not a server-side failure. Maps to 400,
+ * same rationale as [SubscriptionVerificationException]; distinct from [PayPalApiException],
+ * which means the call to PayPal itself failed rather than PayPal validating and rejecting it.
+ */
+@ResponseStatus(HttpStatus.BAD_REQUEST)
+class PayPalPlanPricingException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)

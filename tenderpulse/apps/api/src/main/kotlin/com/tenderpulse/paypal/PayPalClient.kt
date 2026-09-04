@@ -2,6 +2,7 @@ package com.tenderpulse.paypal
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.tenderpulse.domain.PayPalApiException
+import com.tenderpulse.domain.PayPalPlanPricingException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
@@ -11,6 +12,7 @@ import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClientException
 import org.springframework.web.client.RestTemplate
+import java.math.BigDecimal
 import java.time.Instant
 
 /**
@@ -63,6 +65,59 @@ class PayPalClient(
         } catch (e: RestClientException) {
             log.error("PayPal subscription lookup failed for {}: {}", subscriptionId, e.message)
             throw PayPalApiException("Failed to verify PayPal subscription: ${e.message}", e)
+        }
+    }
+
+    /**
+     * Updates a PayPal Plan's pricing scheme (TP-044 admin override) via PayPal's
+     * `POST /v1/billing/plans/{plan_id}/update-pricing-schemes`, reusing the same cached OAuth2
+     * token as [fetchSubscription] rather than duplicating that logic.
+     *
+     * PayPal responds `204 No Content` on success (nothing to return); a non-existent plan ID or
+     * an invalid pricing scheme both come back as a PayPal 4xx (404 / 422 respectively) — both
+     * are surfaced uniformly as [PayPalPlanPricingException] (400) since, in both cases, PayPal
+     * itself answered and rejected the *request*, unlike [PayPalApiException] (network error,
+     * timeout, or a PayPal-side 5xx).
+     *
+     * @throws PayPalPlanPricingException if PayPal rejects the plan ID or pricing scheme (4xx)
+     * @throws PayPalApiException if the call to PayPal itself fails (network error, timeout, 5xx)
+     */
+    fun updatePlanPricing(
+        planId: String,
+        currencyCode: String,
+        fixedPrice: BigDecimal,
+        billingCycleSequence: Int = 1
+    ) {
+        val headers = HttpHeaders().apply {
+            setBearerAuth(accessToken())
+            contentType = MediaType.APPLICATION_JSON
+        }
+        val body = UpdatePricingSchemesRequest(
+            pricingSchemes = listOf(
+                PricingSchemeUpdate(
+                    billingCycleSequence = billingCycleSequence,
+                    pricingScheme = PricingScheme(
+                        fixedPrice = FixedPrice(value = fixedPrice.toPlainString(), currencyCode = currencyCode)
+                    )
+                )
+            )
+        )
+        try {
+            restTemplate.exchange(
+                "$baseUrl/v1/billing/plans/$planId/update-pricing-schemes",
+                HttpMethod.POST,
+                HttpEntity(body, headers),
+                Void::class.java
+            )
+        } catch (e: HttpClientErrorException) {
+            log.error("PayPal rejected pricing update for plan {}: {} {}", planId, e.statusCode, e.message)
+            throw PayPalPlanPricingException(
+                "PayPal rejected the pricing update for plan '$planId' (${e.statusCode}): ${e.message}",
+                e
+            )
+        } catch (e: RestClientException) {
+            log.error("PayPal plan pricing update failed for {}: {}", planId, e.message)
+            throw PayPalApiException("Failed to update PayPal plan pricing: ${e.message}", e)
         }
     }
 
@@ -133,4 +188,23 @@ data class PayPalSubscriptionResponse(
 /** The `subscriber` object nested in [PayPalSubscriptionResponse] — the PayPal payer's own details. */
 data class PayPalSubscriberInfo(
     @JsonProperty("email_address") val emailAddress: String? = null
+)
+
+/** Request body of `POST /v1/billing/plans/{plan_id}/update-pricing-schemes` (TP-044). */
+data class UpdatePricingSchemesRequest(
+    @JsonProperty("pricing_schemes") val pricingSchemes: List<PricingSchemeUpdate>
+)
+
+data class PricingSchemeUpdate(
+    @JsonProperty("billing_cycle_sequence") val billingCycleSequence: Int,
+    @JsonProperty("pricing_scheme") val pricingScheme: PricingScheme
+)
+
+data class PricingScheme(
+    @JsonProperty("fixed_price") val fixedPrice: FixedPrice
+)
+
+data class FixedPrice(
+    val value: String,
+    @JsonProperty("currency_code") val currencyCode: String
 )
