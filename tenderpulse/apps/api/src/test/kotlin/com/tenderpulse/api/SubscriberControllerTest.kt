@@ -223,6 +223,51 @@ class SubscriberControllerTest {
         verify(exactly = 0) { subscriberService.registerPro(any()) }
     }
 
+    /**
+     * Issue #81, test case 2: a `paypalSubscriptionId` containing `/` is rejected (400) before
+     * [SubscriberService] (and therefore [com.tenderpulse.paypal.PayPalClient.fetchSubscription])
+     * is ever reached. Unlike issue #68's `planId` path variable, `paypalSubscriptionId` is a
+     * `@RequestBody` field here — it never touches the request URL at all, so there is no
+     * `StrictHttpFirewall` question to empirically resolve the way #68's PR required: the value is
+     * plain JSON body text, and [com.tenderpulse.subscriber.ProSubscribeRequest]'s `@field:Pattern`
+     * (validated by the standalone MockMvc setup's default `@Valid` wiring, same as the
+     * `register with an invalid email` test above) is the only thing that can reject it, and does.
+     */
+    @Test
+    fun `registerPro with a subscription id containing a slash returns 400 and never calls the service`() {
+        mockMvc.perform(
+            post("/api/v1/subscribers/pro")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(proJson(subscriptionId = "I-VALID/../admin-only"))
+        ).andExpect(status().isBadRequest)
+
+        verify(exactly = 0) { subscriberService.registerPro(any()) }
+    }
+
+    /** Issue #81, test case 3: a `paypalSubscriptionId` containing `..` is rejected (400). */
+    @Test
+    fun `registerPro with a subscription id containing dot-dot returns 400 and never calls the service`() {
+        mockMvc.perform(
+            post("/api/v1/subscribers/pro")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(proJson(subscriptionId = "I-VALID..EVIL"))
+        ).andExpect(status().isBadRequest)
+
+        verify(exactly = 0) { subscriberService.registerPro(any()) }
+    }
+
+    /** Issue #81, test case 4: a `paypalSubscriptionId` containing `?` is rejected (400). */
+    @Test
+    fun `registerPro with a subscription id containing a question mark returns 400 and never calls the service`() {
+        mockMvc.perform(
+            post("/api/v1/subscribers/pro")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(proJson(subscriptionId = "I-VALID?evil=true"))
+        ).andExpect(status().isBadRequest)
+
+        verify(exactly = 0) { subscriberService.registerPro(any()) }
+    }
+
     // ---- create profile ----
 
     @Test
