@@ -41,9 +41,15 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
       <!--
         Pro tier: a real PayPal Subscription button (PayPal JS SDK, vault=true&intent=subscription).
-        onApprove sends the resulting subscription ID to POST /api/v1/subscribers/pro, which
-        independently verifies it against PayPal's API before upgrading anyone to PAID — the tier
-        is never trusted from this page directly. See src/lib/paypal.ts.
+        The button's onClick handler validates the email field FIRST and calls actions.reject()
+        if it's invalid/empty — this blocks PayPal's checkout popup from opening at all, so an
+        invalid email can never result in a real, ACTIVE PayPal subscription with nothing on our
+        side to attach it to (there's no <form>/required-driven native blocking here on purpose;
+        `required` on #pro-email would not stop the PayPal button, which isn't a submit input).
+        Once checkout is approved, onApprove sends the resulting subscription ID to
+        POST /api/v1/subscribers/pro, which independently verifies it against PayPal's API before
+        upgrading anyone to PAID — the tier is never trusted from this page directly. See
+        src/lib/paypal.ts (renderPayPalSubscribeButton) for both of these.
 
         Known limitation (deliberate MVP trade-off, tracked, not silently accepted as solved):
         there is no webhook listener yet, so a later PayPal-side cancellation or failed renewal

@@ -73,6 +73,49 @@ describe("renderPayPalSubscribeButton", () => {
     expect(render).toHaveBeenCalledWith("#paypal-button-container");
   });
 
+  it("onClick blocks checkout (actions.reject, never actions.resolve) when the email is invalid, before any PayPal interaction", () => {
+    const { Buttons } = fakeSdk();
+    const submitPro = vi.fn();
+
+    renderPayPalSubscribeButton(
+      { Buttons },
+      "#c",
+      "PLAN-1",
+      () => {
+        throw new Error("Enter a valid email address before subscribing.");
+      },
+      { onSuccess: vi.fn(), onError: vi.fn() },
+      submitPro
+    );
+
+    const config = Buttons.mock.calls[0][0];
+    const reject = vi.fn();
+    const resolve = vi.fn();
+    config.onClick(undefined, { reject, resolve });
+
+    expect(reject).toHaveBeenCalledTimes(1);
+    expect(resolve).not.toHaveBeenCalled();
+    // No PayPal checkout/approval interaction should have happened at all yet.
+    expect(submitPro).not.toHaveBeenCalled();
+  });
+
+  it("onClick allows checkout (actions.resolve) when the email is valid", () => {
+    const { Buttons } = fakeSdk();
+
+    renderPayPalSubscribeButton({ Buttons }, "#c", "PLAN-1", () => "valid@example.com", {
+      onSuccess: vi.fn(),
+      onError: vi.fn(),
+    });
+
+    const config = Buttons.mock.calls[0][0];
+    const reject = vi.fn();
+    const resolve = vi.fn();
+    config.onClick(undefined, { reject, resolve });
+
+    expect(resolve).toHaveBeenCalledTimes(1);
+    expect(reject).not.toHaveBeenCalled();
+  });
+
   it("createSubscription creates a PayPal subscription against the configured plan id", () => {
     const { Buttons } = fakeSdk();
 
