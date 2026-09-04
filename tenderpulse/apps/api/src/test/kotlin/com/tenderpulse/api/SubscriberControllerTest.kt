@@ -17,6 +17,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.MediaType
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
 import org.springframework.test.web.servlet.MockMvc
@@ -37,7 +38,9 @@ import java.util.UUID
  * [com.tenderpulse.subscriber.SubscriberServiceTest]). The request body is validated by the
  * default standalone validator (registered automatically by
  * [MockMvcBuilders.standaloneSetup]), which exercises the same `@Valid` / `@ResponseStatus`
- * wiring the real application uses.
+ * wiring the real application uses. [GlobalExceptionHandler] (#64) is registered explicitly via
+ * `setControllerAdvice`, since standalone setup does not pick up `@RestControllerAdvice` beans
+ * from a Spring context the way `@SpringBootTest`/`@WebMvcTest` would.
  */
 class SubscriberControllerTest {
 
@@ -52,6 +55,7 @@ class SubscriberControllerTest {
     fun setUp() {
         val controller = SubscriberController(subscriberService)
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
+            .setControllerAdvice(GlobalExceptionHandler())
             .setMessageConverters(MappingJackson2HttpMessageConverter(objectMapper))
             .build()
     }
@@ -103,6 +107,29 @@ class SubscriberControllerTest {
         ).andExpect(status().isConflict)
     }
 
+    /**
+     * #64, test case 1/2: the *losing* side of a register() TOCTOU race — both concurrent
+     * requests pass the app-level `findByEmail` check, so the DB's unique constraint (not
+     * [ConflictException]) is what rejects the second save, surfacing as a raw
+     * [DataIntegrityViolationException] out of the service. [GlobalExceptionHandler] must map
+     * that to the same clean 409 the "normal" duplicate-email path gets, with a structured body
+     * and no stack trace.
+     */
+    @Test
+    fun `register racing on a duplicate email at the DB level returns 409 with a structured body, not 500`() {
+        every { subscriberService.register(any()) } throws
+            DataIntegrityViolationException("could not execute statement; constraint [uk_subscribers_email]")
+
+        mockMvc.perform(
+            post("/api/v1/subscribers")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"email":"sub@example.com"}""")
+        )
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.error").value("conflict"))
+            .andExpect(jsonPath("$.message").exists())
+    }
+
     @Test
     fun `register with an invalid email returns 400`() {
         mockMvc.perform(
@@ -150,6 +177,28 @@ class SubscriberControllerTest {
         ).andExpect(status().isBadRequest)
 
         verify(exactly = 0) { subscriberService.register(any()) }
+    }
+
+    /**
+     * #64, test case 2: the losing side of a `registerPro()` TOCTOU race on
+     * `paypalSubscriptionId` — see the equivalent email-uniqueness test above for the full
+     * rationale; [SubscriberServiceConcurrencyTest] exercises the real race against the
+     * database, this test just proves the controller/handler wiring maps the resulting
+     * exception to 409 rather than an unhandled 500.
+     */
+    @Test
+    fun `registerPro racing on a duplicate paypalSubscriptionId at the DB level returns 409, not 500`() {
+        every { subscriberService.registerPro(any()) } throws
+            DataIntegrityViolationException("could not execute statement; constraint [uk_subscribers_paypal_subscription_id]")
+
+        mockMvc.perform(
+            post("/api/v1/subscribers/pro")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(proJson())
+        )
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.error").value("conflict"))
+            .andExpect(jsonPath("$.message").exists())
     }
 
     @Test
