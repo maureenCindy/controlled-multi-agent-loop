@@ -182,3 +182,33 @@ data class DigestQueueEntry(
 
     val digestedAt: Instant? = null
 )
+
+/**
+ * TP-056 (issue #56): channel-agnostic tracking record proving "was a deadline reminder already
+ * sent for this (subscriber, tender) pair" — independent of whether the reminder ultimately went
+ * out as an immediate Paid-tier email ([com.tenderpulse.notification.EmailNotificationSender]) or
+ * a queued Free-tier [DigestQueueEntry]. A unique constraint on (subscriber, tender) is the
+ * actual enforcement mechanism for "no duplicate reminder across multiple job runs" — the
+ * application-level existence check in
+ * [com.tenderpulse.notification.ReminderService.runReminderCycle] is what makes that guarantee
+ * observable/testable without relying solely on a DB constraint violation.
+ */
+@Entity
+@Table(
+    name = "deadline_reminder_records",
+    uniqueConstraints = [UniqueConstraint(columnNames = ["subscriber_id", "tender_id"])]
+)
+data class DeadlineReminderRecord(
+    @Id
+    val id: UUID = UUID.randomUUID(),
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subscriber_id", nullable = false)
+    val subscriber: Subscriber,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tender_id", nullable = false)
+    val tender: Tender,
+
+    val sentAt: Instant = Instant.now()
+)

@@ -58,6 +58,12 @@ tenderpulse:
     scheduled-enabled: false
     scheduled-initial-delay-ms: 0
     scheduled-interval-ms: 86400000  # 24 hours
+  # TP-056: deadline-reminder job — disabled by default, same pattern as aggregation/digest above.
+  reminder:
+    scheduled-enabled: false
+    scheduled-initial-delay-ms: 0
+    scheduled-interval-ms: 86400000  # 24 hours
+    window-days: 3
   # TP-044: fixed test-only value so full-context tests (e.g. AdminApiIntegrationTest) can send a
   # known-good X-Admin-Key without depending on any real env var — never used outside test runs.
   admin:

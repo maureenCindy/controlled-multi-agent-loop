@@ -52,6 +52,15 @@ tenderpulse:
     scheduled-enabled: false
     scheduled-initial-delay-ms: 0
     scheduled-interval-ms: 86400000  # 24 hours
+  # TP-056: deadline-reminder job (com.tenderpulse.notification.ReminderService), disabled by
+  # default same as the aggregation/digest jobs above — enable explicitly in a real deployment.
+  # window-days: how close a tender's deadline must be (from now) to trigger a reminder for
+  # subscribers already notified of that tender's original match.
+  reminder:
+    scheduled-enabled: false
+    scheduled-initial-delay-ms: 0
+    scheduled-interval-ms: 86400000  # 24 hours
+    window-days: 3
   # TP-044: shared admin-key secret guarding every /api/v1/admin/** route (see
   # com.tenderpulse.auth.AdminKeyAuthFilter / SecurityConfig) — loaded from an env var only, never
   # committed. No fallback value on purpose: an unset TENDERPULSE_ADMIN_KEY leaves this blank, and
