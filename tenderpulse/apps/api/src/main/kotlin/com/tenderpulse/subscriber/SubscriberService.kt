@@ -8,11 +8,15 @@ import com.tenderpulse.domain.NotificationChannel
 import com.tenderpulse.domain.Subscriber
 import com.tenderpulse.domain.SubscriberRepository
 import com.tenderpulse.domain.SubscriptionTier
+import com.tenderpulse.domain.SubscriptionVerificationException
+import com.tenderpulse.paypal.PayPalClient
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.UUID
 
 /**
- * Business logic for subscriber registration and interest-profile management (TP-037).
+ * Business logic for subscriber registration and interest-profile management (TP-037), including
+ * PayPal-verified Pro (PAID tier) signup (TP-042).
  *
  * Owns every repository call this domain needs; [com.tenderpulse.api.SubscriberController]
  * only validates input, delegates here, and maps the returned entity to a response DTO.
@@ -20,7 +24,10 @@ import java.util.UUID
 @Service
 class SubscriberService(
     private val subscriberRepository: SubscriberRepository,
-    private val profileRepository: InterestProfileRepository
+    private val profileRepository: InterestProfileRepository,
+    private val payPalClient: PayPalClient,
+    @Value("\${paypal.plan-id:}")
+    private val expectedPlanId: String
 ) {
 
     fun register(req: RegisterRequest): Subscriber {
@@ -29,6 +36,51 @@ class SubscriberService(
         return subscriberRepository.save(
             Subscriber(email = req.email, phone = req.phone, tier = req.tier ?: SubscriptionTier.FREE)
         )
+    }
+
+    /**
+     * Verifies a PayPal subscription server-side (TP-042) and, only on success, creates or
+     * upgrades the matching [Subscriber] to `tier = PAID`, storing the PayPal subscription ID.
+     *
+     * The client's claim that checkout succeeded is never trusted directly: this fetches the
+     * subscription from PayPal by ID and confirms both that its `status` is `ACTIVE` and that its
+     * `plan_id` matches the configured expected plan — a fabricated or unrelated subscription ID
+     * (e.g. for a different PayPal product) is rejected the same way a non-existent one is.
+     *
+     * An existing FREE subscriber with this email is upgraded in place (their [Subscriber.id] is
+     * preserved); a first-time Pro signup creates a new subscriber.
+     *
+     * @throws SubscriptionVerificationException if the subscription doesn't exist, is for the
+     *   wrong plan, or isn't ACTIVE — no subscriber is created or changed in any of those cases.
+     * @throws com.tenderpulse.domain.PayPalApiException if the call to PayPal itself fails.
+     */
+    fun registerPro(req: ProSubscribeRequest): Subscriber {
+        val subscription = payPalClient.fetchSubscription(req.paypalSubscriptionId)
+            ?: throw SubscriptionVerificationException(
+                "PayPal subscription '${req.paypalSubscriptionId}' was not found"
+            )
+
+        if (subscription.planId != expectedPlanId) {
+            throw SubscriptionVerificationException(
+                "PayPal subscription '${req.paypalSubscriptionId}' is not for the expected plan"
+            )
+        }
+        if (subscription.status != "ACTIVE") {
+            throw SubscriptionVerificationException(
+                "PayPal subscription '${req.paypalSubscriptionId}' is not active (status: ${subscription.status})"
+            )
+        }
+
+        val existing = subscriberRepository.findByEmail(req.email)
+        val toSave = existing?.copy(
+            tier = SubscriptionTier.PAID,
+            paypalSubscriptionId = req.paypalSubscriptionId
+        ) ?: Subscriber(
+            email = req.email,
+            tier = SubscriptionTier.PAID,
+            paypalSubscriptionId = req.paypalSubscriptionId
+        )
+        return subscriberRepository.save(toSave)
     }
 
     fun createProfile(subscriberId: UUID, req: ProfileRequest): InterestProfile {

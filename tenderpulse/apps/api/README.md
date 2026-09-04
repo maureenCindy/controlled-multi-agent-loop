@@ -101,9 +101,34 @@ docker-compose service, so `./gradlew test` keeps working without Docker.
 |--------|------|-------------|
 | GET | `/api/v1/tenders` | List tenders (optional `?sector=IT`) |
 | GET | `/api/v1/tenders/{id}` | Get one tender |
-| POST | `/api/v1/subscribers` | Register subscriber |
+| POST | `/api/v1/subscribers` | Register subscriber (FREE tier by default) |
+| POST | `/api/v1/subscribers/pro` | PayPal-verified Pro signup — see below (TP-042) |
 | POST | `/api/v1/subscribers/{id}/profiles` | Create interest profile |
 | POST | `/api/v1/admin/aggregate` | Run one aggregation cycle |
+
+### Pro (PAID tier) signup — PayPal subscription verification (TP-042)
+
+`POST /api/v1/subscribers/pro` accepts `{ "email": "...", "paypalSubscriptionId": "..." }` — the
+subscription ID PayPal's frontend SDK returns to the `onApprove` callback after checkout. The
+backend never trusts that callback directly: it calls PayPal's REST API server-to-server
+(`GET /v1/billing/subscriptions/{id}`, authenticated via a cached `POST /v1/oauth2/token`
+client-credentials token) and only creates/upgrades the `Subscriber` to `tier = PAID` — storing
+the subscription ID on the record — if PayPal confirms the subscription is `ACTIVE` **and** its
+`plan_id` matches the configured `PAYPAL_PLAN_ID`. A subscription that doesn't exist, is for a
+different plan, or isn't `ACTIVE` is rejected with `400`; a failed/timed-out call to PayPal itself
+returns `502` and never creates or changes a subscriber (no partial state).
+
+Required environment variables (see `.env.example`, never committed with real values):
+
+| Env var | Purpose | Local default |
+| ------- | ------- | -------------- |
+| `PAYPAL_BASE_URL` | `https://api-m.sandbox.paypal.com` (sandbox) or `https://api-m.paypal.com` (live) | sandbox URL |
+| `PAYPAL_CLIENT_ID` | PayPal Developer app Client ID | *(none — must be set to call PayPal)* |
+| `PAYPAL_CLIENT_SECRET` | PayPal Developer app Secret | *(none — must be set to call PayPal)* |
+| `PAYPAL_PLAN_ID` | The recurring Plan ID Pro subscriptions must match | *(none — must be set)* |
+
+Out of scope for TP-042 (tracked separately): the webhook listener for later
+cancellations/failed renewals, refunds, and plan changes/downgrades after initial signup.
 
 ## Tests
 

@@ -18,6 +18,17 @@ data class RegisterRequest(
     val tier: SubscriptionTier? = null
 )
 
+/**
+ * Request body for `POST /api/v1/subscribers/pro` (TP-042) — the PayPal subscription ID is the
+ * one returned to the frontend by PayPal's `onApprove` callback after checkout. It is never
+ * trusted directly: [com.tenderpulse.subscriber.SubscriberService.registerPro] verifies it
+ * server-side against PayPal's API before any tier upgrade happens.
+ */
+data class ProSubscribeRequest(
+    @field:Email @field:NotBlank val email: String,
+    @field:NotBlank val paypalSubscriptionId: String
+)
+
 data class ProfileRequest(
     val sectors: Set<Sector> = emptySet(),
     val valueMin: BigDecimal? = null,
@@ -54,7 +65,8 @@ data class SubscriberResponse(
     val phone: String?,
     val tier: SubscriptionTier,
     val active: Boolean,
-    val createdAt: Instant
+    val createdAt: Instant,
+    val paypalSubscriptionId: String? = null
 ) {
     companion object {
         fun from(subscriber: Subscriber): SubscriberResponse = SubscriberResponse(
@@ -63,7 +75,8 @@ data class SubscriberResponse(
             phone = subscriber.phone,
             tier = subscriber.tier,
             active = subscriber.active,
-            createdAt = subscriber.createdAt
+            createdAt = subscriber.createdAt,
+            paypalSubscriptionId = subscriber.paypalSubscriptionId
         )
     }
 }

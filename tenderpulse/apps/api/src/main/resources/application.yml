@@ -58,3 +58,12 @@ tenderpulse:
     # Bearer access token returned by /verify: also 24h, no refresh flow (out of scope for TP-038).
     access-token-ttl-ms: 86400000
     verify-base-url: ${TENDERPULSE_VERIFY_BASE_URL:http://localhost:8080/api/v1/auth/verify}
+
+# TP-042: PayPal Client ID/Secret/Plan ID are credentials — loaded from env vars only, never
+# committed. Empty defaults let the app boot without them; POST /api/v1/subscribers/pro will fail
+# verification (as PayPalApiException) until they're set. See apps/api/.env.example.
+paypal:
+  base-url: ${PAYPAL_BASE_URL:https://api-m.sandbox.paypal.com}
+  client-id: ${PAYPAL_CLIENT_ID:}
+  client-secret: ${PAYPAL_CLIENT_SECRET:}
+  plan-id: ${PAYPAL_PLAN_ID:}

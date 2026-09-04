@@ -75,7 +75,14 @@ data class Subscriber(
 
     val active: Boolean = true,
 
-    val createdAt: Instant = Instant.now()
+    val createdAt: Instant = Instant.now(),
+
+    /**
+     * PayPal subscription ID for a PAID-tier signup (TP-042), stored only after the backend has
+     * independently verified the subscription with PayPal's API (never trusted from the client).
+     * Null for FREE subscribers and any subscriber that has never completed Pro checkout.
+     */
+    val paypalSubscriptionId: String? = null
 )
 
 @Entity
