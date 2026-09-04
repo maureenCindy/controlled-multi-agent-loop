@@ -1,5 +1,11 @@
 package com.tenderpulse.api
 
+import com.tenderpulse.admin.AdminPlanPricingRequest
+import com.tenderpulse.admin.AdminPlanPricingResponse
+import com.tenderpulse.admin.AdminService
+import com.tenderpulse.admin.AdminSubscriberListResponse
+import com.tenderpulse.admin.AdminSubscriberResponse
+import com.tenderpulse.admin.AdminTierUpdateRequest
 import com.tenderpulse.aggregation.AggregationService
 import com.tenderpulse.auth.AuthService
 import com.tenderpulse.auth.InvalidMagicLinkTokenException
@@ -94,14 +100,47 @@ class SubscriberController(
     ): InterestProfileResponse = InterestProfileResponse.from(subscriberService.updateProfile(id, profileId, req))
 }
 
+/**
+ * Operator-only admin API (TP-044). Every route under `/api/v1/admin` — including the
+ * pre-existing `/aggregate` trigger below — requires a valid `X-Admin-Key` header; see
+ * [com.tenderpulse.auth.AdminKeyAuthFilter] and [com.tenderpulse.auth.SecurityConfig], which
+ * enforce that at the Spring Security filter-chain level (a request that fails that check never
+ * reaches this controller at all), not here. This controller stays thin — all business logic
+ * lives in [AdminService] (or, for `/aggregate`, the pre-existing [AggregationService]).
+ */
 @RestController
 @RequestMapping("/api/v1/admin")
 class AdminController(
-    private val aggregationService: AggregationService
+    private val aggregationService: AggregationService,
+    private val adminService: AdminService
 ) {
     /** Trigger one aggregation cycle (for ops / scheduled jobs). */
     @PostMapping("/aggregate")
     fun aggregate() = aggregationService.runAggregationCycle()
+
+    /** List all subscribers with email/tier/status/paypalSubscriptionId, paginated. */
+    @GetMapping("/subscribers")
+    fun listSubscribers(
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") size: Int
+    ): AdminSubscriberListResponse = AdminSubscriberListResponse.from(adminService.listSubscribers(page, size))
+
+    /**
+     * Manually override a subscriber's tier (support cases, refunds, syncing PayPal state back
+     * in manually) — deliberately bypasses PayPal verification; see [AdminService.updateSubscriberTier].
+     */
+    @PutMapping("/subscribers/{id}/tier")
+    fun updateSubscriberTier(
+        @PathVariable id: UUID,
+        @Valid @RequestBody req: AdminTierUpdateRequest
+    ): AdminSubscriberResponse = AdminSubscriberResponse.from(adminService.updateSubscriberTier(id, req.tier))
+
+    /** Update a PayPal Plan's pricing scheme via PayPal's `update-pricing-schemes` endpoint. */
+    @PostMapping("/plans/{planId}/pricing")
+    fun updatePlanPricing(
+        @PathVariable planId: String,
+        @Valid @RequestBody req: AdminPlanPricingRequest
+    ): AdminPlanPricingResponse = adminService.updatePlanPricing(planId, req)
 }
 
 /**

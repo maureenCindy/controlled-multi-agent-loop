@@ -1,6 +1,7 @@
 package com.tenderpulse.paypal
 
 import com.tenderpulse.domain.PayPalApiException
+import com.tenderpulse.domain.PayPalPlanPricingException
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -8,6 +9,7 @@ import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
@@ -18,6 +20,7 @@ import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.HttpServerErrorException
 import org.springframework.web.client.ResourceAccessException
 import org.springframework.web.client.RestTemplate
+import java.math.BigDecimal
 
 /**
  * Unit tests for [PayPalClient] (TP-042). No live network calls — [RestTemplate] is a mockk mock,
@@ -215,5 +218,110 @@ class PayPalClientTest {
         client.fetchSubscription("I-VALID123")
 
         assertEquals("Bearer the-access-token", headersEntity.captured.headers.getFirst("Authorization"))
+    }
+
+    // ---- updatePlanPricing (TP-044) ----
+
+    /** Test case 5: valid input -> the PayPal update-pricing-schemes call succeeds. */
+    @Test
+    fun `updatePlanPricing sends the expected pricing scheme body and succeeds for a valid plan`() {
+        stubToken()
+        val entityCaptor = slot<HttpEntity<UpdatePricingSchemesRequest>>()
+        every {
+            restTemplate.exchange(
+                "https://api-m.sandbox.paypal.com/v1/billing/plans/P-VALIDPLAN/update-pricing-schemes",
+                HttpMethod.POST,
+                capture(entityCaptor),
+                Void::class.java
+            )
+        } returns ResponseEntity.noContent().build()
+
+        client.updatePlanPricing(
+            planId = "P-VALIDPLAN",
+            currencyCode = "USD",
+            fixedPrice = BigDecimal("19.99")
+        )
+
+        val sentBody = entityCaptor.captured.body!!
+        assertEquals(1, sentBody.pricingSchemes.size)
+        assertEquals(1, sentBody.pricingSchemes[0].billingCycleSequence)
+        assertEquals("19.99", sentBody.pricingSchemes[0].pricingScheme.fixedPrice.value)
+        assertEquals("USD", sentBody.pricingSchemes[0].pricingScheme.fixedPrice.currencyCode)
+        assertEquals("Bearer test-access-token", entityCaptor.captured.headers.getFirst("Authorization"))
+    }
+
+    @Test
+    fun `updatePlanPricing honors a non-default billing cycle sequence`() {
+        stubToken()
+        val entityCaptor = slot<HttpEntity<UpdatePricingSchemesRequest>>()
+        every {
+            restTemplate.exchange(any<String>(), HttpMethod.POST, capture(entityCaptor), Void::class.java)
+        } returns ResponseEntity.noContent().build()
+
+        client.updatePlanPricing(
+            planId = "P-VALIDPLAN",
+            currencyCode = "EUR",
+            fixedPrice = BigDecimal("5.00"),
+            billingCycleSequence = 2
+        )
+
+        assertEquals(2, entityCaptor.captured.body!!.pricingSchemes[0].billingCycleSequence)
+    }
+
+    /** Test case 6 (nonexistent plan id): PayPal 404 -> PayPalPlanPricingException, not PayPalApiException. */
+    @Test
+    fun `updatePlanPricing for a nonexistent plan id throws PayPalPlanPricingException`() {
+        stubToken()
+        every {
+            restTemplate.exchange(any<String>(), HttpMethod.POST, any<HttpEntity<*>>(), Void::class.java)
+        } throws HttpClientErrorException.NotFound.create(
+            HttpStatus.NOT_FOUND, "Not Found", HttpHeaders.EMPTY, ByteArray(0), null
+        )
+
+        val ex = assertThrows(PayPalPlanPricingException::class.java) {
+            client.updatePlanPricing("P-DOES-NOT-EXIST", "USD", BigDecimal("10.00"))
+        }
+        assertTrue(ex.message!!.contains("P-DOES-NOT-EXIST"))
+    }
+
+    /** Test case 6 (invalid input): PayPal 422 for a bad pricing scheme -> also PayPalPlanPricingException (4xx). */
+    @Test
+    fun `updatePlanPricing for an invalid pricing scheme throws PayPalPlanPricingException`() {
+        stubToken()
+        every {
+            restTemplate.exchange(any<String>(), HttpMethod.POST, any<HttpEntity<*>>(), Void::class.java)
+        } throws HttpClientErrorException.UnprocessableEntity.create(
+            HttpStatus.UNPROCESSABLE_ENTITY, "Unprocessable Entity", HttpHeaders.EMPTY, ByteArray(0), null
+        )
+
+        assertThrows(PayPalPlanPricingException::class.java) {
+            client.updatePlanPricing("P-VALIDPLAN", "USD", BigDecimal("-5.00"))
+        }
+    }
+
+    @Test
+    fun `updatePlanPricing wraps a PayPal 5xx failure as PayPalApiException, not PayPalPlanPricingException`() {
+        stubToken()
+        every {
+            restTemplate.exchange(any<String>(), HttpMethod.POST, any<HttpEntity<*>>(), Void::class.java)
+        } throws HttpServerErrorException.create(
+            HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error", HttpHeaders.EMPTY, ByteArray(0), null
+        )
+
+        assertThrows(PayPalApiException::class.java) {
+            client.updatePlanPricing("P-VALIDPLAN", "USD", BigDecimal("10.00"))
+        }
+    }
+
+    @Test
+    fun `updatePlanPricing wraps a network timeout as PayPalApiException`() {
+        stubToken()
+        every {
+            restTemplate.exchange(any<String>(), HttpMethod.POST, any<HttpEntity<*>>(), Void::class.java)
+        } throws ResourceAccessException("Read timed out")
+
+        assertThrows(PayPalApiException::class.java) {
+            client.updatePlanPricing("P-VALIDPLAN", "USD", BigDecimal("10.00"))
+        }
     }
 }
