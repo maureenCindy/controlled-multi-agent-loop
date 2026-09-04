@@ -210,4 +210,46 @@ class EntityPersistenceTest {
         assertEquals(profile.id, reloaded.profile.id)
         assertNotNull(reloaded.queuedAt)
     }
+
+    /**
+     * TP-013 (issue #92): [DigestQueueEntryRepository.findAllByDigestedAtIsNull] is what
+     * [com.tenderpulse.notification.DigestService] relies on to exclude entries already digested
+     * in a prior run (test case 5 from the issue) against a real query, not just a mocked
+     * repository.
+     */
+    @Test
+    fun `findAllByDigestedAtIsNull excludes already-digested entries across subscribers`() {
+        val subA = subscriberRepository.save(Subscriber(email = "digest-query-a@example.co.zw"))
+        val subB = subscriberRepository.save(Subscriber(email = "digest-query-b@example.co.zw"))
+        val tender = tenderRepository.save(
+            Tender(
+                title = "Supply of Laboratory Equipment",
+                issuingAuthority = "Ministry of Health",
+                sourceUrl = "https://egp.praz.org.zw/tenders/2026/TR90004",
+                sourceName = "egp.praz.org.zw"
+            )
+        )
+        val profileA = interestProfileRepository.save(InterestProfile(subscriber = subA))
+        val profileB = interestProfileRepository.save(InterestProfile(subscriber = subB))
+        entityManager.flush()
+
+        val pendingA = digestQueueEntryRepository.save(
+            DigestQueueEntry(subscriber = subA, tender = tender, profile = profileA)
+        )
+        val alreadyDigestedA = digestQueueEntryRepository.save(
+            DigestQueueEntry(subscriber = subA, tender = tender, profile = profileA, digestedAt = java.time.Instant.now())
+        )
+        val pendingB = digestQueueEntryRepository.save(
+            DigestQueueEntry(subscriber = subB, tender = tender, profile = profileB)
+        )
+        entityManager.flush()
+        entityManager.clear()
+
+        val undigested = digestQueueEntryRepository.findAllByDigestedAtIsNull()
+        val undigestedIds = undigested.map { it.id }.toSet()
+
+        assertEquals(true, undigestedIds.contains(pendingA.id))
+        assertEquals(true, undigestedIds.contains(pendingB.id))
+        assertEquals(false, undigestedIds.contains(alreadyDigestedA.id))
+    }
 }

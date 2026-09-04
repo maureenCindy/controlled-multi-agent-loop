@@ -40,4 +40,13 @@ interface NotificationRecordRepository : JpaRepository<NotificationRecord, UUID>
 
 interface DigestQueueEntryRepository : JpaRepository<DigestQueueEntry, UUID> {
     fun findBySubscriberIdAndDigestedAtIsNull(subscriberId: UUID): List<DigestQueueEntry>
+
+    /**
+     * TP-013: every pending (undigested) entry across every subscriber, used by
+     * [com.tenderpulse.notification.DigestService] to find which Free-tier subscribers have at
+     * least one matched tender to include in today's daily digest. Grouped by subscriber in
+     * application code (DigestService) rather than a dedicated distinct-subscriber-ids query,
+     * given the expected low volume of undigested entries at this stage of the product.
+     */
+    fun findAllByDigestedAtIsNull(): List<DigestQueueEntry>
 }
