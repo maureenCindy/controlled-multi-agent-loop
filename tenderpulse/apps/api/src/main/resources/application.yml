@@ -21,9 +21,30 @@ spring:
     driver-class-name: org.postgresql.Driver
     username: ${DB_USER:tenderpulse}
     password: ${DB_PASSWORD:tenderpulse}
+  # TP-061 (#61): Flyway now owns schema creation/evolution (versioned scripts under
+  # src/main/resources/db/migration) instead of Hibernate's ddl-auto: update silently managing
+  # it. ddl-auto is now "validate" — Hibernate checks the entity mappings against whatever
+  # Flyway has already migrated and fails loudly on a mismatch, rather than auto-correcting.
+  #
+  # baseline-on-migrate + baseline-version=8: every table in V1-V8 already exists (with data) on
+  # any real deployment that predates this change, created by the old ddl-auto: update mechanism.
+  # Without this, Flyway would try to run "CREATE TABLE tenders (...)" etc. against a database
+  # where "tenders" already exists and fail outright. baseline-on-migrate makes Flyway, on first
+  # run against a schema that has no flyway_schema_history table yet, insert a baseline marker at
+  # baseline-version (8 — the last migration this baseline captures) instead of executing V1-V8,
+  # then proceed with any migration after V8. Verified empirically against a real, populated
+  # Postgres container (pre-existing rows survived, no errors, no re-run of V1-V8) — see PR
+  # evidence for #61. A genuinely fresh/empty database has no schema history table either, but
+  # baseline-on-migrate only takes effect when the target schema is non-empty; Flyway detects an
+  # empty schema and runs the full V1-V8 migrate path normally (see PR evidence: fresh-boot test).
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 8
+    baseline-description: "Baseline capturing schema created by Hibernate ddl-auto: update prior to Flyway (#61)"
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: false
     properties:
       hibernate:

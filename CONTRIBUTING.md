@@ -65,6 +65,34 @@ Branch from latest `main`.
 - Add or update **tests** listed on the issue (or equivalent coverage).  
 - Follow [tenderpulse/docs/specs/aggregation-policy.md](tenderpulse/docs/specs/aggregation-policy.md) and [tenderpulse/docs/specs/zw-tender-sources.md](tenderpulse/docs/specs/zw-tender-sources.md) for aggregation work.  
 - **MVP scrape source:** PRAZ e-GP only (`egp.praz.org.zw`).  
+- **Any entity/schema change needs a new Flyway migration script** (TP-061/#61) — see "Database migrations" below. Never rely on Hibernate to infer schema changes; `ddl-auto` is `validate`, and will fail loudly (not silently correct) if the entity mapping and the migrated schema disagree.
+
+### Database migrations (Flyway)
+
+Schema for `tenderpulse/apps/api` is owned by versioned Flyway migration scripts under
+`src/main/resources/db/migration/` (`V<n>__description.sql`), not by Hibernate's `ddl-auto`
+(which is `validate` in both `application.yml` and `src/test/resources/application.yml` — it
+checks entity mappings against the already-migrated schema and fails the boot on any mismatch).
+Tests run the same scripts against H2 (in PostgreSQL-compatibility mode), so CI exercises the
+real migrations, not a parallel Hibernate-inferred schema.
+
+Any PR that adds or changes an `@Entity` (new table, new/changed/removed column, new
+constraint, etc.) **must** include a new `V<next-n>__...sql` migration script — do not rely on an
+entity class change alone; Flyway migrations are the only mechanism that actually reaches a real
+database (`ddl-auto: validate` will only ever catch a *mismatch*, never apply one).
+
+- **Never edit or renumber an already-merged migration script.** Once a `V<n>` script has landed
+  on `main`, treat it as immutable — a later change is a *new* `V<n+1>` script, even to fix a typo
+  in a comment. Flyway tracks applied migrations by checksum; editing an already-applied script
+  makes Flyway refuse to boot on any environment that already ran it.
+- **A `NOT NULL` column added to an existing (potentially populated) table needs either a
+  `DEFAULT` in the same `ALTER TABLE`/`CREATE TABLE` statement or an explicit backfill step in
+  the migration** — see the Cross-cutting invariants checklist below. Empirically verify this
+  against a real, populated Postgres container (`tenderpulse/docker-compose.yml`), not just by
+  reasoning about it — boot against a DB with pre-existing rows and confirm no errors and no data
+  loss.
+- Group tightly-coupled DDL (an entity's own `@ElementCollection` tables, e.g.) in one script per
+  table/entity if that keeps the schema traceable; split unrelated tables into separate scripts.
 
 ### 4. Before you open the PR
 
@@ -132,7 +160,7 @@ Some lessons from `tenderpulse/docs/specs/MVP_CHECKLIST_BOARD.md`'s "Template im
 - [ ] Include a test case for a subscriber who is eligible by history (previously matched/notified) but is *currently* opted out (`emailOptOut = true`) or deactivated (`active = false`) — confirm they receive nothing. This is the standing consent guarantee established in TP-041; a new dispatch path must re-check current status, not just historical eligibility. *(Source: TP-056/#56 — `ReminderService` shipped without this check, caught only at Reviewer stage.)*
 
 **Schema / column changes** — any task that adds or modifies a column with a `NOT NULL` constraint:
-- [ ] State in Assumptions/AC how migration safety against an already-populated table is verified — a DB-level default (e.g. `@ColumnDefault`) or an explicit backfill step. This app uses `ddl-auto: update`, not Flyway (#61), and the test suite runs against H2 only (#54), so this class of bug is invisible to both the schema-evolution mechanism and CI — it only surfaces by booting against a real, populated Postgres instance. *(Source: TP-058/#58 — adding `InterestProfile.name` as required broke boot against a populated table, caught only at Reviewer stage; the second such gap this project has hit.)*
+- [ ] State in Assumptions/AC how migration safety against an already-populated table is verified — a DB-level default (e.g. Postgres `DEFAULT` in the migration script) or an explicit backfill step in the migration itself. Empirically verify it against a real, populated Postgres container (per Verification Standards in `CLAUDE.md`), not just reasoned about. *(Source: TP-058/#58 — adding `InterestProfile.name` as required broke boot against a populated table, caught only at Reviewer stage; the second such gap this project has hit. As of TP-061/#61, schema is Flyway-managed — see "Database migrations" below — which makes this the concrete mechanism to apply the check to, rather than a Hibernate `ddl-auto: update` inference.)*
 
 ---
 

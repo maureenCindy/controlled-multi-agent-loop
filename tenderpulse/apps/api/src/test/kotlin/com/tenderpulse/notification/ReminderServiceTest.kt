@@ -54,7 +54,7 @@ class ReminderServiceTest {
         tier = tier
     )
 
-    private fun profile(subscriber: Subscriber) = InterestProfile(subscriber = subscriber)
+    private fun profile(subscriber: Subscriber) = InterestProfile(subscriber = subscriber, name = "Test Profile")
 
     @BeforeEach
     fun setUp() {
