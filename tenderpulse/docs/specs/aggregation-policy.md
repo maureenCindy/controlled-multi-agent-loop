@@ -65,6 +65,7 @@ After each aggregation run:
 | **When** | After the evening aggregation (e.g. 19:30 CAT) |
 | **Content** | Summary lines: title, entity, deadline, link to source |
 | **Empty day** | Do **not** send an email |
+| **Delivery guarantee** | **At-least-once, not exactly-once** (accepted MVP trade-off, issue #97): if the process crashes after a digest email is sent but before the queue entries are marked digested, the next run resends it — a rare, low-severity duplicate email, never a silent non-delivery. See `DigestService.runDigestCycle()` KDoc. |
 
 ### Paid
 
@@ -109,3 +110,4 @@ Avoid promising “instant” or “real-time” until frequency or push channel
 | Date | Change |
 |------|--------|
 | 2026-08-31 | Initial: 3×/day aggregate; Free daily digest; Paid on-match |
+| 2026-09-06 | Documented Free digest's at-least-once delivery semantics (issue #97) as an accepted MVP trade-off |
