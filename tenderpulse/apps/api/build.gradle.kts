@@ -32,6 +32,14 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
     implementation("org.jsoup:jsoup:1.18.1")
 
+    // TP-061 (#61): Flyway now owns schema creation/evolution instead of Hibernate's
+    // ddl-auto: update — versioned migrations under src/main/resources/db/migration. Versions
+    // are managed by Spring Boot's dependency-management plugin (matching Boot 3.4.1's BOM), not
+    // pinned here. flyway-database-postgresql is required as of Flyway 10 for Postgres support
+    // (it was folded out of flyway-core into a separate module).
+    implementation("org.flywaydb:flyway-core")
+    implementation("org.flywaydb:flyway-database-postgresql")
+
     // TP-048: the running app connects to real PostgreSQL only (see application.yml). H2 is no
     // longer on the app's runtime classpath — it now backs the test suite only (see
     // src/test/resources/application.yml and apps/api/README.md "Tests vs. the real datasource").

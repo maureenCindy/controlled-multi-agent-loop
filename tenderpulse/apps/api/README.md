@@ -61,8 +61,16 @@ via env var — see `src/main/resources/application.yml`:
 | `DB_USER`     | `tenderpulse` |
 | `DB_PASSWORD` | `tenderpulse` |
 
-Schema is still managed by Hibernate's `ddl-auto: update` (no Flyway — deferred, see #49) and is
-created automatically on first boot against the empty Postgres database.
+Schema is managed by versioned Flyway migrations under `src/main/resources/db/migration` (TP-061
+/ #61) — Hibernate's `ddl-auto` is `validate`, not `update`, so it checks the entity mappings
+against whatever Flyway has already migrated and fails loudly on a mismatch instead of silently
+auto-correcting. On first boot against an empty Postgres database, Flyway runs every migration
+script in order; on a database that already has these tables (e.g. one still running the old
+`ddl-auto: update` mechanism), `baseline-on-migrate` marks it as already at the baseline version
+without re-running the `CREATE TABLE` scripts (see `spring.flyway` in `application.yml`).
+
+**Convention:** any future entity/schema change must come with a new Flyway migration script
+under `src/main/resources/db/migration` — see [CONTRIBUTING.md](../../../CONTRIBUTING.md).
 
 To stop Postgres: `docker compose down` (from `tenderpulse/`). Add `-v` to also delete the data
 volume (irreversible — wipes all local subscriber/tender data).
@@ -77,7 +85,10 @@ gradle wrapper --gradle-version 8.11.1
 
 `./gradlew test` does **not** require Postgres or Docker to be running. Tests use H2 in-memory via
 `src/test/resources/application.yml`, which shadows the main `application.yml` on the test
-classpath. This was a deliberate choice (TP-048 / #49), not an oversight:
+classpath. Since TP-061 (#61), tests also run the same Flyway migration scripts (against H2, in
+PostgreSQL-compatibility mode) rather than a parallel Hibernate auto-generated schema, so CI
+exercises the real migration scripts. Using H2 rather than a real Postgres service was a
+deliberate choice (TP-048 / #49), not an oversight:
 
 - CI (`.github/workflows/ci.yml`) has no Postgres service configured, and adding one (or
   Testcontainers) was judged a bigger lift than this migration's scope warranted.
@@ -143,7 +154,6 @@ Matching rules are covered by unit tests under `src/test/kotlin/.../MatchingServ
 - Scheduled aggregation (`@Scheduled`)
 - Daily digest job for FREE tier
 - Auth (JWT / OAuth2)
-- Flyway migrations (Postgres itself landed in TP-048; schema is still Hibernate `ddl-auto: update`)
 - Real email (SES / SendGrid) and SMS (Twilio) providers
 - Analytics & history endpoints for PAID tier
 

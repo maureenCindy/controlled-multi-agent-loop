@@ -26,9 +26,15 @@ spring:
     driver-class-name: org.h2.Driver
     username: sa
     password:
+  # TP-061 (#61): tests now run the same Flyway scripts under src/main/resources/db/migration
+  # against H2 (PostgreSQL-compatibility mode above) instead of a parallel Hibernate
+  # auto-generated schema — so CI actually exercises the real migration scripts, not a
+  # from-scratch schema Hibernate infers from the entities. ddl-auto is "validate" to match.
+  flyway:
+    enabled: true
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: false
     properties:
       hibernate:
