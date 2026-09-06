@@ -12,7 +12,7 @@ Kotlin / Spring Boot scaffold for a tender aggregation & notification platform.
 
 4. **Subscription Tiers**
    - **Free** — daily digest alerts
-   - **Paid** — real-time notifications, advanced filters, deadline reminders, tender history & analytics
+   - **Paid** — real-time notifications, WhatsApp notifications, advanced filters, deadline reminders, tender history & analytics
 
 ## Stack
 

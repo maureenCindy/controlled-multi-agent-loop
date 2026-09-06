@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { WHATSAPP_NOTIFICATIONS_ENABLED } from "../lib/featureFlags";
 ---
 <BaseLayout
   title="Get started"
@@ -12,6 +13,11 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       <p class="lede">
         Free gets you a daily digest of matching tenders. Pro gets you notified as soon as a
         match is found, via a recurring PayPal subscription.
+        {WHATSAPP_NOTIFICATIONS_ENABLED && (
+          <>
+            {" "}Pro subscribers can also opt in to receive those notifications via WhatsApp.
+          </>
+        )}
       </p>
 
       <div class="tier-toggle" role="tablist" aria-label="Choose a plan">
