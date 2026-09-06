@@ -11,6 +11,7 @@ import com.tenderpulse.domain.Subscriber
 import com.tenderpulse.domain.SubscriberRepository
 import com.tenderpulse.domain.SubscriptionTier
 import com.tenderpulse.domain.SubscriptionVerificationException
+import com.tenderpulse.domain.TierRestrictionException
 import com.tenderpulse.paypal.PayPalClient
 import com.tenderpulse.paypal.PayPalSubscriberInfo
 import com.tenderpulse.paypal.PayPalSubscriptionResponse
@@ -457,5 +458,81 @@ class SubscriberServiceTest {
         )
 
         assertEquals(setOf(NotificationChannel.EMAIL), result.preferredChannels)
+    }
+
+    // ---- setWhatsAppOptIn (TP-093) ----
+
+    /** Test case 1: a Paid subscriber's valid number + explicit consent stores both fields. */
+    @Test
+    fun `setWhatsAppOptIn stores the number and true optIn for a Paid subscriber with explicit consent`() {
+        val paidSubscriber = subscriber.copy(tier = SubscriptionTier.PAID)
+        every { subscriberRepository.findById(subscriberId) } returns Optional.of(paidSubscriber)
+        every { subscriberRepository.save(any()) } answers { firstArg() }
+
+        val result = service.setWhatsAppOptIn(
+            subscriberId,
+            WhatsAppOptInRequest(number = "+263771234567", consentGiven = true)
+        )
+
+        assertEquals("+263771234567", result.whatsappNumber)
+        assertTrue(result.whatsappOptIn)
+    }
+
+    /** Test case 2: consent omitted (defaults false) stores the number but never sets optIn true. */
+    @Test
+    fun `setWhatsAppOptIn stores the number but leaves optIn false when consentGiven is not given`() {
+        val paidSubscriber = subscriber.copy(tier = SubscriptionTier.PAID)
+        every { subscriberRepository.findById(subscriberId) } returns Optional.of(paidSubscriber)
+        every { subscriberRepository.save(any()) } answers { firstArg() }
+
+        val result = service.setWhatsAppOptIn(subscriberId, WhatsAppOptInRequest(number = "+263771234567"))
+
+        assertEquals("+263771234567", result.whatsappNumber)
+        assertFalse(result.whatsappOptIn)
+    }
+
+    /**
+     * Resubmitting with `consentGiven: false` after a prior `true` genuinely revokes opt-in --
+     * guards against an implementation that coalesces with the subscriber's existing stored value
+     * instead of setting it to exactly what was submitted this time.
+     */
+    @Test
+    fun `setWhatsAppOptIn revokes a previously-true optIn when consentGiven is now false`() {
+        val previouslyOptedIn = subscriber.copy(
+            tier = SubscriptionTier.PAID,
+            whatsappNumber = "+263771234567",
+            whatsappOptIn = true
+        )
+        every { subscriberRepository.findById(subscriberId) } returns Optional.of(previouslyOptedIn)
+        every { subscriberRepository.save(any()) } answers { firstArg() }
+
+        val result = service.setWhatsAppOptIn(
+            subscriberId,
+            WhatsAppOptInRequest(number = "+263771234567", consentGiven = false)
+        )
+
+        assertFalse(result.whatsappOptIn)
+    }
+
+    /** Test case 4: a Free-tier subscriber is rejected, no save attempted. */
+    @Test
+    fun `setWhatsAppOptIn rejects a Free-tier subscriber and saves nothing`() {
+        val freeSubscriber = subscriber.copy(tier = SubscriptionTier.FREE)
+        every { subscriberRepository.findById(subscriberId) } returns Optional.of(freeSubscriber)
+
+        assertThrows(TierRestrictionException::class.java) {
+            service.setWhatsAppOptIn(subscriberId, WhatsAppOptInRequest(number = "+263771234567", consentGiven = true))
+        }
+        verify(exactly = 0) { subscriberRepository.save(any()) }
+    }
+
+    @Test
+    fun `setWhatsAppOptIn for an unknown subscriber throws NotFoundException`() {
+        every { subscriberRepository.findById(subscriberId) } returns Optional.empty()
+
+        assertThrows(NotFoundException::class.java) {
+            service.setWhatsAppOptIn(subscriberId, WhatsAppOptInRequest(number = "+263771234567", consentGiven = true))
+        }
+        verify(exactly = 0) { subscriberRepository.save(any()) }
     }
 }

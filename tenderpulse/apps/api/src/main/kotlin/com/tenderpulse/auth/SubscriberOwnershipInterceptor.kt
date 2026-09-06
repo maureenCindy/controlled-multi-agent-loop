@@ -29,7 +29,9 @@ import java.util.UUID
 object SubscriberOwnershipPaths {
     val PROTECTED_PATH_PATTERNS = listOf(
         "/api/v1/subscribers/*/profiles/**",
-        "/api/v1/subscribers/*/profiles"
+        "/api/v1/subscribers/*/profiles",
+        // TP-093: PATCH /api/v1/subscribers/{id}/whatsapp -- self-attested WhatsApp opt-in.
+        "/api/v1/subscribers/*/whatsapp"
     )
 }
 

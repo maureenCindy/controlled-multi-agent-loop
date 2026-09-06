@@ -9,6 +9,7 @@ import com.tenderpulse.domain.Subscriber
 import com.tenderpulse.domain.SubscriberRepository
 import com.tenderpulse.domain.SubscriptionTier
 import com.tenderpulse.domain.SubscriptionVerificationException
+import com.tenderpulse.domain.TierRestrictionException
 import com.tenderpulse.paypal.PayPalClient
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -150,6 +151,26 @@ class SubscriberService(
             active = req.active
         )
         return profileRepository.save(updated)
+    }
+
+    /**
+     * Sets [Subscriber.whatsappNumber] and [Subscriber.whatsappOptIn] together (TP-093),
+     * Paid-tier only. [WhatsAppOptInRequest.consentGiven] is stored verbatim as
+     * [Subscriber.whatsappOptIn] -- never coerced true merely because a number was submitted, and
+     * never left as any prior stored value: a subscriber resubmitting with `consentGiven: false`
+     * genuinely revokes consent, they don't just leave it unchanged.
+     *
+     * @throws NotFoundException if no subscriber exists with [subscriberId].
+     * @throws TierRestrictionException if the subscriber is not on [SubscriptionTier.PAID].
+     */
+    fun setWhatsAppOptIn(subscriberId: UUID, req: WhatsAppOptInRequest): Subscriber {
+        val subscriber = findSubscriberOrThrow(subscriberId)
+        if (subscriber.tier != SubscriptionTier.PAID) {
+            throw TierRestrictionException("WhatsApp opt-in is available to Paid subscribers only")
+        }
+        return subscriberRepository.save(
+            subscriber.copy(whatsappNumber = req.number, whatsappOptIn = req.consentGiven)
+        )
     }
 
     private fun findSubscriberOrThrow(subscriberId: UUID): Subscriber =

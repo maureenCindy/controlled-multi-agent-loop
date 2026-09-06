@@ -100,7 +100,34 @@ data class Subscriber(
      * what actually rejects a reused ID with a 400 rather than a raw constraint-violation 500.
      */
     @Column(unique = true)
-    val paypalSubscriptionId: String? = null
+    val paypalSubscriptionId: String? = null,
+
+    /**
+     * WhatsApp number opted in for notification delivery (TP-093), E.164-formatted (e.g.
+     * `+263771234567`) — validated at the request level by
+     * [com.tenderpulse.subscriber.WhatsAppOptInRequest], not re-validated here. Null until a
+     * Paid subscriber submits one via `PATCH /api/v1/subscribers/{id}/whatsapp`. Sending any
+     * actual WhatsApp message is out of scope here (TP-094) — this field only stores where a
+     * future send would go.
+     */
+    val whatsappNumber: String? = null,
+
+    /**
+     * Self-attested WhatsApp delivery consent (TP-093): true only when the subscriber explicitly
+     * sent `consentGiven: true` in the *same request* that submitted [whatsappNumber] — see
+     * [com.tenderpulse.subscriber.SubscriberService.setWhatsAppOptIn]. Deliberately never
+     * defaulted true merely because a number was entered, and deliberately not flipped by any
+     * separate verification step (e.g. a `wa.me`-link click or inbound-webhook reply) — that kind
+     * of verification is explicitly out of scope for this task. `@ColumnDefault` matters here for
+     * the same reason it did for [InterestProfile.name] (see that field's kdoc): this app is now
+     * Flyway-managed with `ddl-auto: validate` (TP-061), so the DB-level default is what lets the
+     * corresponding migration (`V9__add_whatsapp_fields_to_subscribers.sql`) add this as a
+     * `NOT NULL` column against an already-populated `subscribers` table without failing or
+     * requiring a manual backfill — existing rows get `false`.
+     */
+    @Column(nullable = false)
+    @ColumnDefault("false")
+    val whatsappOptIn: Boolean = false
 )
 
 @Entity
