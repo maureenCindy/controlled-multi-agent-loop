@@ -1,6 +1,6 @@
 # WhatsApp Template: `tender_deadline_reminder`
 
-**Status:** Drafted, pending Meta approval
+**Status:** Approved by Meta (2026-09-06)
 **Category:** Utility
 **Language:** English (US) / `en_US`
 
