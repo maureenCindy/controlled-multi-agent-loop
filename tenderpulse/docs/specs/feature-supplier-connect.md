@@ -28,7 +28,7 @@ instead of bootstrapping two unproven products at once.
 - CONTRIBUTING.md's Phase 2 rule ("Do not expand into Phase 2 — tender registration,
   application checklist, apply templates — unless the issue explicitly says so") already fences
   off scope this size. Supplier Connect is larger than Phase 2: it's a distinct marketplace
-  product (supplier directory, RFQs, quote comparison, commissions) layered on top of the
+  product (supplier directory, RFQs, quote comparison, subscriptions) layered on top of the
   tender-alert product.
 - This aligns with, and elaborates, the private-sector marketplace direction already discussed
   informally for TenderBell's long-term future (service-provider registration and
@@ -36,7 +36,7 @@ instead of bootstrapping two unproven products at once.
 - Before any part of this becomes buildable work, it needs to be broken into scoped issues with
   concrete acceptance criteria and test cases, per the standard `/loop` workflow — this document
   is not sufficient input for that on its own (no data model, no auth/payment design, no
-  Zimbabwe-specific legal/compliance review for commissions or subscriptions).
+  Zimbabwe-specific legal/compliance review for subscription billing).
 
 ---
 
@@ -91,16 +91,17 @@ for government business in Zimbabwe, simplifying digital registration.
 
 ## Revenue model
 
-A diversified monetization strategy modeled on proven B2B marketplace patterns:
+**Decision (2026-09-08):** the sole revenue stream is a **monthly supplier subscription**.
+Transaction commissions and pay-per-lead fees — both in the original pitch — were considered
+and dropped; see Gaps 3–5 in "Customer validation notes" below for why.
 
 | Stream | Description |
 |---|---|
-| **Supplier subscriptions** (primary) | Freemium model — free tier (basic listing, limited lead access) and paid tiers (premium storefronts, analytics, priority placement, unlimited leads); tiered pricing in USD or ZiG aligned with PRAZ registration fees |
-| **Transaction commissions** | Percentage of Gross Merchandise Value (GMV) on completed transactions; take rates roughly 3–15% depending on category complexity and value-added services |
-| **Lead generation fees** | Pay-per-lead / pay-per-quote, particularly for services and high-consideration B2B categories |
-| **Featured & sponsored listings** | Advertising revenue from sponsored supplier placements and category sponsorships |
-| **Market opportunity insights reports** | Premium data reports sold to investors, business strategists, and procurement professionals |
-| **Advertising & promotions** | Sponsored listings and featured placements for suppliers seeking visibility |
+| **Supplier subscriptions** (sole stream) | Freemium model, billed **monthly** — free tier (basic listing, limited lead access) and paid tiers (premium storefronts, analytics, priority placement, unlimited leads); priced in USD or ZiG |
+| **Featured & sponsored listings** | Optional add-on — sponsored supplier placements and category sponsorships, sold on top of a subscription, not a replacement for one |
+| **Market opportunity insights reports** | Premium data reports sold to investors, business strategists, and procurement professionals — independent of the supplier-facing subscription |
+
+~~Transaction commissions~~ and ~~lead generation fees~~ — dropped (see Gaps 3–5 below).
 
 ## Strategic synergy with TenderBell
 
@@ -134,10 +135,10 @@ trust mechanism (see "Customer validation notes" below).
 
 Before iterating further, this proposal was reviewed against two target personas — a buyer
 (procurement lead at a mid-size Zimbabwean firm sourcing materials/services) and a supplier
-(small distributor currently relying on referrals and cold outreach for leads). The review
-validated the core pain point and surfaced three gaps the original pitch did not address. Each
-gap must be resolved before this can be scoped into buildable work; the badge removal above is
-the one already acted on.
+(small distributor currently relying on referrals and cold outreach for leads), across two
+passes. The review validated the core pain point and surfaced five gaps the original pitch did
+not address. Every gap below has since been resolved by either dropping the badge (Gap 1) or
+simplifying the revenue model to a flat monthly subscription (Gaps 3–5).
 
 **Pain point validated:** fragmented, manual, WhatsApp/phone-based supplier discovery and quote
 comparison is a real, recurring pain for buyers — comparing quotes phoned or WhatsApped in
@@ -160,13 +161,32 @@ the buyer side from TenderBell's existing manually-served customers, run a manua
 pilot (a human matching a handful of real RFQs to real suppliers) to prove demand, and only then
 invest in automated matching.
 
-**Gap 3 — commission rates unvalidated against local trade margins.** The 3–15% GMV take rate is
-carried over from generic B2B marketplace benchmarks, not tested against real margins in
-Zimbabwean trading categories — a flat rate near the high end could exceed a supplier's entire
-margin on a low-margin order (e.g. building materials). **How it must be solved:** validate
-proposed rates per category against real supplier margin data (starting with whatever categories
-the Gap 2 pilot surfaces) before any commission structure ships, and expect rates to vary by
-category rather than use one range platform-wide.
+**Gap 3 — commission rates unvalidated against local trade margins (resolved: commission
+dropped for monthly subscription).** The original 3–15% GMV take rate was carried over from
+generic B2B marketplace benchmarks, not tested against real margins in Zimbabwean trading
+categories — a flat rate near the high end could exceed a supplier's entire margin on a
+low-margin order (e.g. building materials). **How it was solved:** rather than validate
+per-category rates, the revenue model was simplified to a flat monthly subscription (see
+"Revenue model" above), which removes margin-erosion risk entirely instead of tuning it per
+category.
+
+**Gap 4 — commission was tied to quote acceptance, not to whether the supplier actually got
+paid.** A second supplier-persona pass surfaced this: a GMV commission charges the supplier the
+moment a quote is accepted, but the supplier's real risk is buyer non-payment or late payment
+after delivery — a problem this platform does nothing to solve. Charging commission on an
+"agreed" transaction the supplier may never fully collect on adds insult to injury. **How it was
+solved:** a flat monthly subscription doesn't depend on any single transaction completing or
+being paid, so this misalignment is moot — the platform's revenue no longer rides on the
+supplier's collection risk.
+
+**Gap 5 — disintermediation: repeat business would predictably move off-platform.** Once a buyer
+and supplier complete one transaction through the platform, neither has a reason to pay
+commission again for repeat orders. A GMV-commission model would need to either accept steady
+revenue leakage or attempt "non-circumvention" contract terms against small suppliers — an
+enforcement fight the platform likely loses. **How it was solved:** a flat monthly subscription
+doesn't try to capture a cut of every transaction, so there's nothing to lose to
+disintermediation — the platform earns on ongoing access to leads and tools, not on policing
+what suppliers do with a relationship after the first match.
 
 ---
 
@@ -182,10 +202,11 @@ written:
   abuse (fake reviews, retaliation reviews) is handled.
 - Concrete bootstrap/pilot plan (Gap 2 above) — who runs the manually-brokered pilot, what
   counts as proof the demand is real, and what triggers investment in automated matching.
-- Payments/commission handling — currency (USD/ZiG), settlement, and Zimbabwe-specific
-  compliance requirements; this is auth/payment-adjacent and would trigger the Reviewer gate
-  per the orchestrator workflow's conditional triggers.
-- Legal review for marketplace terms, commission structure, and any claims tied to PRAZ
-  branding or compliance status.
+- Subscription billing handling — currency (USD/ZiG), monthly billing/collection mechanism, and
+  Zimbabwe-specific compliance requirements; this is auth/payment-adjacent and would trigger the
+  Reviewer gate per the orchestrator workflow's conditional triggers.
+- Legal review for marketplace terms and subscription structure.
+- Whether/how RFQ posting on the buyer side should carry any friction or verification, to limit
+  low-intent inquiries suppliers have to spend time quoting against.
 - How this affects [privacy-note.md](privacy-note.md) given supplier PII and buyer inquiry data
   now flowing through the platform.
