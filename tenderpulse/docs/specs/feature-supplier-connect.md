@@ -47,11 +47,11 @@ and geographies.
 
 ### 2. Verified supplier directory
 
-A searchable database where suppliers list products and services. To build trust, the platform
-would integrate with Zimbabwe's PRAZ eGP system — which has seen a reported 30% increase in
-bidder registrations as digital procurement adoption grows — offering a "PRAZ-verified" badge
-to signal credibility and government compliance, similar to pre-vetted business networks used
-in other markets.
+A searchable database where suppliers list products and services. Trust is signaled through a
+buyer-facing reputation system — ratings and reviews tied to completed transactions — rather
+than through government registration status. (An earlier version of this proposal used a
+"PRAZ-verified" badge as the trust signal; see "Customer validation notes" below for why that
+was dropped — a PRAZ vendor number proves tender eligibility, not commercial reliability.)
 
 ### 3. One-click RFQ (Request for Quotation)
 
@@ -112,8 +112,50 @@ negotiation, and supply chain coordination workflows.
 
 Supplier Connect is positioned to align with Zimbabwe's digital procurement transformation —
 the eGP system's reported 30% increase in bidder registrations reflects broader SME
-participation in digital procurement. A PRAZ-integrated platform would position Supplier
-Connect as a compliant, trusted partner for buyers and suppliers navigating that shift.
+participation in digital procurement. The "Supplier prequalification hub" feature helps
+suppliers register for PRAZ vendor numbers as part of that shift, but PRAZ registration is
+treated purely as a tender-eligibility credential in this proposal, not as the marketplace's
+trust mechanism (see "Customer validation notes" below).
+
+---
+
+## Customer validation notes (buyer/supplier persona review)
+
+Before iterating further, this proposal was reviewed against two target personas — a buyer
+(procurement lead at a mid-size Zimbabwean firm sourcing materials/services) and a supplier
+(small distributor currently relying on referrals and cold outreach for leads). The review
+validated the core pain point and surfaced three gaps the original pitch did not address. Each
+gap must be resolved before this can be scoped into buildable work; the badge removal above is
+the one already acted on.
+
+**Pain point validated:** fragmented, manual, WhatsApp/phone-based supplier discovery and quote
+comparison is a real, recurring pain for buyers — comparing quotes phoned or WhatsApped in
+different formats, with no easy side-by-side view, wastes real time. This matches the manual
+workaround already seen on TenderBell's tender-alert side, where customers are served by hand
+today.
+
+**Gap 1 — trust signal conflated with tender eligibility (resolved: badge dropped).** A PRAZ
+vendor number proves a supplier can bid on *government* tenders; it says nothing about
+reliability for *private* buyer-to-supplier trade, which is what this feature actually
+transacts. **How it must be solved:** trust comes from a buyer-submitted ratings/reviews system
+tied to completed transactions, not a government registration lookup.
+
+**Gap 2 — no cold-start / bootstrap plan.** A two-sided marketplace has no value to either side
+until both sides have real listings; the pitch describes the mature-state network effect but not
+how the platform gets there from zero. **How it must be solved:** any scoped version needs an
+explicit bootstrap sequence before the general matching algorithm is built — e.g. seed the
+supplier side from existing outreach contacts ([zw-outreach-list.md](zw-outreach-list.md)) and
+the buyer side from TenderBell's existing manually-served customers, run a manually-brokered
+pilot (a human matching a handful of real RFQs to real suppliers) to prove demand, and only then
+invest in automated matching.
+
+**Gap 3 — commission rates unvalidated against local trade margins.** The 3–15% GMV take rate is
+carried over from generic B2B marketplace benchmarks, not tested against real margins in
+Zimbabwean trading categories — a flat rate near the high end could exceed a supplier's entire
+margin on a low-margin order (e.g. building materials). **How it must be solved:** validate
+proposed rates per category against real supplier margin data (starting with whatever categories
+the Gap 2 pilot surfaces) before any commission structure ships, and expect rates to vary by
+category rather than use one range platform-wide.
 
 ---
 
@@ -122,10 +164,13 @@ Connect as a compliant, trusted partner for buyers and suppliers navigating that
 These are not answered by the source pitch and would need resolution before any task cards are
 written:
 
-- Data model for suppliers, listings, RFQs, and quotes, and how it relates to the existing
-  tender/notification schema ([domain-schema.md](domain-schema.md)).
-- Verification process for the "PRAZ-verified" badge — what's actually checked, and against
-  what PRAZ data or API (today's scrape is tender bulletins, not a vendor registry).
+- Data model for suppliers, listings, RFQs, quotes, and ratings/reviews, and how it relates to
+  the existing tender/notification schema ([domain-schema.md](domain-schema.md)).
+- Design of the ratings/reviews system that replaces the dropped "PRAZ-verified" badge as the
+  trust mechanism (see "Customer validation notes" above) — what's rated, when, by whom, and how
+  abuse (fake reviews, retaliation reviews) is handled.
+- Concrete bootstrap/pilot plan (Gap 2 above) — who runs the manually-brokered pilot, what
+  counts as proof the demand is real, and what triggers investment in automated matching.
 - Payments/commission handling — currency (USD/ZiG), settlement, and Zimbabwe-specific
   compliance requirements; this is auth/payment-adjacent and would trigger the Reviewer gate
   per the orchestrator workflow's conditional triggers.
