@@ -199,7 +199,10 @@ written:
   counts as proof the demand is real, and what triggers investment in automated matching.
 - Subscription billing handling — currency (USD/ZiG), monthly billing/collection mechanism, and
   Zimbabwe-specific compliance requirements; this is auth/payment-adjacent and would trigger the
-  Reviewer gate per the orchestrator workflow's conditional triggers.
+  Reviewer gate per the orchestrator workflow's conditional triggers. TenderBell's own
+  [subscription-lifecycle-paypal.md](subscription-lifecycle-paypal.md) already defines a PayPal
+  subscription state machine (Free/Pro/Max, payment failures, cancel/downgrade) — Supplier
+  Connect's supplier-side billing should extend that pattern rather than build a second one.
 - Legal review for marketplace terms and subscription structure.
 - Whether/how RFQ posting on the buyer side should carry any friction or verification, to limit
   low-intent inquiries suppliers have to spend time quoting against.
