@@ -6,5 +6,5 @@ import { defineConfig } from "astro/config";
 // (PUBLIC_API_BASE_URL), not via an Astro server route.
 export default defineConfig({
   output: "static",
-  site: process.env.PUBLIC_SITE_URL ?? "https://tenderpulse.example",
+  site: process.env.PUBLIC_SITE_URL ?? "https://tenderbell.co.zw",
 });

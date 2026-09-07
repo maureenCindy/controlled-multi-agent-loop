@@ -14,6 +14,9 @@
   --color-primary-dark: #082a66;
   --color-accent: #e2711d;
   --color-accent-dark: #c25c10;
+  /* TenderBell wordmark accent, sampled directly from the approved brand asset
+     (tenderpulse/docs/marketing/brand-assets/banners/tenderbell-logo-light.svg). */
+  --color-brand-orange: #f59e0b;
   --color-success-bg: #ecfdf5;
   --color-success-text: #047857;
   --color-error-bg: #fef2f2;
@@ -200,7 +203,7 @@ a {
 }
 
 .brand span {
-  color: var(--color-primary);
+  color: var(--color-brand-orange);
 }
 
 .nav-links {
@@ -253,6 +256,62 @@ a {
   flex-wrap: wrap;
   gap: var(--space-3);
   margin-top: var(--space-4);
+}
+
+.hero-logo {
+  display: block;
+  height: auto;
+  width: 13.75rem;
+  max-width: 100%;
+  margin-bottom: var(--space-2);
+}
+
+.hero-tagline {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--color-ink-muted);
+  margin: 0 0 var(--space-3);
+}
+
+.hero-icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  margin-top: var(--space-6);
+}
+
+.hero-icon {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.hero-icon-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.hero-icon-badge--primary {
+  background: rgba(11, 61, 145, 0.1);
+  color: var(--color-primary);
+}
+
+.hero-icon-badge--success {
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+}
+
+.hero-icon-badge--accent {
+  background: rgba(245, 158, 11, 0.14);
+  color: var(--color-brand-orange);
 }
 
 /* --- Cards / grid --- */

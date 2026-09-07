@@ -4,20 +4,60 @@ import { WHATSAPP_NOTIFICATIONS_ENABLED } from "../lib/featureFlags";
 ---
 <BaseLayout
   title="Never miss a PRAZ tender again"
-  description="TenderPulse watches Zimbabwe's PRAZ e-GP portal for you and alerts you the moment a tender matches your business."
+  description="TenderBell watches Zimbabwe's PRAZ e-GP portal for you and alerts you the moment a tender matches your business."
 >
   <section class="hero">
     <div class="container">
+      <img
+        src="/tenderbell-website-logo.svg"
+        alt="TenderBell"
+        class="hero-logo"
+        width="220"
+        height="116"
+      />
+      <p class="hero-tagline">Alerts Insights and Opportunities</p>
       <span class="eyebrow">Built for Zimbabwe</span>
       <h1>Never miss a government tender in Zimbabwe again.</h1>
       <p class="lede">
-        TenderPulse watches PRAZ's e-Government Procurement portal (egp.praz.org.zw) around the
+        TenderBell watches PRAZ's e-Government Procurement portal (egp.praz.org.zw) around the
         clock and tells you the moment a tender matches what your business actually does —
         no more refreshing a government website by hand.
       </p>
       <div class="hero-cta-row">
         <a class="btn btn-accent" href="/signup">Get free alerts</a>
         <a class="btn btn-outline" href="/how-it-works">See how it works</a>
+      </div>
+
+      <div class="hero-icons">
+        <div class="hero-icon">
+          <span class="hero-icon-badge hero-icon-badge--primary">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="10" cy="10" r="6" />
+              <line x1="15" y1="15" x2="20" y2="20" />
+            </svg>
+          </span>
+          <span>Find</span>
+        </div>
+        <div class="hero-icon">
+          <span class="hero-icon-badge hero-icon-badge--success">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="4" y1="20" x2="4" y2="14" />
+              <line x1="12" y1="20" x2="12" y2="9" />
+              <line x1="20" y1="20" x2="20" y2="4" />
+            </svg>
+          </span>
+          <span>Gain</span>
+        </div>
+        <div class="hero-icon">
+          <span class="hero-icon-badge hero-icon-badge--accent">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M6 17c0-5 1.5-9 6-9s6 4 6 9" />
+              <path d="M4 17h16" />
+              <path d="M10 20a2 2 0 0 0 4 0" />
+            </svg>
+          </span>
+          <span>Never Miss</span>
+        </div>
       </div>
     </div>
   </section>
@@ -37,7 +77,7 @@ import { WHATSAPP_NOTIFICATIONS_ENABLED } from "../lib/featureFlags";
           <span class="eyebrow">The solution</span>
           <h3>We watch PRAZ for you</h3>
           <p>
-            TenderPulse fetches PRAZ e-GP tenders on a shared schedule and matches them against
+            TenderBell fetches PRAZ e-GP tenders on a shared schedule and matches them against
             the sectors, value range, region and keywords you tell us matter to your business.
           </p>
         </div>
