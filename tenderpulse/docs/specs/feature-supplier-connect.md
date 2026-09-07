@@ -146,47 +146,42 @@ different formats, with no easy side-by-side view, wastes real time. This matche
 workaround already seen on TenderBell's tender-alert side, where customers are served by hand
 today.
 
-**Gap 1 — trust signal conflated with tender eligibility (resolved: badge dropped).** A PRAZ
-vendor number proves a supplier can bid on *government* tenders; it says nothing about
-reliability for *private* buyer-to-supplier trade, which is what this feature actually
-transacts. **How it must be solved:** trust comes from a buyer-submitted ratings/reviews system
-tied to completed transactions, not a government registration lookup.
+| # | Gap | Status | What we found | Resolution |
+|---|---|---|---|---|
+| 1 | Trust signal conflated with tender eligibility | ✅ Resolved | A PRAZ vendor number proves a supplier can bid on *government* tenders; it says nothing about reliability for *private* buyer-to-supplier trade, which is what this feature actually transacts. | Badge dropped. Trust now comes from a buyer-submitted ratings/reviews system tied to completed transactions, not a government registration lookup. |
+| 2 | No cold-start / bootstrap plan | 🔲 Open | A two-sided marketplace has no value to either side until both sides have real listings; the pitch describes the mature-state network effect but not how the platform gets there from zero. | Needs an explicit bootstrap sequence before the general matching algorithm is built — e.g. seed the supplier side from existing outreach contacts ([zw-outreach-list.md](zw-outreach-list.md)) and the buyer side from TenderBell's existing manually-served customers, run a manually-brokered pilot (a human matching a handful of real RFQs to real suppliers) to prove demand, and only then invest in automated matching. |
+| 3 | Commission rates unvalidated against local trade margins | ✅ Resolved | The original 3–15% GMV take rate was carried over from generic B2B marketplace benchmarks, not tested against real margins in Zimbabwean trading categories — a flat rate near the high end could exceed a supplier's entire margin on a low-margin order (e.g. building materials). | Commission dropped. Revenue model simplified to a flat monthly subscription (see "Revenue model" above), which removes margin-erosion risk entirely instead of tuning it per category. |
+| 4 | Commission tied to quote acceptance, not to whether the supplier actually got paid | ✅ Resolved | A second supplier-persona pass surfaced this: a GMV commission charges the supplier the moment a quote is accepted, but the supplier's real risk is buyer non-payment or late payment after delivery — a problem the platform did nothing to solve. | A flat monthly subscription doesn't depend on any single transaction completing or being paid, so this misalignment is moot — revenue no longer rides on the supplier's collection risk. |
+| 5 | Disintermediation: repeat business would predictably move off-platform | ✅ Resolved | Once a buyer and supplier complete one transaction through the platform, neither has a reason to pay commission again for repeat orders. A GMV-commission model would need to either accept steady revenue leakage or attempt "non-circumvention" contract terms against small suppliers — an enforcement fight the platform likely loses. | A flat monthly subscription doesn't try to capture a cut of every transaction, so there's nothing to lose to disintermediation — the platform earns on ongoing access to leads and tools, not on policing what suppliers do with a relationship after the first match. |
 
-**Gap 2 — no cold-start / bootstrap plan.** A two-sided marketplace has no value to either side
-until both sides have real listings; the pitch describes the mature-state network effect but not
-how the platform gets there from zero. **How it must be solved:** any scoped version needs an
-explicit bootstrap sequence before the general matching algorithm is built — e.g. seed the
-supplier side from existing outreach contacts ([zw-outreach-list.md](zw-outreach-list.md)) and
-the buyer side from TenderBell's existing manually-served customers, run a manually-brokered
-pilot (a human matching a handful of real RFQs to real suppliers) to prove demand, and only then
-invest in automated matching.
+---
 
-**Gap 3 — commission rates unvalidated against local trade margins (resolved: commission
-dropped for monthly subscription).** The original 3–15% GMV take rate was carried over from
-generic B2B marketplace benchmarks, not tested against real margins in Zimbabwean trading
-categories — a flat rate near the high end could exceed a supplier's entire margin on a
-low-margin order (e.g. building materials). **How it was solved:** rather than validate
-per-category rates, the revenue model was simplified to a flat monthly subscription (see
-"Revenue model" above), which removes margin-erosion risk entirely instead of tuning it per
-category.
+## Operational requirements (platform admin review)
 
-**Gap 4 — commission was tied to quote acceptance, not to whether the supplier actually got
-paid.** A second supplier-persona pass surfaced this: a GMV commission charges the supplier the
-moment a quote is accepted, but the supplier's real risk is buyer non-payment or late payment
-after delivery — a problem this platform does nothing to solve. Charging commission on an
-"agreed" transaction the supplier may never fully collect on adds insult to injury. **How it was
-solved:** a flat monthly subscription doesn't depend on any single transaction completing or
-being paid, so this misalignment is moot — the platform's revenue no longer rides on the
-supplier's collection risk.
+Reviewed from the perspective of whoever actually runs Supplier Connect day to day — a small
+team, plausibly sharing operational load with TenderBell rather than staffing it separately.
+These aren't buyer/supplier viability gaps like the table above; they're what blocks a real
+launch regardless of product-market fit.
 
-**Gap 5 — disintermediation: repeat business would predictably move off-platform.** Once a buyer
-and supplier complete one transaction through the platform, neither has a reason to pay
-commission again for repeat orders. A GMV-commission model would need to either accept steady
-revenue leakage or attempt "non-circumvention" contract terms against small suppliers — an
-enforcement fight the platform likely loses. **How it was solved:** a flat monthly subscription
-doesn't try to capture a cut of every transaction, so there's nothing to lose to
-disintermediation — the platform earns on ongoing access to leads and tools, not on policing
-what suppliers do with a relationship after the first match.
+- **Moderation queue** for new supplier listings and reviews — reviewed before they go live, not
+  after, to catch fake suppliers, spam listings, and the retaliation-review risk flagged in Gap 1.
+- **RFQ rate-limiting** on the buyer side, with an admin-tunable cap — addresses the low-intent
+  RFQ problem in "Open questions" below and guards against scraping/abuse.
+- **Suspend/kill switch** per account, independent of any formal dispute-resolution process —
+  an active-harm listing can't wait on a dispute to resolve.
+- **Billing operations**: dunning/retry on failed monthly payments, a grace period before
+  auto-downgrade to free tier, and free-tier abuse detection (one supplier running multiple free
+  accounts to dodge lead limits).
+- **Subscription-appropriate metrics**: subscriber count, monthly churn, and free-to-paid
+  conversion — GMV dashboards no longer apply now that commissions are dropped. Ideally surfaced
+  in the same admin console TenderBell already uses, not a second one, given the team size this
+  project assumes.
+- **An instrumented traction gate**: turn the "TenderBell has paying/retained customers beyond
+  today's 2" build-later condition (see "Relationship to MVP scope" above) into a simple
+  report/dashboard tracking paying-customer count over time, so it's a number to check rather
+  than a judgment call to remember.
+- **Admin-side tooling for the review-dispute/appeal process** referenced in Gap 1 above —
+  currently named as a requirement with no mechanism specified for who actually adjudicates it.
 
 ---
 
