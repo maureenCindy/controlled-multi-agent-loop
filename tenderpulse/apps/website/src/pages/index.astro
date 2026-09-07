@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { WHATSAPP_NOTIFICATIONS_ENABLED } from "../lib/featureFlags";
 ---
 <BaseLayout
   title="Never miss a PRAZ tender again"
@@ -47,6 +48,12 @@ import BaseLayout from "../layouts/BaseLayout.astro";
             Free plans get a daily digest of matches. Paid plans get notified as soon as a match
             is found in each aggregation run — either way, always a link back to the official
             PRAZ listing, never a copy.
+            {WHATSAPP_NOTIFICATIONS_ENABLED && (
+              <>
+                {" "}Paid subscribers can also opt in to receive those notifications via
+                WhatsApp.
+              </>
+            )}
           </p>
         </div>
       </div>
