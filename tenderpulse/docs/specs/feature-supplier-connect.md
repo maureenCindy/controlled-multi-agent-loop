@@ -1,6 +1,7 @@
 # Feature Proposal: Supplier Connect
 
-**Status:** Proposal — vision-level, not scoped or committed
+**Status:** Proposal — bundled with the TenderBell roadmap, but build-later (gated on TenderBell
+traction, see "Relationship to MVP scope" below)
 **Applies to:** Future roadmap beyond the current MVP (see "Relationship to MVP scope" below)
 **Related:** [orchestrator-workflow.md](orchestrator-workflow.md), [aggregation-policy.md](aggregation-policy.md), [MVP_CHECKLIST_BOARD.md](MVP_CHECKLIST_BOARD.md)
 
@@ -10,6 +11,16 @@
 
 This document captures an external feature pitch as-is, for reference. It is **not** an
 accepted spec and has **no** task cards on the [MVP checklist board](MVP_CHECKLIST_BOARD.md).
+
+**Build sequencing decision (2026-09-08):** Supplier Connect stays bundled with TenderBell as
+one product story — same brand, same buyer base, the Find → Match → Quote → Compare → Win
+narrative in "Strategic synergy with TenderBell" below — but it is explicitly **build-later**,
+not simultaneous with the current MVP. It becomes eligible for scoping only once a traction gate
+is met: **TenderBell has paying/retained customers beyond today's 2 manually-served ones.** That
+gate matters for two reasons — it proves the core alert product before a second, much larger
+product (transactions, ratings, payments) is layered on top, and it hands Supplier Connect a
+real buyer base to seed its own cold-start problem (Gap 2 in "Customer validation notes" below)
+instead of bootstrapping two unproven products at once.
 
 - The current TenderBell MVP scrapes **PRAZ e-GP only** and is limited to tender **alerts**
   (find + award notifications) — see [zw-tender-sources.md](zw-tender-sources.md) and
