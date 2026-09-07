@@ -23,6 +23,7 @@ import com.tenderpulse.subscriber.ProfileRequest
 import com.tenderpulse.subscriber.RegisterRequest
 import com.tenderpulse.subscriber.SubscriberResponse
 import com.tenderpulse.subscriber.SubscriberService
+import com.tenderpulse.subscriber.WhatsAppOptInRequest
 import com.tenderpulse.tender.TenderResponse
 import com.tenderpulse.tender.TenderService
 import jakarta.validation.Valid
@@ -100,6 +101,20 @@ class SubscriberController(
         @PathVariable profileId: UUID,
         @Valid @RequestBody req: ProfileRequest
     ): InterestProfileResponse = InterestProfileResponse.from(subscriberService.updateProfile(id, profileId, req))
+
+    /**
+     * Self-attested WhatsApp opt-in (TP-093): sets the subscriber's WhatsApp number and consent
+     * flag together, in the same request -- no separate verification step. Paid-tier only and
+     * restricted to the subscriber's own record; both are enforced in
+     * [SubscriberService.setWhatsAppOptIn] / the shared ownership machinery
+     * ([com.tenderpulse.auth.SubscriberOwnershipPaths], which this route is added to) rather than
+     * here, same pattern as the profile endpoints above.
+     */
+    @PatchMapping("/{id}/whatsapp")
+    fun setWhatsAppOptIn(
+        @PathVariable id: UUID,
+        @Valid @RequestBody req: WhatsAppOptInRequest
+    ): SubscriberResponse = SubscriberResponse.from(subscriberService.setWhatsAppOptIn(id, req))
 }
 
 /**

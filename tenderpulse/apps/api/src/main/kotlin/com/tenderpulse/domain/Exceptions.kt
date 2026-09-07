@@ -55,3 +55,13 @@ class PayPalPlanPricingException(message: String, cause: Throwable? = null) : Ru
  */
 @ResponseStatus(HttpStatus.BAD_REQUEST)
 class InvalidPlanIdException(message: String) : RuntimeException(message)
+
+/**
+ * A subscriber attempted to use a feature gated to a subscription tier they don't hold (TP-093:
+ * WhatsApp opt-in is Paid-only). Maps to 403 -- the caller is unambiguously identified (this is
+ * never thrown for an unauthenticated or cross-subscriber request, both of which are already
+ * rejected earlier by [com.tenderpulse.auth.SecurityConfig] / [com.tenderpulse.auth.SubscriberOwnershipInterceptor]
+ * with 401/403 of their own) but is not entitled to the specific action they asked for.
+ */
+@ResponseStatus(HttpStatus.FORBIDDEN)
+class TierRestrictionException(message: String) : RuntimeException(message)

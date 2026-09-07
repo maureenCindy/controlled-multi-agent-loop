@@ -11,6 +11,7 @@ import com.tenderpulse.domain.Sector
 import com.tenderpulse.domain.Subscriber
 import com.tenderpulse.domain.SubscriptionTier
 import com.tenderpulse.domain.SubscriptionVerificationException
+import com.tenderpulse.domain.TierRestrictionException
 import com.tenderpulse.subscriber.SubscriberService
 import io.mockk.every
 import io.mockk.mockk
@@ -22,6 +23,7 @@ import org.springframework.http.MediaType
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
@@ -499,6 +501,94 @@ class SubscriberControllerTest {
             put("${profilesUrl()}/$profileId")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(profileJson())
+        ).andExpect(status().isNotFound)
+    }
+
+    // ---- setWhatsAppOptIn (TP-093) ----
+
+    private fun whatsappUrl(id: UUID = subscriberId) = "/api/v1/subscribers/$id/whatsapp"
+
+    private fun whatsappJson(number: String = "+263771234567", consentGiven: Boolean? = null): String {
+        val body = LinkedHashMap<String, Any?>()
+        body["number"] = number
+        if (consentGiven != null) body["consentGiven"] = consentGiven
+        return objectMapper.writeValueAsString(body)
+    }
+
+    @Test
+    fun `setWhatsAppOptIn with a valid number and explicit consent returns 200 with both fields`() {
+        val updated = subscriber.copy(whatsappNumber = "+263771234567", whatsappOptIn = true)
+        every { subscriberService.setWhatsAppOptIn(subscriberId, any()) } returns updated
+
+        mockMvc.perform(
+            patch(whatsappUrl())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(whatsappJson(consentGiven = true))
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.whatsappNumber").value("+263771234567"))
+            .andExpect(jsonPath("$.whatsappOptIn").value(true))
+    }
+
+    @Test
+    fun `setWhatsAppOptIn with consentGiven omitted returns optIn false`() {
+        val updated = subscriber.copy(whatsappNumber = "+263771234567", whatsappOptIn = false)
+        every { subscriberService.setWhatsAppOptIn(subscriberId, any()) } returns updated
+
+        mockMvc.perform(
+            patch(whatsappUrl())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(whatsappJson())
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.whatsappOptIn").value(false))
+    }
+
+    /** Test case 3: a malformed (non-E.164) number is rejected by @Valid before the service runs. */
+    @Test
+    fun `setWhatsAppOptIn with a malformed number returns 400 and never calls the service`() {
+        mockMvc.perform(
+            patch(whatsappUrl())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(whatsappJson(number = "0771234567", consentGiven = true))
+        ).andExpect(status().isBadRequest)
+
+        verify(exactly = 0) { subscriberService.setWhatsAppOptIn(any(), any()) }
+    }
+
+    @Test
+    fun `setWhatsAppOptIn with a blank number returns 400 and never calls the service`() {
+        mockMvc.perform(
+            patch(whatsappUrl())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(whatsappJson(number = "", consentGiven = true))
+        ).andExpect(status().isBadRequest)
+
+        verify(exactly = 0) { subscriberService.setWhatsAppOptIn(any(), any()) }
+    }
+
+    /** Test case 4: a Free-tier subscriber's attempt surfaces as 403, not a silent success. */
+    @Test
+    fun `setWhatsAppOptIn for a Free-tier subscriber returns 403`() {
+        every { subscriberService.setWhatsAppOptIn(subscriberId, any()) } throws
+            TierRestrictionException("WhatsApp opt-in is available to Paid subscribers only")
+
+        mockMvc.perform(
+            patch(whatsappUrl())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(whatsappJson(consentGiven = true))
+        ).andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `setWhatsAppOptIn for an unknown subscriber returns 404`() {
+        every { subscriberService.setWhatsAppOptIn(subscriberId, any()) } throws
+            NotFoundException("Subscriber $subscriberId")
+
+        mockMvc.perform(
+            patch(whatsappUrl())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(whatsappJson(consentGiven = true))
         ).andExpect(status().isNotFound)
     }
 }

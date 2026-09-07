@@ -47,6 +47,28 @@ data class ProSubscribeRequest(
     val paypalSubscriptionId: String
 )
 
+/**
+ * Request body for `PATCH /api/v1/subscribers/{id}/whatsapp` (TP-093) -- submits a WhatsApp
+ * number and self-attested delivery consent together, in the same request. There is no separate
+ * verification step (e.g. a `wa.me` link or inbound-webhook reply): [consentGiven] is taken at
+ * face value from the subscriber's own authenticated request (ownership is enforced upstream by
+ * [com.tenderpulse.auth.SubscriberOwnershipInterceptor], same as the profile endpoints).
+ *
+ * [consentGiven] deliberately defaults to `false` (not nullable/unset) so that omitting it from
+ * the request body -- or explicitly sending `false` -- both leave/set
+ * [com.tenderpulse.domain.Subscriber.whatsappOptIn] false; only an explicit `true` in this same
+ * request sets it true. See [SubscriberService.setWhatsAppOptIn].
+ */
+data class WhatsAppOptInRequest(
+    @field:NotBlank
+    @field:Pattern(
+        regexp = "^\\+[1-9]\\d{1,14}$",
+        message = "number must be in E.164 format, e.g. '+263771234567'"
+    )
+    val number: String,
+    val consentGiven: Boolean = false
+)
+
 data class ProfileRequest(
     @field:NotBlank
     val name: String,
@@ -86,7 +108,9 @@ data class SubscriberResponse(
     val tier: SubscriptionTier,
     val active: Boolean,
     val createdAt: Instant,
-    val paypalSubscriptionId: String? = null
+    val paypalSubscriptionId: String? = null,
+    val whatsappNumber: String? = null,
+    val whatsappOptIn: Boolean = false
 ) {
     companion object {
         fun from(subscriber: Subscriber): SubscriberResponse = SubscriberResponse(
@@ -96,7 +120,9 @@ data class SubscriberResponse(
             tier = subscriber.tier,
             active = subscriber.active,
             createdAt = subscriber.createdAt,
-            paypalSubscriptionId = subscriber.paypalSubscriptionId
+            paypalSubscriptionId = subscriber.paypalSubscriptionId,
+            whatsappNumber = subscriber.whatsappNumber,
+            whatsappOptIn = subscriber.whatsappOptIn
         )
     }
 }
