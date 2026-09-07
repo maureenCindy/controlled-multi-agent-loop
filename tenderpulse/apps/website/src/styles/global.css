@@ -276,6 +276,7 @@ a {
 
 .hero-icons {
   display: flex;
+  align-items: stretch;
   flex-wrap: wrap;
   gap: var(--space-5);
   margin-top: var(--space-6);
@@ -283,18 +284,35 @@ a {
 
 .hero-icon {
   display: flex;
+  flex-direction: column;
   align-items: center;
+  text-align: center;
   gap: var(--space-2);
-  font-weight: 600;
   color: var(--color-ink);
+}
+
+.hero-icon-divider {
+  align-self: stretch;
+  width: 1px;
+  background: var(--color-border);
+}
+
+.hero-icon-label {
+  font-weight: 600;
+}
+
+.hero-icon-subtext {
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: var(--color-ink-muted);
 }
 
 .hero-icon-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 3.25rem;
+  height: 3.25rem;
   border-radius: 999px;
   flex-shrink: 0;
 }
