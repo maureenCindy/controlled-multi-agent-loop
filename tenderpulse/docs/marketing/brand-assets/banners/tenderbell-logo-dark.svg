@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 1200 320">
+    <defs>
+      <linearGradient id="bellGrad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#1766B2"/>
+        <stop offset="0.55" stop-color="#0B3D7A"/>
+        <stop offset="1" stop-color="#071F45"/>
+      </linearGradient>
+    </defs>
+    <rect width="1200" height="320" rx="28" fill="#0B2D5B"/>
+    <path d="M 86.0 97.5 Q 18.8 150.0 60.8 208.8" fill="none" stroke="#F59E0B" stroke-width="7.4" stroke-linecap="round" opacity="0.95"/>
+<path d="M 71.3 91.2 Q 2.0 150.0 44.0 215.1" fill="none" stroke="#F59E0B" stroke-width="7.4" stroke-linecap="round" opacity="0.77"/>
+<path d="M 56.6 84.9 Q -14.8 150.0 27.2 221.4" fill="none" stroke="#F59E0B" stroke-width="7.4" stroke-linecap="round" opacity="0.59"/>
+<path d="M 254.0 97.5 Q 321.2 150.0 279.2 208.8" fill="none" stroke="#3B82F6" stroke-width="7.4" stroke-linecap="round" opacity="0.95"/>
+<path d="M 268.7 91.2 Q 338.0 150.0 296.0 215.1" fill="none" stroke="#3B82F6" stroke-width="7.4" stroke-linecap="round" opacity="0.77"/>
+<path d="M 283.4 84.9 Q 354.8 150.0 312.8 221.4" fill="none" stroke="#3B82F6" stroke-width="7.4" stroke-linecap="round" opacity="0.59"/>
+<circle cx="170" cy="68.1" r="18.9" fill="url(#bellGrad)"/>
+<path d="M 98.6 200.4 C 123.8 171.0, 123.8 108.0, 149.0 84.9 C 161.6 72.3, 178.4 72.3, 191.0 84.9 C 216.2 108.0, 216.2 171.0, 241.4 200.4 Q 170.0 231.9 98.6 200.4 Z" fill="url(#bellGrad)"/>
+<path d="M 142.7 208.8 Q 170.0 250.8 197.3 208.8 Q 170.0 196.2 142.7 208.8 Z" fill="#F59E0B"/>
+    <text x="330" y="150" font-family="Inter,Arial,sans-serif" font-size="108" font-weight="800" letter-spacing="-4">
+      <tspan fill="#FFFFFF">Tender</tspan><tspan fill="#F59E0B">Bell</tspan>
+    </text>
+    <text x="336" y="205" font-family="Inter,Arial,sans-serif" font-size="25" font-weight="600" letter-spacing="7" fill="#FFFFFF">ALERTS INSIGHTS AND OPPORTUNITIES</text>
+    <line x1="500" y1="246" x2="610" y2="246" stroke="#F59E0B" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="640" cy="246" r="10" fill="#F59E0B"/>
+    <line x1="670" y1="246" x2="780" y2="246" stroke="#3B82F6" stroke-width="5" stroke-linecap="round"/>
+    </svg>

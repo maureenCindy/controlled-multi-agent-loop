@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">TenderBell</title>
+  <desc id="desc">TenderBell ringing bell brand mark</desc>
+  <defs>
+    <linearGradient id="bell-mark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1766B2"/>
+      <stop offset="0.55" stop-color="#0B3D7A"/>
+      <stop offset="1" stop-color="#071F45"/>
+    </linearGradient>
+  </defs>
+  <path d="M26 39 Q2 64 19 91 M35 46 Q18 64 30 84" fill="none" stroke="#F59E0B" stroke-width="7" stroke-linecap="round"/>
+  <path d="M102 39 Q126 64 109 91 M93 46 Q110 64 98 84" fill="none" stroke="#3B82F6" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="64" cy="27" r="11" fill="url(#bell-mark)"/>
+  <path d="M38 85 C49 72 49 48 57 37 C61 33 67 33 71 37 C79 48 79 72 90 85 Q64 99 38 85Z" fill="url(#bell-mark)"/>
+  <path d="M53 89 Q64 108 75 89 Q64 84 53 89Z" fill="#F59E0B"/>
+</svg>

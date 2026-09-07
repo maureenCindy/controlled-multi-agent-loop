@@ -1,0 +1,2512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TenderBell · Government tender alerts</title>
+    <meta name="description" content="TenderBell helps Zimbabwean businesses find relevant government tenders, receive timely alerts and understand where market opportunities are growing." />
+    <meta property="og:title" content="TenderBell · Alerts, insights and opportunities" />
+    <meta property="og:description" content="Find relevant government tenders and turn procurement data into actionable market intelligence." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="brand-assets/tenderbell-website-logo-1200x630.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="brand-assets/tenderbell-website-logo-1200x630.png" />
+    <link rel="icon" href="brand-assets/tenderbell-bell-mark.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f5f8fc;
+            color: #1a2b4c;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* ---- NAV ---- */
+        .navbar {
+            background: #ffffff;
+            border-bottom: 1px solid #e9edf2;
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(4px);
+            background: rgba(255, 255, 255, 0.92);
+        }
+
+        .nav-flex {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.6rem;
+            color: #1a2b4c;
+            letter-spacing: -0.5px;
+        }
+        .logo i {
+            color: #f5a623;
+            margin-right: 6px;
+        }
+        .logo span {
+            color: #f5a623;
+        }
+        .navbar-brand {
+            display: inline-flex;
+            align-items: center;
+            flex: 0 0 auto;
+            line-height: 0;
+        }
+        .navbar-brand img {
+            display: block;
+            width: 176px;
+            height: auto;
+        }
+        .navbar-brand .brand-logo-dark { display: none; }
+        html[data-theme="dark"] .navbar-brand .brand-logo-light { display: none; }
+        html[data-theme="dark"] .navbar-brand .brand-logo-dark { display: block; }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        .nav-links a {
+            text-decoration: none;
+            color: #1a2b4c;
+            transition: 0.2s;
+        }
+        .nav-links a:hover {
+            color: #f5a623;
+        }
+        .nav-links a.active {
+            color: #f5a623;
+            border-bottom: 2px solid #f5a623;
+            padding-bottom: 4px;
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #d0d7e2;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #1a2b4c;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-outline:hover {
+            border-color: #1a2b4c;
+            background: #f0f4fa;
+        }
+        .btn-outline i {
+            font-size: 0.8rem;
+        }
+        .btn-outline-award {
+            background: #e8f0fe;
+            border: 1px solid #c5d6ed;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #1a4f8b;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-outline-award:hover {
+            background: #d4e2fa;
+            border-color: #1a4f8b;
+        }
+        .btn-outline-award i {
+            font-size: 0.8rem;
+        }
+        .btn-primary {
+            background: #1a2b4c;
+            border: none;
+            padding: 8px 22px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #fff;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-primary i {
+            font-size: 0.8rem;
+        }
+        .btn-primary:hover {
+            background: #2a3f66;
+        }
+
+        .btn-warning {
+            background: #f5a623;
+            border: none;
+            padding: 10px 28px;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #1a2b4c;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            box-shadow: 0 4px 10px rgba(245, 166, 35, 0.3);
+        }
+        .btn-warning i {
+            font-size: 0.9rem;
+        }
+        .btn-warning:hover {
+            background: #e09515;
+            transform: translateY(-2px);
+        }
+
+        /* ---- HERO ---- */
+        .hero {
+            position: relative;
+            overflow: hidden;
+            padding: 68px 0 38px;
+            background:
+                radial-gradient(circle at 88% 8%, rgba(245, 166, 35, 0.16), transparent 26%),
+                linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+            border-bottom: 1px solid #edf1f6;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            width: 320px;
+            height: 320px;
+            right: -130px;
+            bottom: -180px;
+            border-radius: 50%;
+            border: 42px solid rgba(26, 43, 76, 0.035);
+            pointer-events: none;
+        }
+
+        .hero-grid {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            column-gap: 38px;
+            row-gap: 16px;
+            align-items: center;
+        }
+
+        .hero-copy {
+            grid-column: span 8;
+            max-width: none;
+        }
+
+        .hero-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 12px;
+            margin-bottom: 18px;
+            border-radius: 999px;
+            background: #fff8e8;
+            color: #8d5a00;
+            border: 1px solid #f6dfaa;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.7rem, 4.5vw, 4rem);
+            font-weight: 700;
+            line-height: 1.02;
+            letter-spacing: -0.045em;
+            margin-bottom: 18px;
+            max-width: none;
+        }
+        .hero h1 .accent {
+            color: #f5a623;
+        }
+        .hero .tagline {
+            font-size: 1.08rem;
+            color: #53627a;
+            margin-bottom: 20px;
+            max-width: 720px;
+            line-height: 1.7;
+        }
+        .hero .tagline strong {
+            color: #1a2b4c;
+        }
+
+        .search-box {
+            grid-column: span 4;
+            background: rgba(255,255,255,0.96);
+            border-radius: 24px;
+            padding: 22px 24px 24px;
+            box-shadow: 0 18px 50px rgba(26, 43, 76, 0.11);
+            border: 1px solid #e5ebf2;
+            width: 100%;
+        }
+
+        .search-box-header {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .search-box-header > div {
+            width: 100%;
+        }
+        .search-box-header h3 {
+            font-size: 1.05rem;
+            margin-bottom: 3px;
+        }
+        .search-box-header p {
+            color: #6a7890;
+            font-size: 0.8rem;
+        }
+        .live-pill {
+            display: inline-flex;
+            align-items: center;
+            align-self: flex-end;
+            order: -1;
+            gap: 7px;
+            flex: 0 0 auto;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #1d6f3a;
+            background: #eaf6ed;
+            border-radius: 999px;
+            padding: 6px 10px;
+        }
+        .live-pill::before {
+            content: "";
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #2f9e55;
+            box-shadow: 0 0 0 4px rgba(47,158,85,0.12);
+        }
+
+        .alert-frequency {
+            border: 0;
+            margin: 0 0 14px;
+            padding: 0;
+        }
+        .alert-frequency legend {
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #1a2b4c;
+        }
+        .plan-options {
+            display: grid;
+            gap: 8px;
+        }
+        .plan-option {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: #f8faff;
+            border: 1px solid #e5ebf2;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .plan-option:hover {
+            border-color: #c5d0df;
+        }
+        .plan-option:has(input:checked) {
+            background: #fff9ec;
+            border-color: #f5a623;
+            box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.1);
+        }
+        .plan-option input {
+            width: 16px;
+            height: 16px;
+            accent-color: #f5a623;
+            cursor: pointer;
+        }
+        .plan-option-copy strong {
+            display: block;
+            color: #1a2b4c;
+            font-size: 0.82rem;
+        }
+        .plan-option-copy small {
+            display: block;
+            margin-top: 2px;
+            color: #6a7890;
+            font-size: 0.68rem;
+            line-height: 1.35;
+        }
+        .plan-option-price {
+            color: #1a2b4c;
+            font-size: 0.72rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .popular-mini {
+            display: inline-block;
+            margin-left: 5px;
+            padding: 1px 6px;
+            color: #7a4b00;
+            background: #fce5b3;
+            border-radius: 999px;
+            font-size: 0.55rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            vertical-align: 1px;
+        }
+        .max-plan-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin: 9px 2px 0;
+            color: #1a4f8b;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .max-plan-link:hover {
+            color: #f5a623;
+        }
+
+        .metrics-card {
+            width: 100%;
+            padding: 16px 18px 18px;
+            background: rgba(255,255,255,0.96);
+            border: 1px solid #e5ebf2;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(26, 43, 76, 0.07);
+        }
+        .metrics-card-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .metrics-card-label strong {
+            display: block;
+            color: #1a2b4c;
+            font-size: 0.92rem;
+        }
+        .metrics-card-label small {
+            display: block;
+            margin-top: 2px;
+            color: #6a7890;
+            font-size: 0.68rem;
+            font-weight: 500;
+        }
+        .max-badge {
+            flex: 0 0 auto;
+            padding: 4px 9px;
+            border-radius: 999px;
+            color: #7a4b00;
+            background: #fff0cc;
+            border: 1px solid #f4d48e;
+            font-size: 0.62rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+        .metric-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 0;
+        }
+        .metric-card {
+            background: #f8faff;
+            border-radius: 12px;
+            padding: 11px 13px;
+            border: 1px solid #e9edf2;
+            text-align: left;
+            transition: 0.2s;
+        }
+        .metric-card:hover {
+            border-color: #f5a623;
+            background: #fefcf5;
+        }
+        .metric-card .metric-value {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #1a2b4c;
+            line-height: 1.35;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 6px;
+        }
+        .metric-card .metric-label {
+            margin-bottom: 3px;
+            color: #7a8a9e;
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .metric-card .metric-icon {
+            font-size: 0.95rem;
+            color: #f5a623;
+        }
+        .metric-card .metric-icon.award-icon {
+            color: #1a4f8b;
+        }
+        .metrics-card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 11px;
+        }
+        .metrics-card-footer small {
+            color: #7a8a9e;
+            font-size: 0.62rem;
+        }
+        .insights-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: #1a4f8b;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .insights-link:hover {
+            color: #f5a623;
+        }
+        .metric-trend {
+            font-size: 0.62rem;
+            font-weight: 600;
+            padding: 1px 8px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .metric-trend.up {
+            color: #1d6f3a;
+            background: #e4f0e6;
+        }
+        .metric-trend.down {
+            color: #b13e3e;
+            background: #fde8e8;
+        }
+
+        .search-row {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: stretch;
+            margin-top: 4px;
+        }
+        .search-group {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .search-group label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #4a5a72;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .search-group select {
+            width: 100%;
+            border: 1px solid #e9edf2;
+            padding: 10px 14px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            background: #f9fbfd;
+            outline: none;
+            font-weight: 500;
+            color: #1a2b4c;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a5a72' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+        }
+        .search-group select:focus {
+            border-color: #f5a623;
+        }
+        .search-group .helper {
+            font-size: 0.7rem;
+            color: #7a8a9e;
+            padding-left: 4px;
+        }
+        .search-action {
+            width: 100%;
+            display: flex;
+            align-items: flex-end;
+        }
+        .search-action .btn-warning {
+            width: 100%;
+            justify-content: center;
+            padding: 10px 20px;
+            font-size: 0.95rem;
+        }
+
+        /* ---- HOW IT WORKS ---- */
+        .how-it-works {
+            margin: 28px auto 8px;
+            scroll-margin-top: 96px;
+        }
+        .how-it-works > .section-title {
+            margin: 0 0 16px;
+        }
+        .how-it-works-card {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(180px, 0.8fr)) minmax(360px, 1.6fr);
+            align-items: start;
+            gap: 24px;
+            padding: 22px 26px;
+            background: #ffffff;
+            border: 1px solid #e5ebf2;
+            border-radius: 20px;
+            box-shadow: 0 8px 24px rgba(26, 43, 76, 0.05);
+        }
+        .how-step {
+            display: grid;
+            grid-template-columns: 38px 1fr;
+            align-items: start;
+            gap: 11px;
+        }
+        .how-step-icon {
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: #fff4dc;
+            color: #b06d00;
+            font-size: 0.9rem;
+        }
+        .how-step strong {
+            display: block;
+            margin-bottom: 2px;
+            font-size: 0.86rem;
+        }
+        .how-step p {
+            color: #607089;
+            font-size: 0.74rem;
+            line-height: 1.45;
+        }
+        .how-step-with-visual {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .how-step-standard {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .how-step-intro {
+            display: grid;
+            grid-template-columns: 38px 1fr;
+            align-items: start;
+            gap: 11px;
+        }
+        .how-mini-visual {
+            padding: 12px;
+            background: #f8faff;
+            border: 1px solid #e5ebf2;
+            border-radius: 13px;
+        }
+        .mini-field-label {
+            display: block;
+            margin-bottom: 5px;
+            color: #6a7890;
+            font-size: 0.58rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+        .mini-select {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 8px 10px;
+            color: #1a2b4c;
+            background: #ffffff;
+            border: 1px solid #f5a623;
+            border-radius: 999px;
+            font-size: 0.67rem;
+            font-weight: 700;
+        }
+        .mini-select i { color: #8d5a00; }
+        .monitor-flow {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 8px;
+        }
+        .monitor-source,
+        .monitor-match {
+            padding: 8px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 0.62rem;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+        .monitor-source {
+            color: #53627a;
+            background: #ffffff;
+            border: 1px solid #e5ebf2;
+        }
+        .monitor-source i {
+            display: block;
+            margin-bottom: 4px;
+            color: #1a4f8b;
+        }
+        .monitor-arrow { color: #f5a623; font-size: 0.7rem; }
+        .monitor-match {
+            color: #1d6f3a;
+            background: #eaf6ed;
+            border: 1px solid #cce7d3;
+        }
+        .monitor-match i {
+            display: block;
+            margin-bottom: 4px;
+        }
+        .how-alert-preview.carousel-card {
+            width: 100%;
+            min-width: 0;
+            padding: 14px 16px;
+            border-radius: 14px;
+            box-shadow: 0 8px 20px rgba(26, 43, 76, 0.07);
+        }
+        .how-alert-preview .alert-category {
+            margin-bottom: 7px;
+            font-size: 0.67rem;
+        }
+        .how-alert-preview.carousel-card .card-title {
+            font-size: 0.88rem;
+        }
+        .how-alert-preview .alert-detail {
+            margin-bottom: 5px;
+            font-size: 0.7rem;
+        }
+        .how-alert-preview.carousel-card .card-actions {
+            margin-top: 8px;
+        }
+
+        /* ---- CAROUSEL - 3 CARDS PER VIEW (DESKTOP) ---- */
+        .carousel-section {
+            margin: 32px auto 16px;
+        }
+
+        .carousel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .carousel-header h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .carousel-header h2 i {
+            color: #f5a623;
+        }
+        .carousel-header h2 .award-icon {
+            color: #1a4f8b;
+        }
+        .carousel-heading p {
+            margin-top: 3px;
+            color: #607089;
+            font-size: 0.8rem;
+        }
+
+        .carousel-wrapper {
+            position: relative;
+            overflow: hidden;
+            border-radius: 20px;
+        }
+
+        .carousel-track {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+            gap: 0;
+            will-change: transform;
+        }
+
+        /* One carousel slide occupies the full 12-column row. */
+        .carousel-slide {
+            min-width: 100%;
+            flex: 0 0 100%;
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        /* Desktop: 3 cards per view, each spanning 4 of 12 columns. */
+        .carousel-card {
+            grid-column: span 4;
+            min-width: 0;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 20px 22px;
+            border: 1px solid #e9edf2;
+            transition: 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+        .carousel-card:hover {
+            border-color: #f5a623;
+            box-shadow: 0 8px 24px rgba(245, 166, 35, 0.08);
+        }
+        .carousel-card.award-card {
+            border-left: 4px solid #1a4f8b;
+            background: #fafcff;
+        }
+        .carousel-card.award-card:hover {
+            border-color: #1a4f8b;
+        }
+        .carousel-card.tender-alert-card {
+            border-left: 4px solid #f5a623;
+        }
+        .carousel-card.closing-alert-card {
+            border-left: 4px solid #d94848;
+            background: #fffdfd;
+        }
+        .alert-type {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+        .alert-type.tender {
+            color: #8d5a00;
+            background: #fff4dc;
+        }
+        .alert-type.award {
+            color: #1a4f8b;
+            background: #e8f0fe;
+        }
+        .alert-type.closing {
+            color: #a53232;
+            background: #fde8e8;
+        }
+        .delivery-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: #53627a;
+            font-size: 0.68rem;
+            font-weight: 600;
+        }
+        .delivery-badge .fa-whatsapp {
+            color: #25D366;
+        }
+        .alert-category {
+            margin-bottom: 10px;
+            color: #53627a;
+            font-size: 0.72rem;
+            line-height: 1.45;
+        }
+        .alert-category strong {
+            display: block;
+            margin-bottom: 2px;
+            color: #8d5a00;
+            font-size: 0.62rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .award-card .alert-category strong {
+            color: #1a4f8b;
+        }
+        .alert-detail {
+            margin-bottom: 7px;
+            color: #53627a;
+            font-size: 0.76rem;
+        }
+        .alert-detail i {
+            width: 16px;
+            color: #f5a623;
+        }
+        .award-detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px 12px;
+            margin-bottom: 10px;
+        }
+        .award-detail {
+            color: #53627a;
+            font-size: 0.7rem;
+            line-height: 1.4;
+        }
+        .award-detail.wide {
+            grid-column: 1 / -1;
+        }
+        .award-detail strong {
+            display: block;
+            color: #1a2b4c;
+            font-size: 0.63rem;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+        }
+        .carousel-card .card-actions a {
+            text-decoration: none;
+        }
+
+        .carousel-card .card-badge {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .carousel-card .badge-budget {
+            background: #e4f0e6;
+            color: #1d6f3a;
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 4px 12px;
+            border-radius: 40px;
+        }
+        .carousel-card .badge-time {
+            background: #fef1e6;
+            color: #b45a1c;
+            font-weight: 600;
+            font-size: 0.75rem;
+            padding: 4px 12px;
+            border-radius: 40px;
+        }
+        .carousel-card .badge-award {
+            background: #e8f0fe;
+            color: #1a4f8b;
+            font-weight: 700;
+            font-size: 0.7rem;
+            padding: 4px 12px;
+            border-radius: 40px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .carousel-card .card-title {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+        .carousel-card .card-entity {
+            font-size: 0.8rem;
+            color: #4a5a72;
+            margin-bottom: 6px;
+        }
+        .carousel-card .card-entity i {
+            color: #f5a623;
+            margin-right: 4px;
+        }
+        .carousel-card .card-ref {
+            font-size: 0.75rem;
+            color: #7a8a9e;
+            margin-bottom: 8px;
+        }
+        .carousel-card .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 6px 0 12px;
+        }
+        .carousel-card .card-tags span {
+            background: #f0f4fa;
+            padding: 2px 10px;
+            border-radius: 40px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: #1a2b4c;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .carousel-card .card-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: auto;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .carousel-card .card-actions .btn-outline-sm {
+            background: transparent;
+            border: 1px solid #d0d7e2;
+            padding: 5px 14px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #1a2b4c;
+        }
+        .carousel-card .card-actions .btn-outline-sm:hover {
+            border-color: #1a2b4c;
+            background: #f0f4fa;
+        }
+        .carousel-card .card-actions .btn-view-sm {
+            background: #1a2b4c;
+            border: none;
+            padding: 5px 16px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            color: #fff;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .carousel-card .card-actions .btn-view-sm:hover {
+            background: #2a3f66;
+        }
+        .carousel-card .card-actions .btn-award-alert-sm {
+            background: #e8f0fe;
+            border: none;
+            padding: 5px 14px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.7rem;
+            color: #1a4f8b;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .carousel-card .card-actions .btn-award-alert-sm:hover {
+            background: #d4e2fa;
+        }
+
+        .carousel-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .carousel-btn {
+            background: white;
+            border: 1px solid #d0d7e2;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 1rem;
+            color: #1a2b4c;
+        }
+        .carousel-btn:hover {
+            border-color: #1a2b4c;
+            background: #f0f4fa;
+        }
+        .carousel-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        .carousel-dots {
+            display: flex;
+            gap: 6px;
+        }
+        .carousel-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #d0d7e2;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .carousel-dots span.active {
+            background: #f5a623;
+            width: 24px;
+            border-radius: 12px;
+        }
+
+        /* ---- INSIGHTS ---- */
+        .dashboard-preview {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 28px 32px;
+            margin: 32px 0 24px;
+            border: 1px solid #e9edf2;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+        .dash-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #f0f4fa;
+            padding: 12px 0;
+        }
+        .dash-item:last-child {
+            border-bottom: none;
+        }
+        .dash-item .icon {
+            background: #f0f4fa;
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1a2b4c;
+        }
+        .dash-item .info {
+            flex: 1;
+        }
+        .dash-item .info strong {
+            display: block;
+            font-size: 0.95rem;
+        }
+        .dash-item .info small {
+            font-size: 0.8rem;
+            color: #4a5a72;
+        }
+        .dash-item .status {
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: #1d6f3a;
+            background: #e4f0e6;
+            padding: 2px 12px;
+            border-radius: 40px;
+        }
+        .dash-item .status.award {
+            background: #e8f0fe;
+            color: #1a4f8b;
+        }
+        .dash-right {
+            background: #f8faff;
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .dash-right h4 {
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .dash-right p {
+            font-size: 0.9rem;
+            color: #4a5a72;
+            margin-bottom: 12px;
+        }
+        .dash-right .channel-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #eef3f9;
+            padding: 4px 14px 4px 10px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        .dash-right .channel-badge .fa-whatsapp {
+            color: #25D366;
+        }
+
+        /* ---- MARKET OPPORTUNITY INSIGHTS ---- */
+        .market-insights-section {
+            margin: 48px auto 12px;
+            scroll-margin-top: 90px;
+        }
+        .market-insights-shell {
+            display: grid;
+            grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.2fr);
+            gap: 34px;
+            align-items: center;
+            padding: 38px;
+            border-radius: 28px;
+            color: #ffffff;
+            background: radial-gradient(circle at 95% 0%, rgba(245, 166, 35, 0.2), transparent 34%), #142541;
+            box-shadow: 0 18px 44px rgba(20, 37, 65, 0.14);
+        }
+        .market-insights-copy .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            margin-bottom: 13px;
+            color: #f8c562;
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+        }
+        .market-insights-copy h2 {
+            margin-bottom: 13px;
+            font-size: clamp(1.8rem, 3vw, 2.5rem);
+            line-height: 1.08;
+            letter-spacing: -0.035em;
+        }
+        .market-insights-copy > p {
+            margin-bottom: 20px;
+            color: #c5d0e0;
+            line-height: 1.65;
+        }
+        .market-audiences {
+            display: grid;
+            gap: 10px;
+            margin: 0 0 22px;
+            padding: 0;
+            list-style: none;
+        }
+        .market-audiences li {
+            display: grid;
+            grid-template-columns: 24px 1fr;
+            gap: 9px;
+            color: #dce4ef;
+            font-size: 0.82rem;
+            line-height: 1.45;
+        }
+        .market-audiences i {
+            margin-top: 2px;
+            color: #f5a623;
+            text-align: center;
+        }
+        .market-audiences strong { color: #ffffff; }
+        .market-insights-copy .btn-warning { box-shadow: none; }
+        .portal-window {
+            overflow: hidden;
+            color: #1a2b4c;
+            background: #f7f9fc;
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 20px;
+            box-shadow: 0 22px 50px rgba(0,0,0,0.24);
+        }
+        .portal-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 13px 16px;
+            background: #ffffff;
+            border-bottom: 1px solid #e5ebf2;
+        }
+        .portal-brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.78rem;
+            font-weight: 800;
+        }
+        .portal-brand img {
+            width: 25px;
+            height: 25px;
+            object-fit: contain;
+        }
+        .portal-period { color: #6a7890; font-size: 0.66rem; }
+        .portal-content { padding: 17px; }
+        .portal-heading {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .portal-heading strong { font-size: 0.86rem; }
+        .portal-heading span { color: #7a8a9e; font-size: 0.62rem; }
+        .portal-insight-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+        .portal-insight-card {
+            min-height: 104px;
+            padding: 13px;
+            background: #ffffff;
+            border: 1px solid #e5ebf2;
+            border-radius: 13px;
+        }
+        .portal-insight-card .portal-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #6a7890;
+            font-size: 0.61rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .portal-insight-card .portal-label i { color: #f5a623; }
+        .portal-insight-card strong {
+            display: block;
+            margin-top: 8px;
+            font-size: 0.84rem;
+            line-height: 1.3;
+        }
+        .portal-insight-card small {
+            display: block;
+            margin-top: 4px;
+            color: #1d6f3a;
+            font-size: 0.65rem;
+            font-weight: 700;
+        }
+        .portal-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 5px;
+            height: 34px;
+            margin-top: 10px;
+        }
+        .portal-chart span {
+            flex: 1;
+            min-height: 7px;
+            border-radius: 4px 4px 1px 1px;
+            background: #f5a623;
+            opacity: 0.85;
+        }
+
+        /* ---- TESTIMONIALS ---- */
+        .testimonials-section {
+            margin-top: 36px;
+            scroll-margin-top: 96px;
+        }
+        .testimonials-section .section-title {
+            margin-top: 0;
+        }
+        .testimonials-panel {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.6fr);
+            gap: 28px;
+            align-items: center;
+            padding: 30px 32px;
+            background:
+                radial-gradient(circle at 92% 12%, rgba(245, 166, 35, 0.14), transparent 32%),
+                #ffffff;
+            border: 1px solid #e5ebf2;
+            border-radius: 24px;
+            box-shadow: 0 8px 26px rgba(26, 43, 76, 0.05);
+        }
+        .testimonials-copy .early-access-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            margin-bottom: 10px;
+            padding: 5px 10px;
+            color: #8d5a00;
+            background: #fff8e8;
+            border: 1px solid #f6dfaa;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .testimonials-copy h3 {
+            margin-bottom: 8px;
+            font-size: 1.35rem;
+        }
+        .testimonials-copy p {
+            max-width: 680px;
+            color: #53627a;
+            font-size: 0.9rem;
+            line-height: 1.65;
+        }
+        .testimonials-copy blockquote {
+            max-width: 720px;
+            color: #1a2b4c;
+            font-size: 1.05rem;
+            font-style: italic;
+            font-weight: 400;
+            line-height: 1.65;
+        }
+        .testimonial-carousel {
+            min-width: 0;
+            overflow: hidden;
+        }
+        .testimonial-track {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+            will-change: transform;
+        }
+        .testimonial-slide {
+            min-width: 100%;
+            flex: 0 0 100%;
+        }
+        .testimonial-attribution {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            margin-top: 14px;
+        }
+        .testimonial-attribution strong {
+            font-size: 0.85rem;
+        }
+        .testimonial-attribution span {
+            color: #6a7890;
+            font-size: 0.74rem;
+        }
+        .testimonial-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 18px;
+        }
+        .testimonial-controls .carousel-btn {
+            width: 32px;
+            height: 32px;
+            font-size: 0.75rem;
+        }
+        .testimonial-dots {
+            display: flex;
+            gap: 6px;
+        }
+        .testimonial-dot {
+            width: 8px;
+            height: 8px;
+            padding: 0;
+            border: 0;
+            border-radius: 999px;
+            background: #d0d7e2;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .testimonial-dot.active {
+            width: 24px;
+            background: #f5a623;
+        }
+        .testimonial-invite {
+            padding: 20px;
+            background: #f8faff;
+            border: 1px solid #e9edf2;
+            border-radius: 16px;
+        }
+        .testimonial-invite i {
+            margin-bottom: 10px;
+            color: #f5a623;
+            font-size: 1.25rem;
+        }
+        .testimonial-invite strong {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.95rem;
+        }
+        .testimonial-invite p {
+            margin-bottom: 14px;
+            color: #607089;
+            font-size: 0.78rem;
+            line-height: 1.5;
+        }
+        .testimonial-invite .btn-warning {
+            width: 100%;
+            justify-content: center;
+            padding: 9px 18px;
+        }
+
+        /* ---- PRICING ---- */
+        #pricing {
+            scroll-margin-top: 96px;
+        }
+        .section-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin: 32px 0 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .section-title i {
+            color: #f5a623;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin: 24px 0 48px;
+        }
+        .pricing-card {
+            background: white;
+            border-radius: 24px;
+            padding: 28px 24px;
+            border: 1px solid #e9edf2;
+            text-align: center;
+            transition: 0.2s;
+        }
+        .pricing-card.popular {
+            border-color: #f5a623;
+            box-shadow: 0 8px 24px rgba(245, 166, 35, 0.12);
+        }
+        .pricing-card h3 {
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+        .pricing-card .price {
+            font-weight: 700;
+            font-size: 2.2rem;
+            margin: 12px 0 4px;
+        }
+        .pricing-card .price small {
+            font-size: 1rem;
+            font-weight: 400;
+            color: #4a5a72;
+        }
+        .pricing-card ul {
+            list-style: none;
+            text-align: left;
+            margin: 20px 0;
+        }
+        .pricing-card ul li {
+            padding: 6px 0;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .pricing-card ul li i {
+            color: #f5a623;
+            width: 18px;
+        }
+        .pricing-card ul li .fa-whatsapp {
+            color: #25D366;
+        }
+        .pricing-card ul li .fa-gavel {
+            color: #1a4f8b;
+        }
+        .pricing-card ul li.not-included {
+            color: #7a879a;
+        }
+        .pricing-card ul li.not-included i {
+            color: #a8b2c1;
+        }
+        .pricing-card .btn-primary {
+            width: 100%;
+            justify-content: center;
+            padding: 12px;
+        }
+        .pricing-card .btn-warning {
+            width: 100%;
+            justify-content: center;
+        }
+
+        /* ---- CONTACT ---- */
+        .contact-section {
+            margin: 40px auto 48px;
+            scroll-margin-top: 96px;
+        }
+        .contact-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+            gap: 32px;
+            padding: 32px;
+            background: #ffffff;
+            border: 1px solid #e5ebf2;
+            border-radius: 24px;
+            box-shadow: 0 8px 26px rgba(26, 43, 76, 0.05);
+        }
+        .contact-heading {
+            margin-bottom: 20px;
+        }
+        .contact-heading h2 {
+            margin-bottom: 5px;
+            font-size: 1.45rem;
+        }
+        .contact-heading p {
+            color: #607089;
+            font-size: 0.84rem;
+        }
+        .contact-form {
+            display: grid;
+            gap: 14px;
+        }
+        .contact-form-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+        .contact-field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .contact-field label {
+            color: #33435f;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+        .contact-field input,
+        .contact-field select,
+        .contact-field textarea {
+            width: 100%;
+            padding: 10px 12px;
+            color: #1a2b4c;
+            background: #f9fbfd;
+            border: 1px solid #dfe6ef;
+            border-radius: 10px;
+            font: inherit;
+            font-size: 0.82rem;
+            outline: none;
+        }
+        .contact-field textarea {
+            min-height: 116px;
+            resize: vertical;
+        }
+        .contact-field input:focus,
+        .contact-field select:focus,
+        .contact-field textarea:focus {
+            border-color: #f5a623;
+            box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.1);
+        }
+        .contact-privacy {
+            color: #718097;
+            font-size: 0.68rem;
+            line-height: 1.5;
+        }
+        .contact-privacy a {
+            color: #1a4f8b;
+        }
+        .contact-form .btn-warning {
+            justify-content: center;
+            width: 100%;
+        }
+        .contact-success {
+            padding: 10px 12px;
+            color: #1d6f3a;
+            background: #eaf6ed;
+            border-radius: 10px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+        .contact-side h3 {
+            margin-bottom: 12px;
+            font-size: 0.92rem;
+        }
+        .contact-socials {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+        .contact-social-link {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 11px 12px;
+            color: #1a2b4c;
+            background: #f8faff;
+            border: 1px solid #e5ebf2;
+            border-radius: 12px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .contact-social-link:hover {
+            color: #1a4f8b;
+            border-color: #c5d6ed;
+        }
+        .contact-social-link i {
+            color: #1a4f8b;
+            font-size: 1rem;
+        }
+        .faq-list {
+            border-top: 1px solid #e5ebf2;
+        }
+        .faq-list details {
+            border-bottom: 1px solid #e5ebf2;
+        }
+        .faq-list summary {
+            position: relative;
+            padding: 13px 28px 13px 0;
+            color: #1a2b4c;
+            font-size: 0.79rem;
+            font-weight: 700;
+            cursor: pointer;
+            list-style: none;
+        }
+        .faq-list summary::-webkit-details-marker {
+            display: none;
+        }
+        .faq-list summary::after {
+            content: "+";
+            position: absolute;
+            right: 2px;
+            top: 11px;
+            color: #f5a623;
+            font-size: 1.15rem;
+        }
+        .faq-list details[open] summary::after {
+            content: "−";
+        }
+        .faq-list details p {
+            padding: 0 24px 14px 0;
+            color: #607089;
+            font-size: 0.73rem;
+            line-height: 1.55;
+        }
+
+        /* ---- FOOTER ---- */
+        .site-footer {
+            margin-top: 16px;
+            padding: 48px 0 22px;
+            background: #0B2D5B;
+            color: #dbe3ef;
+        }
+        .footer-grid {
+            display: grid;
+            grid-template-columns: minmax(260px, 1.6fr) repeat(3, minmax(150px, 1fr));
+            gap: 42px;
+            padding-bottom: 34px;
+        }
+        .footer-logo {
+            display: block;
+            width: min(100%, 300px);
+            height: auto;
+            margin-bottom: 12px;
+        }
+        .footer-brand p {
+            max-width: 350px;
+            color: #aebbd0;
+            font-size: 0.84rem;
+            line-height: 1.65;
+        }
+        .footer-column h3 {
+            margin-bottom: 14px;
+            color: #ffffff;
+            font-size: 0.82rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .footer-links {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 9px;
+            list-style: none;
+        }
+        .footer-links a,
+        .footer-contact a {
+            color: #c5d0e0;
+            font-size: 0.82rem;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .footer-links a:hover,
+        .footer-contact a:hover {
+            color: #f5a623;
+        }
+        .footer-contact {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            color: #c5d0e0;
+            font-size: 0.82rem;
+        }
+        .footer-contact a,
+        .footer-contact span {
+            display: inline-flex;
+            align-items: flex-start;
+            gap: 9px;
+        }
+        .footer-contact i {
+            width: 15px;
+            margin-top: 3px;
+            color: #f5a623;
+            text-align: center;
+        }
+        .footer-bottom {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.12);
+            color: #8fa0b8;
+            font-size: 0.75rem;
+        }
+        .footer-bottom a {
+            color: #c5d0e0;
+            text-decoration: none;
+        }
+        .footer-bottom a:hover {
+            color: #f5a623;
+        }
+
+        /* ---- RESPONSIVE ---- */
+
+        /* Tablet: 2 cards per row (6 of 12 columns each). */
+        @media (max-width: 1024px) {
+            .carousel-card {
+                grid-column: span 6;
+            }
+
+            .hero-copy,
+            .search-box {
+                grid-column: span 6;
+            }
+
+            .how-it-works-card {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .how-step-with-visual {
+                grid-column: 1 / -1;
+                display: grid;
+                grid-template-columns: minmax(180px, 0.7fr) minmax(0, 1.3fr);
+                align-items: start;
+            }
+            .how-step-with-visual .how-alert-preview {
+                grid-column: auto;
+            }
+
+            .footer-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 900px) {
+            .hero-copy,
+            .search-box {
+                grid-column: span 12;
+            }
+
+            .hero-copy {
+                max-width: 720px;
+            }
+
+            .market-insights-shell {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Mobile: 1 card per row (12 of 12 columns). */
+        @media (max-width: 768px) {
+            .carousel-card {
+                grid-column: span 12;
+                min-width: 0;
+                padding: 16px;
+            }
+
+            .how-it-works-card {
+                grid-template-columns: 1fr;
+                gap: 18px;
+                padding: 20px;
+            }
+
+            .how-step-with-visual {
+                grid-column: auto;
+                display: flex;
+            }
+            .how-step-with-visual .how-alert-preview {
+                grid-column: auto;
+            }
+
+            .metric-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .dashboard-preview {
+                grid-template-columns: 1fr;
+            }
+
+            .market-insights-shell {
+                padding: 26px 22px;
+            }
+
+            .testimonials-panel {
+                grid-template-columns: 1fr;
+                padding: 24px;
+            }
+
+            .contact-layout {
+                grid-template-columns: 1fr;
+                padding: 24px;
+            }
+
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .search-group {
+                min-width: 100%;
+            }
+            .search-action {
+                min-width: 100%;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+            .hero .tagline {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .navbar-brand img {
+                width: 150px;
+            }
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+            .metric-cards {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            .metric-card .metric-value {
+                font-size: 0.78rem;
+            }
+            .metrics-card-footer {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+            .portal-insight-grid {
+                grid-template-columns: 1fr;
+            }
+            .carousel-card {
+                padding: 14px;
+            }
+            .carousel-card .card-title {
+                font-size: 0.95rem;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 28px;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+            }
+
+            .contact-form-row,
+            .contact-socials {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body id="top">
+
+    <!-- NAV -->
+    <nav class="navbar">
+        <div class="container nav-flex">
+            <a class="navbar-brand" href="#top" aria-label="TenderBell home">
+                <img class="brand-logo-light" src="brand-assets/tenderbell-wordmark-light.svg" alt="TenderBell" />
+                <img class="brand-logo-dark" src="brand-assets/tenderbell-wordmark-dark.svg" alt="" aria-hidden="true" />
+            </a>
+            <div class="nav-links">
+                <a href="#top" class="active">Home</a>
+                <a href="#howItWorks">How it works</a>
+                <a href="#marketInsights">Market insights</a>
+                <a href="#testimonials">Customer stories</a>
+                <a href="#pricing">Pricing</a>
+                <a href="#contact">Contact</a>
+            </div>
+            <div class="nav-actions">
+                <a class="btn-warning" href="/signup"><i class="fas fa-arrow-right"></i> Get Started</a>
+                <button class="btn-primary"><i class="fas fa-user"></i> Sign in</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="container hero-grid">
+            <div class="hero-copy">
+                <h1>Find the right tenders<br /><span class="accent">before your competitors.</span></h1>
+                <div class="tagline">Get matched tender alerts—and with Max, see where <strong>government demand, spending and awards</strong> are creating new business opportunities.</div>
+                <div class="metrics-card">
+                    <div class="metrics-card-label">
+                        <div>
+                            <strong>Market Opportunity Snapshot</strong>
+                            <small>A preview from the TenderBell Market Insights Portal</small>
+                        </div>
+                        <span class="max-badge">Available with Max</span>
+                    </div>
+                    <div class="metric-cards">
+                        <div class="metric-card">
+                            <div class="metric-label">Highest-demand sector</div>
+                            <div class="metric-value">
+                                <span class="metric-icon"><i class="fas fa-chart-line"></i></span>
+                                Construction &amp; Civil Works
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Most active buyer</div>
+                            <div class="metric-value">
+                                <span class="metric-icon award-icon"><i class="fas fa-building"></i></span>
+                                Ministry of Health
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Opportunity hotspot</div>
+                            <div class="metric-value">
+                                <span class="metric-icon"><i class="fas fa-map-marker-alt"></i></span>
+                                Harare
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Most accessible sector</div>
+                            <div class="metric-value">
+                                <span class="metric-icon"><i class="fas fa-door-open"></i></span>
+                                Consulting Services
+                            </div>
+                        </div>
+                    </div>
+                    <div class="metrics-card-footer">
+                        <small>Sample insights for illustration</small>
+                        <a class="insights-link" href="#marketInsights">Explore Market Opportunity Insights <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="search-box">
+                <div class="search-box-header">
+                    <div>
+                        <div class="hero-eyebrow"><i class="fas fa-bolt"></i> Never miss published tenders</div>
+                        <h3>Set up your first tender alert</h3>
+                        <p>Choose a tender category and how quickly you’d like to hear about matching opportunities.</p>
+                    </div>
+
+                </div>
+                <div class="search-row">
+                    <div class="search-group">
+                        <label for="categorySelect">Tender category</label>
+                        <select id="categorySelect">
+                            <option>choose your business category</option>
+                            <option>IT &amp; Software</option>
+                            <option>Construction &amp; Engineering</option>
+                            <option>Medical &amp; Healthcare</option>
+                            <option>Logistics &amp; Transport</option>
+                            <option>Security Services</option>
+                            <option>Consulting &amp; Professional</option>
+                        </select>
+                        <span class="helper">Select the category that matches your business</span>
+                    </div>
+                    <fieldset class="alert-frequency">
+                        <legend>How quickly should we alert you?</legend>
+                        <div class="plan-options">
+                            <label class="plan-option" for="freeAlertPlan">
+                                <input type="radio" id="freeAlertPlan" name="alertPlan" value="free" checked />
+                                <span class="plan-option-copy">
+                                    <strong>Weekly email — Free</strong>
+                                    <small>Every Monday morning · Email only</small>
+                                </span>
+                                <span class="plan-option-price">$0</span>
+                            </label>
+                            <label class="plan-option" for="proAlertPlan">
+                                <input type="radio" id="proAlertPlan" name="alertPlan" value="pro" />
+                                <span class="plan-option-copy">
+                                    <strong>Real-time alerts <span class="popular-mini">Most popular</span></strong>
+                                    <small>New tenders, reminders and awards · Email + optional WhatsApp</small>
+                                </span>
+                                <span class="plan-option-price">$5/mo</span>
+                            </label>
+                            <label class="plan-option" for="maxAlertPlan">
+                                <input type="radio" id="maxAlertPlan" name="alertPlan" value="max" />
+                                <span class="plan-option-copy">
+                                    <strong>Market intelligence — Max</strong>
+                                    <small>Unlimited categories · Real-time alerts · Market Insights Portal</small>
+                                </span>
+                                <span class="plan-option-price">$30/mo</span>
+                            </label>
+                        </div>
+                    </fieldset>
+                    <div class="search-action">
+                        <button class="btn-warning" id="heroAlertCta" type="button" aria-live="polite"><i class="fas fa-bell"></i> Start free weekly alerts</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="container how-it-works" id="howItWorks" aria-labelledby="howItWorksTitle">
+        <div class="section-title" id="howItWorksTitle">
+            <i class="fas fa-route" aria-hidden="true"></i> How TenderBell works
+        </div>
+        <div class="how-it-works-card">
+            <div class="how-step how-step-standard">
+                <div class="how-step-intro">
+                    <div class="how-step-icon"><i class="fas fa-sliders-h" aria-hidden="true"></i></div>
+                    <div>
+                        <strong>1. Choose your interests</strong>
+                        <p>Select your tender category and preferred alert frequency.</p>
+                    </div>
+                </div>
+                <div class="how-mini-visual" aria-label="Sample tender category selection">
+                    <span class="mini-field-label">Tender category</span>
+                    <div class="mini-select"><span>IT &amp; Software</span><i class="fas fa-chevron-down" aria-hidden="true"></i></div>
+                </div>
+            </div>
+            <div class="how-step how-step-standard">
+                <div class="how-step-intro">
+                    <div class="how-step-icon"><i class="fas fa-search" aria-hidden="true"></i></div>
+                    <div>
+                        <strong>2. We monitor tenders</strong>
+                        <p>TenderBell checks official sources for relevant opportunities.</p>
+                    </div>
+                </div>
+                <div class="how-mini-visual monitor-flow" aria-label="TenderBell matching an official tender to a business category">
+                    <div class="monitor-source"><i class="fas fa-landmark" aria-hidden="true"></i>Official source</div>
+                    <i class="fas fa-arrow-right monitor-arrow" aria-hidden="true"></i>
+                    <div class="monitor-match"><i class="fas fa-check-circle" aria-hidden="true"></i>Category match</div>
+                </div>
+            </div>
+            <div class="how-step how-step-with-visual">
+                <div class="how-step-intro">
+                    <div class="how-step-icon"><i class="fas fa-bell" aria-hidden="true"></i></div>
+                    <div>
+                        <strong>3. Receive matching alerts</strong>
+                        <p>Get notified by email or WhatsApp and open the official tender notice.</p>
+                    </div>
+                </div>
+                <article class="carousel-card tender-alert-card how-alert-preview" aria-label="Sample newly published tender alert">
+                    <div class="card-badge">
+                        <span class="alert-type tender"><i class="fas fa-file-signature" aria-hidden="true"></i> Newly Published Tender Alert</span>
+                        <span class="delivery-badge"><i class="fas fa-envelope" aria-hidden="true"></i> Email</span>
+                    </div>
+                    <div class="alert-category"><strong>Matched category</strong>Software Development and Computer Applications, Computer Security Systems Installation and Consultants Services</div>
+                    <div class="card-title">Provision Of Vendor Management System</div>
+                    <div class="alert-detail"><i class="fas fa-building" aria-hidden="true"></i> City Of Bulawayo</div>
+                    <div class="alert-detail"><i class="fas fa-calendar-alt" aria-hidden="true"></i> Closes 29-Sep-2026 11:45 AM</div>
+                    <div class="card-actions">
+                        <a class="btn-view-sm" href="https://egp.praz.org.zw/" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt" aria-hidden="true"></i> View Tender Details</a>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- MARKET OPPORTUNITY INSIGHTS -->
+    <section class="container market-insights-section" id="marketInsights" aria-labelledby="marketInsightsTitle">
+        <div class="market-insights-shell">
+            <div class="market-insights-copy">
+                <span class="eyebrow"><i class="fas fa-chart-pie" aria-hidden="true"></i> Included with Max</span>
+                <h2 id="marketInsightsTitle">Turn tender data into business intelligence</h2>
+                <p>See where government money is flowing, which markets are growing and where your next opportunity may be—inside the TenderBell Market Insights Portal.</p>
+                <ul class="market-audiences">
+                    <li><i class="fas fa-lightbulb" aria-hidden="true"></i><span><strong>Entrepreneurs:</strong> identify in-demand sectors with lower barriers to entry.</span></li>
+                    <li><i class="fas fa-briefcase" aria-hidden="true"></i><span><strong>Established businesses:</strong> find new markets and sharpen bidding strategies.</span></li>
+                    <li><i class="fas fa-chart-line" aria-hidden="true"></i><span><strong>Investors:</strong> follow spending patterns, regional hotspots and emerging activity.</span></li>
+                </ul>
+                <a class="btn-warning" href="#pricing"><i class="fas fa-arrow-right" aria-hidden="true"></i> Explore Max</a>
+            </div>
+            <div class="portal-window" aria-label="Sample TenderBell Market Insights Portal preview">
+                <div class="portal-topbar">
+                    <div class="portal-brand"><img src="brand-assets/tenderbell-bell-mark.svg" alt="" aria-hidden="true" /> TenderBell Market Insights Portal</div>
+                    <div class="portal-period"><i class="far fa-calendar-alt" aria-hidden="true"></i> Last 90 days</div>
+                </div>
+                <div class="portal-content">
+                    <div class="portal-heading">
+                        <strong>Market opportunity overview</strong>
+                        <span>Sample dashboard</span>
+                    </div>
+                    <div class="portal-insight-grid">
+                        <div class="portal-insight-card">
+                            <div class="portal-label"><i class="fas fa-fire" aria-hidden="true"></i> Demand by sector</div>
+                            <strong>Construction leads published demand</strong>
+                            <div class="portal-chart" aria-hidden="true"><span style="height:42%"></span><span style="height:64%"></span><span style="height:53%"></span><span style="height:88%"></span><span style="height:72%"></span></div>
+                        </div>
+                        <div class="portal-insight-card">
+                            <div class="portal-label"><i class="fas fa-landmark" aria-hidden="true"></i> Top-spending buyer</div>
+                            <strong>Ministry of Health</strong>
+                            <small><i class="fas fa-arrow-up" aria-hidden="true"></i> Procurement activity trending up</small>
+                        </div>
+                        <div class="portal-insight-card">
+                            <div class="portal-label"><i class="fas fa-map-marked-alt" aria-hidden="true"></i> Regional hotspot</div>
+                            <strong>Harare publishes the most opportunities</strong>
+                            <small>Compare activity across regions</small>
+                        </div>
+                        <div class="portal-insight-card">
+                            <div class="portal-label"><i class="fas fa-unlock-alt" aria-hidden="true"></i> Entry opportunity</div>
+                            <strong>Consulting shows accessible award patterns</strong>
+                            <small>Based on thresholds and past awards</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TESTIMONIALS -->
+    <section class="container testimonials-section" id="testimonials" aria-labelledby="testimonialsTitle">
+        <div class="section-title" id="testimonialsTitle">
+            <i class="fas fa-quote-left"></i> Customer stories
+        </div>
+        <div class="testimonials-panel">
+            <div class="testimonial-carousel" id="testimonialCarousel" aria-label="Customer testimonials">
+                <div class="testimonial-track" id="testimonialTrack">
+                    <article class="testimonial-slide testimonials-copy">
+                        <span class="early-access-label"><i class="fas fa-quote-left" aria-hidden="true"></i> Customer feedback</span>
+                        <blockquote>“TenderBell helped us win our first government tender within 2 weeks of signing up. The real-time alerts and award insights give us an edge we never had before.”</blockquote>
+                        <div class="testimonial-attribution">
+                            <strong>L. Ndlovu</strong>
+                            <span>Manual email alerts pilot</span>
+                        </div>
+                    </article>
+                    <article class="testimonial-slide testimonials-copy">
+                        <span class="early-access-label"><i class="fas fa-quote-left" aria-hidden="true"></i> Customer feedback</span>
+                        <blockquote>“As a consultant, I need to find opportunities fast. TenderBell sends me curated alerts for exactly the categories I work in—no spam, no clutter. I've already secured 3 consulting gigs through the platform. The best part? I get notified before the competition.”</blockquote>
+                        <div class="testimonial-attribution">
+                            <strong>M. Dube</strong>
+                            <span>Manual email alerts pilot</span>
+                        </div>
+                    </article>
+                </div>
+                <div class="testimonial-controls">
+                    <button class="carousel-btn" id="testimonialPrev" type="button" aria-label="Previous testimonial"><i class="fas fa-chevron-left" aria-hidden="true"></i></button>
+                    <div class="testimonial-dots" id="testimonialDots" aria-label="Choose a testimonial"></div>
+                    <button class="carousel-btn" id="testimonialNext" type="button" aria-label="Next testimonial"><i class="fas fa-chevron-right" aria-hidden="true"></i></button>
+                </div>
+            </div>
+            <div class="testimonial-invite">
+                <i class="fas fa-comment-dots" aria-hidden="true"></i>
+                <strong>Join others and never miss a tender</strong>
+                <p>Join TenderBell, find relevant tenders sooner, and tell us how alerts helped your business.</p>
+                <button class="btn-warning"><i class="fas fa-bell"></i> Get started free</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRICING -->
+    <div class="container" id="pricing">
+        <div class="section-title">
+            <i class="fas fa-crown"></i> Subscription plans
+        </div>
+        <div class="pricing-grid">
+            <div class="pricing-card">
+                <h3>Free</h3>
+                <div class="price">$0 <small>/mo</small></div>
+                <ul>
+                    <li><i class="fas fa-check"></i> 1 tender category match</li>
+                    <li><i class="fas fa-envelope"></i> Weekly published-tender email digest</li>
+                    <li><i class="fas fa-calendar-alt"></i> Delivered every Monday morning</li>
+                    <li><i class="fas fa-clock"></i> Open tenders with 3+ business days remaining</li>
+                    <li><i class="fas fa-check"></i> Email alerts only</li>
+                    <li class="not-included"><i class="fas fa-times"></i> No closing-soon reminders</li>
+                    <li class="not-included"><i class="fas fa-times"></i> No tender award alerts</li>
+                    <li class="not-included"><i class="fas fa-times"></i> No WhatsApp alerts</li>
+                </ul>
+                <button class="btn-primary">Get started</button>
+            </div>
+            <div class="pricing-card popular">
+                <h3>Pro <span style="background: #f5a623; font-size: 0.7rem; padding: 2px 12px; border-radius: 40px; margin-left: 8px;">popular</span></h3>
+                <div class="price">$5 <small>/mo</small></div>
+                <ul>
+                    <li><i class="fas fa-check"></i> 1 tender category match</li>
+                    <li><i class="fas fa-bell"></i> Newly published-tender alerts in real time</li>
+                    <li><i class="fas fa-hourglass-half"></i> Closing-soon tender reminders in real time</li>
+                    <li><i class="fas fa-gavel" style="color:#1a4f8b;"></i> Tender-award notice alerts in real time</li>
+                    <li><i class="fas fa-envelope"></i> Email alert delivery</li>
+                    <li><i class="fab fa-whatsapp" style="color:#25D366;"></i> Optional WhatsApp alert delivery</li>
+                    <li class="not-included"><i class="fas fa-times"></i> No TenderBell Market Insights Portal</li>
+                    <li class="not-included"><i class="fas fa-times"></i> No Market Opportunity Insights</li>
+                </ul>
+                <button class="btn-warning" style="width:100%; justify-content:center;"><i class="fas fa-bolt"></i> Start Pro</button>
+            </div>
+            <div class="pricing-card">
+                <h3>Max</h3>
+                <div class="price">$30 <small>/mo</small></div>
+                <ul>
+                    <li><i class="fas fa-check"></i> Everything included in Pro</li>
+                    <li><i class="fas fa-check"></i> Unlimited tender category matches</li>
+                    <li><i class="fas fa-desktop"></i> TenderBell Market Insights Portal</li>
+                    <li><i class="fas fa-chart-line"></i> Market Opportunity Insights</li>
+                </ul>
+                <button class="btn-primary">Get started</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTACT -->
+    <section class="container contact-section" id="contact" aria-labelledby="contactTitle">
+        <div class="contact-layout">
+            <div>
+                <div class="contact-heading">
+                    <h2 id="contactTitle">Contact TenderBell</h2>
+                    <p>Ask us about subscriptions, alert delivery or partnerships.</p>
+                </div>
+                <form class="contact-form" id="contactForm">
+                    <div class="contact-form-row">
+                        <div class="contact-field">
+                            <label for="contactName">Name</label>
+                            <input id="contactName" name="name" type="text" autocomplete="name" required />
+                        </div>
+                        <div class="contact-field">
+                            <label for="contactEmail">Email address</label>
+                            <input id="contactEmail" name="email" type="email" autocomplete="email" required />
+                        </div>
+                    </div>
+                    <div class="contact-field">
+                        <label for="contactTopic">What can we help with?</label>
+                        <select id="contactTopic" name="topic" required>
+                            <option value="">Choose a topic</option>
+                            <option>Subscription help</option>
+                            <option>Tender alerts</option>
+                            <option>Billing</option>
+                            <option>Partnerships</option>
+                            <option>Feedback</option>
+                        </select>
+                    </div>
+                    <div class="contact-field">
+                        <label for="contactMessage">Message</label>
+                        <textarea id="contactMessage" name="message" required></textarea>
+                    </div>
+                    <p class="contact-privacy">We’ll use your details only to respond to this enquiry. See our <a href="/privacy">Privacy Policy</a>.</p>
+                    <button class="btn-warning" type="submit"><i class="fas fa-paper-plane" aria-hidden="true"></i> Send message</button>
+                    <div class="contact-success" id="contactSuccess" role="status" hidden>Thanks—your message has been received.</div>
+                </form>
+            </div>
+            <aside class="contact-side" aria-label="Contact options and frequently asked questions">
+                <h3>Connect with us</h3>
+                <div class="contact-socials">
+                    <a class="contact-social-link" href="https://x.com/tenderbellzw" target="_blank" rel="noopener noreferrer"><i class="fab fa-twitter" aria-hidden="true"></i> @tenderbellzw</a>
+                    <a class="contact-social-link" href="https://www.facebook.com/profile.php?id=61594028708475" target="_blank" rel="noopener noreferrer"><i class="fab fa-facebook" aria-hidden="true"></i> Tender Bell</a>
+                </div>
+                <h3>Quick answers</h3>
+                <div class="faq-list">
+                    <details>
+                        <summary>Where do TenderBell tenders come from?</summary>
+                        <p>TenderBell monitors Zimbabwe’s official PRAZ e-GP publisher and links every alert back to the original notice.</p>
+                    </details>
+                    <details>
+                        <summary>How often will I receive alerts?</summary>
+                        <p>Free subscribers receive a Monday email digest. Paid subscribers receive alerts after each TenderBell monitoring run.</p>
+                    </details>
+                    <details>
+                        <summary>Can I receive alerts through WhatsApp?</summary>
+                        <p>Yes. Pro and Max subscribers can optionally enable WhatsApp delivery alongside email.</p>
+                    </details>
+                    <details>
+                        <summary>What is a tender category match?</summary>
+                        <p>It is a saved business category TenderBell uses to identify relevant tenders, reminders and award notices.</p>
+                    </details>
+                    <details>
+                        <summary>What is included in the Max plan?</summary>
+                        <p>Max includes everything in Pro, unlimited category matches, the TenderBell Market Insights Portal and market opportunity insights.</p>
+                    </details>
+                </div>
+            </aside>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <img class="footer-logo" src="brand-assets/banners/tenderbell-logo-dark.svg" alt="TenderBell — Alerts, insights and opportunities" />
+                    <p>Helping Zimbabwean businesses discover officially published government tenders and receive relevant opportunity alerts sooner.</p>
+                </div>
+                <div class="footer-column">
+                    <h3>Explore</h3>
+                    <ul class="footer-links">
+                        <li><a href="#howItWorks">How it works</a></li>
+                        <li><a href="#marketInsights">Market insights</a></li>
+                        <li><a href="#testimonials">Customer stories</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Plans &amp; policies</h3>
+                    <ul class="footer-links">
+                        <li><a href="#pricing">Subscription plans</a></li>
+                        <li><a href="/signup">Get started</a></li>
+                        <li><a href="/privacy">Privacy policy</a></li>
+                        <li><a href="https://egp.praz.org.zw/" target="_blank" rel="noopener noreferrer">Official tender source <i class="fas fa-external-link-alt" aria-hidden="true"></i></a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contact</h3>
+                    <div class="footer-contact">
+                        <a href="https://x.com/tenderbellzw" target="_blank" rel="noopener noreferrer"><i class="fab fa-twitter" aria-hidden="true"></i> @tenderbellzw</a>
+                        <a href="https://www.facebook.com/profile.php?id=61594028708475" target="_blank" rel="noopener noreferrer"><i class="fab fa-facebook" aria-hidden="true"></i> Tender Bell on Facebook</a>
+                        <span><i class="fas fa-map-marker-alt" aria-hidden="true"></i> Zimbabwe</span>
+                        <span><i class="fas fa-clock" aria-hidden="true"></i> Support and enquiries via X</span>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 TenderBell. All rights reserved.</span>
+                <span>Never miss a tender opportunity.</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- CAROUSEL JAVASCRIPT -->
+    <script>
+        function initTestimonialCarousel() {
+            const carousel = document.getElementById('testimonialCarousel');
+            const track = document.getElementById('testimonialTrack');
+            const prevBtn = document.getElementById('testimonialPrev');
+            const nextBtn = document.getElementById('testimonialNext');
+            const dotsContainer = document.getElementById('testimonialDots');
+            const slides = track.querySelectorAll('.testimonial-slide');
+            const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            let currentIndex = 0;
+            let autoPlayTimer;
+
+            slides.forEach(function(_, index) {
+                const dot = document.createElement('button');
+                dot.type = 'button';
+                dot.className = 'testimonial-dot';
+                dot.setAttribute('aria-label', 'Show testimonial ' + (index + 1));
+                dot.addEventListener('click', function() {
+                    goToSlide(index);
+                    restartAutoPlay();
+                });
+                dotsContainer.appendChild(dot);
+            });
+
+            const dots = dotsContainer.querySelectorAll('.testimonial-dot');
+
+            function goToSlide(index) {
+                currentIndex = (index + slides.length) % slides.length;
+                track.style.transform = 'translateX(-' + (currentIndex * 100) + '%)';
+                slides.forEach(function(slide, slideIndex) {
+                    slide.setAttribute('aria-hidden', slideIndex === currentIndex ? 'false' : 'true');
+                });
+                dots.forEach(function(dot, dotIndex) {
+                    const isActive = dotIndex === currentIndex;
+                    dot.classList.toggle('active', isActive);
+                    dot.setAttribute('aria-current', isActive ? 'true' : 'false');
+                });
+            }
+
+            function stopAutoPlay() {
+                window.clearInterval(autoPlayTimer);
+            }
+
+            function startAutoPlay() {
+                if (!reduceMotion && slides.length > 1) {
+                    stopAutoPlay();
+                    autoPlayTimer = window.setInterval(function() {
+                        goToSlide(currentIndex + 1);
+                    }, 5000);
+                }
+            }
+
+            function restartAutoPlay() {
+                stopAutoPlay();
+                startAutoPlay();
+            }
+
+            prevBtn.addEventListener('click', function() {
+                goToSlide(currentIndex - 1);
+                restartAutoPlay();
+            });
+            nextBtn.addEventListener('click', function() {
+                goToSlide(currentIndex + 1);
+                restartAutoPlay();
+            });
+            carousel.addEventListener('mouseenter', stopAutoPlay);
+            carousel.addEventListener('mouseleave', startAutoPlay);
+            carousel.addEventListener('focusin', stopAutoPlay);
+            carousel.addEventListener('focusout', startAutoPlay);
+
+            goToSlide(0);
+            startAutoPlay();
+        }
+
+        initTestimonialCarousel();
+
+        const heroAlertCta = document.getElementById('heroAlertCta');
+        document.querySelectorAll('input[name="alertPlan"]').forEach(function(planOption) {
+            planOption.addEventListener('change', function() {
+                if (this.value === 'pro') {
+                    heroAlertCta.innerHTML = '<i class="fas fa-bolt"></i> Continue with Pro — $5/month';
+                } else if (this.value === 'max') {
+                    heroAlertCta.innerHTML = '<i class="fas fa-chart-line"></i> Continue with Max — $30/month';
+                } else {
+                    heroAlertCta.innerHTML = '<i class="fas fa-bell"></i> Start free weekly alerts';
+                }
+            });
+        });
+
+        const contactForm = document.getElementById('contactForm');
+        const contactSuccess = document.getElementById('contactSuccess');
+        contactForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            contactSuccess.hidden = false;
+            contactForm.reset();
+        });
+
+        // Micro-interactions
+        document.querySelectorAll('.btn-view-sm').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                if (this.tagName === 'A') return;
+                e.preventDefault();
+                alert('🔗 Redirecting to the official tender publication site for full details.');
+            });
+        });
+
+        document.querySelectorAll('.btn-award-alert-sm').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                alert('🔔 You\'ll now receive award notice alerts for this category via email & WhatsApp.');
+            });
+        });
+
+        document.querySelectorAll('.btn-warning, .btn-outline-sm, .btn-primary').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                if (this.classList.contains('btn-view-sm') || this.classList.contains('btn-award-alert-sm')) return;
+                if (this.closest('.nav-actions')) return;
+                if (this.innerHTML.includes('Set alert') || this.innerHTML.includes('Set up alerts')) {
+                    alert('✅ We\'ll notify you via email and WhatsApp (opt-in) when this matches.');
+                } else if (this.innerHTML.includes('Save')) {
+                    alert('🔔 Tender saved. You\'ll get alerts for similar opportunities.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
