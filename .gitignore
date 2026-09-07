@@ -44,3 +44,7 @@ coverage/
 *.mp4
 *.png
 !tenderpulse/docs/**/*.png
+# TenderBell brand favicon/OG PNGs the marketing site serves from public/ (small, required
+# build assets referenced by <link rel="icon">/<meta property="og:image"> — not the large,
+# incidental binaries this section targets).
+!tenderpulse/apps/website/public/*.png

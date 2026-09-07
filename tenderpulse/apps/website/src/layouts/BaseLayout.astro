@@ -10,7 +10,7 @@ interface Props {
 
 const {
   title,
-  description = "TenderPulse tracks Zimbabwe's PRAZ e-GP tenders and alerts you the moment one matches your business.",
+  description = "TenderBell tracks Zimbabwe's official government tenders and alerts you the moment one matches your business.",
 } = Astro.props;
 ---
 <!doctype html>
@@ -18,9 +18,16 @@ const {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>{title} | TenderPulse</title>
+    <link rel="icon" type="image/svg+xml" href="/tenderbell-favicon.svg" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/tenderbell-favicon-16x16.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/tenderbell-favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/tenderbell-favicon-48x48.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/tenderbell-favicon-512x512.png" />
+    <title>{title} | TenderBell</title>
     <meta name="description" content={description} />
+    <meta property="og:title" content={`${title} | TenderBell`} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content="/tenderbell-website-logo-1200x630.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
