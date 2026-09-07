@@ -31,6 +31,11 @@ venv/
 dist/
 build/
 
+# Gradle / Kotlin generated files
+.gradle/
+**/gradle/wrapper/.classpath.*
+/tenderpulse/bin/
+
 # Worktrees & experimental runs
 worktrees/
 runs/
