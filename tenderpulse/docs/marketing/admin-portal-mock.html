@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TenderBell Max · Market Insights Portal</title>
+    <meta name="description" content="TenderBell Max Market Insights Portal dashboard mock." />
+    <link rel="icon" href="brand-assets/tenderbell-bell-mark.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <script>
+        const savedTheme = localStorage.getItem('tenderbell-portal-theme');
+        if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.dataset.theme = 'dark';
+        }
+    </script>
+    <style>
+        :root {
+            color-scheme: light;
+            --navy: #1a2b4c;
+            --navy-soft: #293d62;
+            --orange: #f5a623;
+            --orange-soft: #fff4df;
+            --blue: #2563a6;
+            --green: #16845b;
+            --red: #c84f4f;
+            --bg: #f4f7fb;
+            --surface: #ffffff;
+            --surface-soft: #f8fafc;
+            --text: #182944;
+            --muted: #6b7a90;
+            --border: #e3e9f1;
+            --shadow: 0 12px 32px rgba(26, 43, 76, 0.07);
+        }
+
+        html[data-theme="dark"] {
+            color-scheme: dark;
+            --bg: #0f1726;
+            --surface: #172235;
+            --surface-soft: #1c2a40;
+            --text: #edf2f8;
+            --muted: #9eacc0;
+            --border: #2a3950;
+            --orange-soft: rgba(245, 166, 35, 0.13);
+            --shadow: 0 14px 36px rgba(0, 0, 0, 0.24);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            min-height: 100vh;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.5;
+        }
+        button, input, select { font: inherit; }
+        button, a { -webkit-tap-highlight-color: transparent; }
+        a { color: inherit; }
+
+        .app-shell {
+            display: grid;
+            grid-template-columns: 248px minmax(0, 1fr);
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 24px 16px 18px;
+            overflow-y: auto;
+            color: #fff;
+            background:
+                radial-gradient(circle at 24px 45px, rgba(245, 166, 35, 0.16), transparent 105px),
+                var(--navy);
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            min-height: 42px;
+            padding: 0 10px;
+            text-decoration: none;
+        }
+        .brand img { display: block; width: 166px; height: auto; }
+        .plan-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin: 13px 10px 25px;
+            padding: 5px 10px;
+            width: fit-content;
+            color: #ffe8ba;
+            background: rgba(245, 166, 35, 0.12);
+            border: 1px solid rgba(245, 166, 35, 0.3);
+            border-radius: 999px;
+            font-size: 0.68rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        .nav-label {
+            margin: 0 12px 7px;
+            color: #8090aa;
+            font-size: 0.65rem;
+            font-weight: 800;
+            letter-spacing: 0.11em;
+            text-transform: uppercase;
+        }
+        .side-nav { display: grid; gap: 5px; list-style: none; }
+        .side-nav + .nav-label { margin-top: 24px; }
+        .nav-item {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding: 10px 12px;
+            color: #bdc8d8;
+            background: transparent;
+            border: 0;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-align: left;
+            text-decoration: none;
+            transition: 0.18s ease;
+        }
+        .nav-item i { width: 18px; color: #8798b1; text-align: center; }
+        .nav-item:hover { color: #fff; background: rgba(255, 255, 255, 0.07); }
+        .nav-item.active { color: #fff; background: rgba(245, 166, 35, 0.14); }
+        .nav-item.active i { color: var(--orange); }
+        .nav-badge {
+            margin-left: auto;
+            min-width: 22px;
+            padding: 2px 6px;
+            color: var(--navy);
+            background: var(--orange);
+            border-radius: 999px;
+            font-size: 0.64rem;
+            font-weight: 800;
+            text-align: center;
+        }
+        .sidebar-footer { margin-top: auto; padding-top: 24px; }
+        .account-mini {
+            display: grid;
+            grid-template-columns: 34px minmax(0, 1fr) 16px;
+            gap: 9px;
+            align-items: center;
+            padding: 11px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .avatar {
+            display: grid;
+            place-items: center;
+            width: 34px;
+            height: 34px;
+            color: var(--navy);
+            background: var(--orange);
+            border-radius: 50%;
+            font-size: 0.72rem;
+            font-weight: 800;
+        }
+        .account-mini strong, .account-mini small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .account-mini strong { font-size: 0.73rem; }
+        .account-mini small { color: #8f9db2; font-size: 0.62rem; }
+        .account-mini i { color: #8090aa; font-size: 0.72rem; }
+
+        .main { min-width: 0; }
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            min-height: 72px;
+            padding: 14px 32px;
+            background: color-mix(in srgb, var(--surface) 92%, transparent);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(14px);
+        }
+        .menu-toggle {
+            display: none;
+            width: 38px;
+            height: 38px;
+            color: var(--text);
+            background: var(--surface-soft);
+            border: 1px solid var(--border);
+            border-radius: 9px;
+        }
+        .top-search {
+            position: relative;
+            width: min(390px, 44vw);
+        }
+        .top-search i {
+            position: absolute;
+            top: 50%;
+            left: 13px;
+            color: var(--muted);
+            transform: translateY(-50%);
+        }
+        .top-search input {
+            width: 100%;
+            padding: 10px 14px 10px 38px;
+            color: var(--text);
+            background: var(--surface-soft);
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            outline: none;
+        }
+        .top-search input:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.12); }
+        .top-actions { display: flex; align-items: center; gap: 9px; margin-left: auto; }
+        .icon-btn {
+            position: relative;
+            display: grid;
+            place-items: center;
+            width: 39px;
+            height: 39px;
+            color: var(--muted);
+            background: var(--surface-soft);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .icon-btn:hover { color: var(--text); border-color: #b7c2d1; }
+        .notification-dot {
+            position: absolute;
+            top: 7px;
+            right: 7px;
+            width: 7px;
+            height: 7px;
+            background: var(--orange);
+            border: 2px solid var(--surface);
+            border-radius: 50%;
+        }
+        .top-user { display: flex; align-items: center; gap: 9px; margin-left: 5px; }
+        .top-user div:last-child { line-height: 1.25; }
+        .top-user strong, .top-user small { display: block; }
+        .top-user strong { font-size: 0.76rem; }
+        .top-user small { color: var(--muted); font-size: 0.64rem; }
+
+        .workspace { padding: 30px 32px 48px; }
+        .view { display: none; animation: fade 0.22s ease; }
+        .view.active { display: block; }
+        @keyframes fade { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+        .page-heading {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        .eyebrow {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--orange);
+            font-size: 0.67rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+        .page-heading h1 { font-size: clamp(1.55rem, 3vw, 2rem); line-height: 1.18; letter-spacing: -0.035em; }
+        .page-heading p { margin-top: 5px; color: var(--muted); font-size: 0.85rem; }
+        .select-control, .outline-button, .primary-button {
+            min-height: 39px;
+            padding: 8px 13px;
+            border-radius: 10px;
+            font-size: 0.76rem;
+            font-weight: 700;
+        }
+        .select-control, .outline-button {
+            color: var(--text);
+            background: var(--surface);
+            border: 1px solid var(--border);
+        }
+        .outline-button, .primary-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; cursor: pointer; text-decoration: none; }
+        .primary-button { color: var(--navy); background: var(--orange); border: 1px solid var(--orange); }
+        .primary-button:hover { background: #e99916; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
+        .stat-card, .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+        }
+        .stat-card { position: relative; overflow: hidden; padding: 18px; }
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            right: -21px;
+            bottom: -25px;
+            width: 78px;
+            height: 78px;
+            background: var(--accent-soft, var(--orange-soft));
+            border-radius: 50%;
+        }
+        .stat-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .stat-label { color: var(--muted); font-size: 0.7rem; font-weight: 700; }
+        .stat-icon { display: grid; place-items: center; width: 31px; height: 31px; color: var(--accent, var(--orange)); background: var(--accent-soft, var(--orange-soft)); border-radius: 9px; font-size: 0.76rem; }
+        .stat-value { display: block; margin: 11px 0 4px; font-size: 1.65rem; line-height: 1; letter-spacing: -0.04em; }
+        .stat-note { color: var(--muted); font-size: 0.64rem; }
+        .trend-up { color: var(--green); font-weight: 800; }
+
+        .dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(280px, 0.75fr); gap: 18px; }
+        .stack { display: grid; gap: 18px; }
+        .card { min-width: 0; padding: 20px; }
+        .card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
+        .card-header h2 { font-size: 0.96rem; letter-spacing: -0.015em; }
+        .card-header p { margin-top: 3px; color: var(--muted); font-size: 0.68rem; }
+        .text-link { color: var(--blue); font-size: 0.7rem; font-weight: 700; text-decoration: none; white-space: nowrap; }
+
+        .chart-wrap { height: 245px; padding-top: 8px; }
+        .chart {
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            gap: 12px;
+            height: 188px;
+            padding: 0 11px;
+            border-bottom: 1px solid var(--border);
+            background: repeating-linear-gradient(to bottom, transparent 0, transparent 46px, var(--border) 47px);
+        }
+        .bar-group { position: relative; z-index: 2; flex: 1; display: flex; align-items: flex-end; justify-content: center; gap: 4px; height: 100%; }
+        .bar { width: min(19px, 38%); border-radius: 5px 5px 1px 1px; background: var(--orange); }
+        .bar.awards { background: var(--navy-soft); }
+        html[data-theme="dark"] .bar.awards { background: #6682ae; }
+        .bar-month { position: absolute; top: calc(100% + 9px); left: 50%; color: var(--muted); font-size: 0.62rem; transform: translateX(-50%); }
+        .chart-legend { display: flex; align-items: center; gap: 16px; margin-top: 28px; color: var(--muted); font-size: 0.65rem; }
+        .chart-legend span { display: inline-flex; align-items: center; gap: 6px; }
+        .legend-dot { width: 8px; height: 8px; background: var(--orange); border-radius: 2px; }
+        .legend-dot.awards { background: var(--navy-soft); }
+
+        .alert-list { display: grid; gap: 10px; }
+        .alert-row {
+            display: grid;
+            grid-template-columns: 36px minmax(0, 1fr) auto;
+            gap: 11px;
+            align-items: center;
+            padding: 12px;
+            background: var(--surface-soft);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+        .alert-kind { display: grid; place-items: center; width: 36px; height: 36px; color: var(--blue); background: rgba(37, 99, 166, 0.1); border-radius: 10px; }
+        .alert-kind.closing { color: #b06e00; background: var(--orange-soft); }
+        .alert-kind.award { color: var(--green); background: rgba(22, 132, 91, 0.1); }
+        .alert-copy { min-width: 0; }
+        .alert-copy strong, .alert-copy small { display: block; }
+        .alert-copy strong { overflow: hidden; font-size: 0.72rem; text-overflow: ellipsis; white-space: nowrap; }
+        .alert-copy small { margin-top: 3px; color: var(--muted); font-size: 0.62rem; }
+        .alert-meta { color: var(--muted); font-size: 0.61rem; text-align: right; }
+        .alert-meta span { display: block; margin-top: 4px; color: var(--green); font-weight: 800; }
+
+        .deadline-list { display: grid; gap: 14px; }
+        .deadline { display: grid; grid-template-columns: 42px minmax(0, 1fr); gap: 11px; align-items: center; }
+        .date-tile { overflow: hidden; color: var(--navy); background: var(--orange-soft); border-radius: 9px; text-align: center; }
+        .date-tile strong, .date-tile small { display: block; }
+        .date-tile strong { padding-top: 5px; font-size: 0.86rem; }
+        .date-tile small { padding: 2px 3px 4px; color: #93610f; font-size: 0.55rem; font-weight: 800; text-transform: uppercase; }
+        .deadline > div:last-child { min-width: 0; }
+        .deadline p { overflow: hidden; font-size: 0.69rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+        .deadline span { color: var(--muted); font-size: 0.6rem; }
+
+        .sector-list { display: grid; gap: 13px; }
+        .sector-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+        .sector-name { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 5px; font-size: 0.65rem; font-weight: 700; }
+        .sector-name span:last-child { color: var(--muted); }
+        .progress { height: 6px; overflow: hidden; background: var(--surface-soft); border-radius: 999px; }
+        .progress span { display: block; height: 100%; background: var(--orange); border-radius: inherit; }
+        .sector-change { color: var(--green); font-size: 0.62rem; font-weight: 800; }
+
+        .insight-callout {
+            position: relative;
+            overflow: hidden;
+            padding: 18px;
+            color: #fff;
+            background: linear-gradient(135deg, var(--navy), #2f4c79);
+            border-radius: 15px;
+        }
+        .insight-callout::after { content: ''; position: absolute; width: 100px; height: 100px; right: -32px; bottom: -48px; border: 18px solid rgba(245, 166, 35, 0.15); border-radius: 50%; }
+        .insight-callout i { color: var(--orange); }
+        .insight-callout h3 { margin: 9px 0 6px; font-size: 0.82rem; }
+        .insight-callout p { color: #cbd5e3; font-size: 0.66rem; }
+
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th, .data-table td { padding: 13px 10px; border-bottom: 1px solid var(--border); font-size: 0.68rem; text-align: left; vertical-align: middle; }
+        .data-table th { color: var(--muted); font-size: 0.6rem; letter-spacing: 0.05em; text-transform: uppercase; }
+        .data-table tr:last-child td { border-bottom: 0; }
+        .table-title { max-width: 390px; font-weight: 700; }
+        .status-pill { display: inline-flex; padding: 4px 8px; color: var(--green); background: rgba(22, 132, 91, 0.1); border-radius: 999px; font-size: 0.58rem; font-weight: 800; white-space: nowrap; }
+        .status-pill.closing { color: #9b6300; background: var(--orange-soft); }
+        .category-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+        .category-card { padding: 17px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; }
+        .category-card .category-icon { display: grid; place-items: center; width: 34px; height: 34px; margin-bottom: 13px; color: var(--orange); background: var(--orange-soft); border-radius: 9px; }
+        .category-card h3 { font-size: 0.78rem; }
+        .category-card p { min-height: 38px; margin: 5px 0 14px; color: var(--muted); font-size: 0.64rem; }
+        .category-footer { display: flex; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 0.61rem; }
+        .category-footer strong { color: var(--green); }
+        .empty-category { display: grid; place-items: center; min-height: 174px; border: 1px dashed #b9c4d3; cursor: pointer; text-align: center; }
+        .empty-category i { margin-bottom: 8px; color: var(--orange); font-size: 1.2rem; }
+
+        .insights-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+        .insight-feature { min-height: 220px; }
+        .rank-list { display: grid; gap: 12px; }
+        .rank-row { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 9px; align-items: center; }
+        .rank-number { display: grid; place-items: center; width: 22px; height: 22px; color: var(--navy); background: var(--orange-soft); border-radius: 6px; font-size: 0.6rem; font-weight: 800; }
+        .rank-row p { font-size: 0.67rem; font-weight: 700; }
+        .rank-row small { color: var(--muted); font-size: 0.59rem; }
+        .rank-value { color: var(--green); font-size: 0.65rem; font-weight: 800; }
+
+        .account-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 18px; }
+        .settings-list { display: grid; gap: 13px; }
+        .setting-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 13px; border-bottom: 1px solid var(--border); }
+        .setting-row:last-child { padding-bottom: 0; border-bottom: 0; }
+        .setting-row strong, .setting-row small { display: block; }
+        .setting-row strong { font-size: 0.72rem; }
+        .setting-row small { margin-top: 3px; color: var(--muted); font-size: 0.61rem; }
+        .toggle { position: relative; width: 38px; height: 21px; flex: 0 0 auto; background: var(--green); border: 0; border-radius: 999px; }
+        .toggle::after { content: ''; position: absolute; top: 3px; right: 3px; width: 15px; height: 15px; background: #fff; border-radius: 50%; }
+        .plan-card { color: #fff; background: linear-gradient(145deg, var(--navy), #315282); border: 0; }
+        .plan-card .plan-pill { margin: 0 0 16px; }
+        .plan-card h2 { font-size: 1.25rem; }
+        .plan-card p { margin: 7px 0 18px; color: #cbd5e3; font-size: 0.7rem; }
+        .plan-card ul { display: grid; gap: 9px; margin-bottom: 20px; list-style: none; }
+        .plan-card li { display: flex; gap: 7px; color: #e2e8f1; font-size: 0.65rem; }
+        .plan-card li i { color: var(--orange); }
+
+        .mock-notice {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            z-index: 40;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 12px;
+            color: var(--muted);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            font-size: 0.62rem;
+        }
+        .mock-notice i { color: var(--orange); }
+
+        @media (max-width: 1050px) {
+            .app-shell { grid-template-columns: 218px minmax(0, 1fr); }
+            .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .category-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (max-width: 760px) {
+            .app-shell { display: block; }
+            .sidebar { position: fixed; left: 0; z-index: 50; width: 248px; transform: translateX(-105%); transition: transform 0.22s ease; box-shadow: 20px 0 50px rgba(0,0,0,0.25); }
+            body.menu-open .sidebar { transform: none; }
+            .menu-toggle { display: grid; place-items: center; flex: 0 0 auto; }
+            .topbar { padding: 12px 16px; }
+            .top-search { width: auto; flex: 1; }
+            .top-user div:last-child { display: none; }
+            .workspace { padding: 24px 16px 72px; }
+            .page-heading { align-items: stretch; flex-direction: column; }
+            .page-heading .select-control, .page-heading .primary-button { width: 100%; }
+            .stats-grid, .category-grid, .insights-grid, .account-grid { grid-template-columns: 1fr; }
+            .data-table { min-width: 650px; }
+            .table-scroll { overflow-x: auto; }
+            .mock-notice { right: 12px; bottom: 12px; left: 12px; justify-content: center; }
+        }
+        @media (max-width: 470px) {
+            .top-search input::placeholder { color: transparent; }
+            .top-user { display: none; }
+            .stats-grid { gap: 10px; }
+            .stat-card { padding: 15px; }
+            .alert-row { grid-template-columns: 34px minmax(0, 1fr); }
+            .alert-meta { grid-column: 2; text-align: left; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar" id="sidebar">
+            <a class="brand" href="website-mock.html" aria-label="TenderBell website">
+                <img src="brand-assets/tenderbell-wordmark-dark.svg" alt="TenderBell" />
+            </a>
+            <span class="plan-pill"><i class="fas fa-crown" aria-hidden="true"></i> Max workspace</span>
+
+            <div class="nav-label">Workspace</div>
+            <nav aria-label="Portal navigation">
+                <ul class="side-nav">
+                    <li><button class="nav-item active" type="button" data-view="overview"><i class="fas fa-border-all"></i> Overview</button></li>
+                    <li><button class="nav-item" type="button" data-view="alerts"><i class="fas fa-bell"></i> Tender alerts <span class="nav-badge">12</span></button></li>
+                    <li><button class="nav-item" type="button" data-view="categories"><i class="fas fa-layer-group"></i> Matched categories</button></li>
+                    <li><button class="nav-item" type="button" data-view="insights"><i class="fas fa-chart-line"></i> Market insights</button></li>
+                    <li><button class="nav-item" type="button" data-view="awards"><i class="fas fa-gavel"></i> Award intelligence</button></li>
+                </ul>
+            </nav>
+
+            <div class="nav-label">Manage</div>
+            <ul class="side-nav">
+                <li><button class="nav-item" type="button" data-view="account"><i class="fas fa-sliders-h"></i> Alerts &amp; account</button></li>
+                <li><a class="nav-item" href="website-mock.html"><i class="fas fa-arrow-left"></i> Back to website</a></li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="account-mini">
+                    <span class="avatar">LN</span>
+                    <div><strong>L. Ndlovu</strong><small>Max subscriber</small></div>
+                    <i class="fas fa-ellipsis-v" aria-hidden="true"></i>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main">
+            <header class="topbar">
+                <button class="menu-toggle" id="menuToggle" type="button" aria-label="Open navigation" aria-expanded="false"><i class="fas fa-bars"></i></button>
+                <label class="top-search">
+                    <i class="fas fa-search" aria-hidden="true"></i>
+                    <input type="search" placeholder="Search tenders, buyers or categories" aria-label="Search portal" />
+                </label>
+                <div class="top-actions">
+                    <button class="icon-btn" id="themeToggle" type="button" aria-label="Switch colour theme"><i class="fas fa-moon"></i></button>
+                    <button class="icon-btn" type="button" aria-label="Notifications"><i class="far fa-bell"></i><span class="notification-dot"></span></button>
+                    <div class="top-user"><span class="avatar">LN</span><div><strong>L. Ndlovu</strong><small>Max plan</small></div></div>
+                </div>
+            </header>
+
+            <div class="workspace">
+                <section class="view active" id="view-overview" aria-labelledby="overviewTitle">
+                    <div class="page-heading">
+                        <div><span class="eyebrow">Tuesday, 8 September 2026</span><h1 id="overviewTitle">Good morning, L. Ndlovu</h1><p>Here is what is happening across your tender market today.</p></div>
+                        <select class="select-control" aria-label="Dashboard reporting period"><option>Last 90 days</option><option>Last 30 days</option><option>This year</option></select>
+                    </div>
+
+                    <div class="stats-grid">
+                        <article class="stat-card"><div class="stat-head"><span class="stat-label">Published tenders</span><span class="stat-icon"><i class="fas fa-file-signature"></i></span></div><strong class="stat-value">184</strong><span class="stat-note"><span class="trend-up">↑ 12%</span> from previous period</span></article>
+                        <article class="stat-card" style="--accent:#2563a6;--accent-soft:rgba(37,99,166,.1)"><div class="stat-head"><span class="stat-label">Matched opportunities</span><span class="stat-icon"><i class="fas fa-bullseye"></i></span></div><strong class="stat-value">27</strong><span class="stat-note">Across 6 tracked categories</span></article>
+                        <article class="stat-card" style="--accent:#b06e00"><div class="stat-head"><span class="stat-label">Closing soon</span><span class="stat-icon"><i class="fas fa-hourglass-half"></i></span></div><strong class="stat-value">8</strong><span class="stat-note">Within the next 7 days</span></article>
+                        <article class="stat-card" style="--accent:#16845b;--accent-soft:rgba(22,132,91,.1)"><div class="stat-head"><span class="stat-label">Published awards</span><span class="stat-icon"><i class="fas fa-gavel"></i></span></div><strong class="stat-value">63</strong><span class="stat-note"><span class="trend-up">↑ 8%</span> from previous period</span></article>
+                    </div>
+
+                    <div class="dashboard-grid">
+                        <div class="stack">
+                            <article class="card">
+                                <div class="card-header"><div><h2>Market activity</h2><p>Published tenders and awards over the past six months</p></div><a class="text-link" href="#" data-open-view="insights">Explore insights →</a></div>
+                                <div class="chart-wrap">
+                                    <div class="chart" aria-label="Sample market activity bar chart">
+                                        <div class="bar-group"><span class="bar" style="height:38%"></span><span class="bar awards" style="height:22%"></span><span class="bar-month">Apr</span></div>
+                                        <div class="bar-group"><span class="bar" style="height:55%"></span><span class="bar awards" style="height:32%"></span><span class="bar-month">May</span></div>
+                                        <div class="bar-group"><span class="bar" style="height:48%"></span><span class="bar awards" style="height:39%"></span><span class="bar-month">Jun</span></div>
+                                        <div class="bar-group"><span class="bar" style="height:67%"></span><span class="bar awards" style="height:44%"></span><span class="bar-month">Jul</span></div>
+                                        <div class="bar-group"><span class="bar" style="height:79%"></span><span class="bar awards" style="height:51%"></span><span class="bar-month">Aug</span></div>
+                                        <div class="bar-group"><span class="bar" style="height:91%"></span><span class="bar awards" style="height:64%"></span><span class="bar-month">Sep</span></div>
+                                    </div>
+                                    <div class="chart-legend"><span><i class="legend-dot"></i> Published tenders</span><span><i class="legend-dot awards"></i> Published awards</span></div>
+                                </div>
+                            </article>
+
+                            <article class="card">
+                                <div class="card-header"><div><h2>Latest matching alerts</h2><p>Your newest tender, reminder and award matches</p></div><a class="text-link" href="#" data-open-view="alerts">View all alerts →</a></div>
+                                <div class="alert-list">
+                                    <div class="alert-row"><span class="alert-kind"><i class="fas fa-file-signature"></i></span><div class="alert-copy"><strong>Provision Of Vendor Management System</strong><small>City Of Bulawayo · Software Development</small></div><div class="alert-meta">12 min ago<span>New tender</span></div></div>
+                                    <div class="alert-row"><span class="alert-kind closing"><i class="fas fa-hourglass-half"></i></span><div class="alert-copy"><strong>Supply and delivery of networking equipment</strong><small>Ministry of ICT · Computer Equipment</small></div><div class="alert-meta">1 hr ago<span style="color:#b06e00">Closes in 3 days</span></div></div>
+                                    <div class="alert-row"><span class="alert-kind award"><i class="fas fa-gavel"></i></span><div class="alert-copy"><strong>Supply of electrical cables and materials</strong><small>Awarded to Great Pack Electrical · US$145</small></div><div class="alert-meta">3 hrs ago<span>Award notice</span></div></div>
+                                </div>
+                            </article>
+                        </div>
+
+                        <aside class="stack">
+                            <article class="card">
+                                <div class="card-header"><div><h2>Upcoming deadlines</h2><p>Matched tenders closing soon</p></div></div>
+                                <div class="deadline-list">
+                                    <div class="deadline"><div class="date-tile"><strong>11</strong><small>Sep</small></div><div><p>Supply of office furniture</p><span>Closes 11:00 AM · Harare</span></div></div>
+                                    <div class="deadline"><div class="date-tile"><strong>14</strong><small>Sep</small></div><div><p>ICT systems maintenance</p><span>Closes 10:00 AM · Bulawayo</span></div></div>
+                                    <div class="deadline"><div class="date-tile"><strong>16</strong><small>Sep</small></div><div><p>Consultancy services</p><span>Closes 2:30 PM · National</span></div></div>
+                                </div>
+                            </article>
+
+                            <article class="card">
+                                <div class="card-header"><div><h2>Demand by sector</h2><p>Share of published opportunities</p></div></div>
+                                <div class="sector-list">
+                                    <div class="sector-row"><div><div class="sector-name"><span>Construction</span><span>34%</span></div><div class="progress"><span style="width:82%"></span></div></div><span class="sector-change">+14%</span></div>
+                                    <div class="sector-row"><div><div class="sector-name"><span>ICT &amp; Software</span><span>26%</span></div><div class="progress"><span style="width:64%"></span></div></div><span class="sector-change">+9%</span></div>
+                                    <div class="sector-row"><div><div class="sector-name"><span>Medical supplies</span><span>19%</span></div><div class="progress"><span style="width:47%"></span></div></div><span class="sector-change">+6%</span></div>
+                                    <div class="sector-row"><div><div class="sector-name"><span>Consulting</span><span>14%</span></div><div class="progress"><span style="width:35%"></span></div></div><span class="sector-change">+3%</span></div>
+                                </div>
+                            </article>
+
+                            <article class="insight-callout"><i class="fas fa-lightbulb"></i><h3>Opportunity signal</h3><p>ICT tender activity has grown for three consecutive months, led by local authorities and state universities.</p></article>
+                        </aside>
+                    </div>
+                </section>
+
+                <section class="view" id="view-alerts" aria-labelledby="alertsTitle">
+                    <div class="page-heading"><div><span class="eyebrow">Real-time monitoring</span><h1 id="alertsTitle">Tender alerts</h1><p>Review every opportunity and award matched to your categories.</p></div><button class="outline-button"><i class="fas fa-filter"></i> Filter alerts</button></div>
+                    <article class="card table-scroll">
+                        <table class="data-table">
+                            <thead><tr><th>Alert</th><th>Procuring entity</th><th>Matched category</th><th>Date</th><th>Status</th></tr></thead>
+                            <tbody>
+                                <tr><td class="table-title">Provision Of Vendor Management System</td><td>City Of Bulawayo</td><td>Software Development</td><td>08 Sep 2026</td><td><span class="status-pill">New tender</span></td></tr>
+                                <tr><td class="table-title">Supply and delivery of networking equipment</td><td>Ministry of ICT</td><td>Computer Equipment</td><td>08 Sep 2026</td><td><span class="status-pill closing">Closing soon</span></td></tr>
+                                <tr><td class="table-title">Supply of electrical cables and materials</td><td>National Railways of Zimbabwe</td><td>Electrical Products</td><td>07 Sep 2026</td><td><span class="status-pill">Award notice</span></td></tr>
+                                <tr><td class="table-title">Development of digital records platform</td><td>State Procurement Board</td><td>Software Development</td><td>07 Sep 2026</td><td><span class="status-pill">New tender</span></td></tr>
+                                <tr><td class="table-title">Business process consulting services</td><td>City of Harare</td><td>Consulting Services</td><td>06 Sep 2026</td><td><span class="status-pill closing">Closing soon</span></td></tr>
+                            </tbody>
+                        </table>
+                    </article>
+                </section>
+
+                <section class="view" id="view-categories" aria-labelledby="categoriesTitle">
+                    <div class="page-heading"><div><span class="eyebrow">Unlimited on Max</span><h1 id="categoriesTitle">Matched categories</h1><p>Track every tender category relevant to your business.</p></div><button class="primary-button"><i class="fas fa-plus"></i> Add category</button></div>
+                    <div class="category-grid">
+                        <article class="category-card"><span class="category-icon"><i class="fas fa-laptop-code"></i></span><h3>Software Development</h3><p>Applications, systems integration and computer security consulting.</p><div class="category-footer"><span>12 alerts this month</span><strong>Active</strong></div></article>
+                        <article class="category-card"><span class="category-icon"><i class="fas fa-server"></i></span><h3>Computer Equipment</h3><p>Networking hardware, workstations, servers and accessories.</p><div class="category-footer"><span>9 alerts this month</span><strong>Active</strong></div></article>
+                        <article class="category-card"><span class="category-icon"><i class="fas fa-bolt"></i></span><h3>Electrical Products</h3><p>Cables, backup power, generators, consumables and accessories.</p><div class="category-footer"><span>18 alerts this month</span><strong>Active</strong></div></article>
+                        <article class="category-card"><span class="category-icon"><i class="fas fa-user-tie"></i></span><h3>Consulting Services</h3><p>Business, strategy, audit and professional advisory services.</p><div class="category-footer"><span>7 alerts this month</span><strong>Active</strong></div></article>
+                        <article class="category-card"><span class="category-icon"><i class="fas fa-chair"></i></span><h3>Office Furniture</h3><p>Desks, seating, storage and related workplace equipment.</p><div class="category-footer"><span>5 alerts this month</span><strong>Active</strong></div></article>
+                        <button class="category-card empty-category" type="button"><span><i class="fas fa-plus-circle"></i><strong>Add another category</strong><p>Max includes unlimited category matches.</p></span></button>
+                    </div>
+                </section>
+
+                <section class="view" id="view-insights" aria-labelledby="insightsTitle">
+                    <div class="page-heading"><div><span class="eyebrow">Market Opportunity Insights</span><h1 id="insightsTitle">See where demand is moving</h1><p>Turn public procurement activity into practical market intelligence.</p></div><select class="select-control"><option>Last 90 days</option><option>Last 12 months</option></select></div>
+                    <div class="insights-grid">
+                        <article class="card insight-feature"><div class="card-header"><div><h2>Fastest-growing sectors</h2><p>Change in published opportunity volume</p></div></div><div class="rank-list"><div class="rank-row"><span class="rank-number">1</span><div><p>ICT &amp; Software</p><small>42 opportunities</small></div><span class="rank-value">+28%</span></div><div class="rank-row"><span class="rank-number">2</span><div><p>Construction</p><small>56 opportunities</small></div><span class="rank-value">+21%</span></div><div class="rank-row"><span class="rank-number">3</span><div><p>Medical supplies</p><small>31 opportunities</small></div><span class="rank-value">+17%</span></div><div class="rank-row"><span class="rank-number">4</span><div><p>Professional consulting</p><small>24 opportunities</small></div><span class="rank-value">+11%</span></div></div></article>
+                        <article class="card insight-feature"><div class="card-header"><div><h2>Top-spending buyers</h2><p>Based on published contract awards</p></div></div><div class="sector-list"><div class="sector-row"><div><div class="sector-name"><span>Ministry of Health</span><span>US$2.8m</span></div><div class="progress"><span style="width:89%"></span></div></div></div><div class="sector-row"><div><div class="sector-name"><span>City of Harare</span><span>US$2.1m</span></div><div class="progress"><span style="width:71%"></span></div></div></div><div class="sector-row"><div><div class="sector-name"><span>ZESA Holdings</span><span>US$1.7m</span></div><div class="progress"><span style="width:58%"></span></div></div></div><div class="sector-row"><div><div class="sector-name"><span>State universities</span><span>US$1.2m</span></div><div class="progress"><span style="width:43%"></span></div></div></div></div></article>
+                        <article class="card insight-feature"><div class="card-header"><div><h2>Regional opportunity hotspots</h2><p>Where the most opportunities are being published</p></div></div><div class="rank-list"><div class="rank-row"><span class="rank-number"><i class="fas fa-map-marker-alt"></i></span><div><p>Harare</p><small>38% of tracked opportunities</small></div><span class="rank-value">74</span></div><div class="rank-row"><span class="rank-number"><i class="fas fa-map-marker-alt"></i></span><div><p>Bulawayo</p><small>19% of tracked opportunities</small></div><span class="rank-value">37</span></div><div class="rank-row"><span class="rank-number"><i class="fas fa-map-marker-alt"></i></span><div><p>National</p><small>17% open across Zimbabwe</small></div><span class="rank-value">33</span></div></div></article>
+                        <article class="card insight-feature"><div class="card-header"><div><h2>Accessible entry sectors</h2><p>Lower award values and broader supplier participation</p></div></div><div class="rank-list"><div class="rank-row"><span class="rank-number">A</span><div><p>Professional consulting</p><small>Median award: US$4,800</small></div><span class="status-pill">Strong fit</span></div><div class="rank-row"><span class="rank-number">B</span><div><p>Office consumables</p><small>Median award: US$3,250</small></div><span class="status-pill">Strong fit</span></div><div class="rank-row"><span class="rank-number">C</span><div><p>ICT support services</p><small>Median award: US$6,100</small></div><span class="status-pill">Good fit</span></div></div></article>
+                    </div>
+                </section>
+
+                <section class="view" id="view-awards" aria-labelledby="awardsTitle">
+                    <div class="page-heading"><div><span class="eyebrow">Competitive intelligence</span><h1 id="awardsTitle">Award intelligence</h1><p>Understand who is winning, what buyers spend and how awards are decided.</p></div><button class="outline-button"><i class="fas fa-download"></i> Export report</button></div>
+                    <article class="card table-scroll"><table class="data-table"><thead><tr><th>Awardee</th><th>Procuring entity</th><th>Category</th><th>Contract amount</th><th>Award date</th></tr></thead><tbody><tr><td class="table-title">Great Pack Electrical</td><td>National Railways of Zimbabwe</td><td>Electrical Products</td><td><strong>US$145.00</strong></td><td>07 Sep 2026</td></tr><tr><td class="table-title">TechBridge Solutions</td><td>City of Bulawayo</td><td>Software Development</td><td><strong>US$18,750.00</strong></td><td>05 Sep 2026</td></tr><tr><td class="table-title">Matobo Office Supplies</td><td>Ministry of Education</td><td>Office Consumables</td><td><strong>US$7,230.00</strong></td><td>03 Sep 2026</td></tr><tr><td class="table-title">Northern Advisory</td><td>Zimbabwe Tourism Authority</td><td>Consulting Services</td><td><strong>US$12,400.00</strong></td><td>01 Sep 2026</td></tr></tbody></table></article>
+                </section>
+
+                <section class="view" id="view-account" aria-labelledby="accountTitle">
+                    <div class="page-heading"><div><span class="eyebrow">Preferences &amp; billing</span><h1 id="accountTitle">Alerts &amp; account</h1><p>Control delivery channels and manage your Max subscription.</p></div></div>
+                    <div class="account-grid">
+                        <article class="card"><div class="card-header"><div><h2>Notification preferences</h2><p>Choose how TenderBell keeps you informed</p></div></div><div class="settings-list"><div class="setting-row"><div><strong>Real-time email alerts</strong><small>New matching tenders are sent as soon as they are published.</small></div><button class="toggle" aria-label="Real-time email alerts enabled"></button></div><div class="setting-row"><div><strong>WhatsApp alerts</strong><small>Receive instant tender matches on your verified number.</small></div><button class="toggle" aria-label="WhatsApp alerts enabled"></button></div><div class="setting-row"><div><strong>Closing-soon reminders</strong><small>Get reminded before matching tender deadlines.</small></div><button class="toggle" aria-label="Closing reminders enabled"></button></div><div class="setting-row"><div><strong>Award notice alerts</strong><small>Follow award outcomes in your selected categories.</small></div><button class="toggle" aria-label="Award alerts enabled"></button></div></div></article>
+                        <article class="card plan-card"><span class="plan-pill"><i class="fas fa-crown"></i> Current plan</span><h2>TenderBell Max</h2><p>US$30 per month · Next billing date 01 Oct 2026</p><ul><li><i class="fas fa-check"></i> Everything included in Pro</li><li><i class="fas fa-check"></i> Unlimited category matches</li><li><i class="fas fa-check"></i> Market Opportunity Insights</li><li><i class="fas fa-check"></i> Full web admin access</li></ul><button class="primary-button" style="width:100%">Manage subscription</button></article>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <div class="mock-notice"><i class="fas fa-flask" aria-hidden="true"></i> Interactive concept mock · Sample data only</div>
+
+    <script>
+        const body = document.body;
+        const menuToggle = document.getElementById('menuToggle');
+        const themeToggle = document.getElementById('themeToggle');
+        const navItems = [...document.querySelectorAll('[data-view]')];
+        const views = [...document.querySelectorAll('.view')];
+
+        function openView(viewName) {
+            const target = document.getElementById(`view-${viewName}`);
+            if (!target) return;
+            views.forEach(view => view.classList.toggle('active', view === target));
+            navItems.forEach(item => item.classList.toggle('active', item.dataset.view === viewName));
+            body.classList.remove('menu-open');
+            menuToggle.setAttribute('aria-expanded', 'false');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        navItems.forEach(item => item.addEventListener('click', () => openView(item.dataset.view)));
+        document.querySelectorAll('[data-open-view]').forEach(link => link.addEventListener('click', event => {
+            event.preventDefault();
+            openView(link.dataset.openView);
+        }));
+
+        menuToggle.addEventListener('click', () => {
+            const isOpen = body.classList.toggle('menu-open');
+            menuToggle.setAttribute('aria-expanded', String(isOpen));
+        });
+
+        function updateThemeIcon() {
+            const dark = document.documentElement.dataset.theme === 'dark';
+            themeToggle.innerHTML = `<i class="fas fa-${dark ? 'sun' : 'moon'}"></i>`;
+            themeToggle.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
+        }
+        updateThemeIcon();
+        themeToggle.addEventListener('click', () => {
+            const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+            document.documentElement.dataset.theme = next;
+            localStorage.setItem('tenderbell-portal-theme', next);
+            updateThemeIcon();
+        });
+    </script>
+</body>
+</html>
