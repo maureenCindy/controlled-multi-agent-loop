@@ -1,12 +1,38 @@
 ---
 ---
-<header class="site-nav">
-  <div class="container">
-    <a class="brand" href="/">Tender<span>Bell</span></a>
-    <ul class="nav-links">
-      <li><a href="/how-it-works">How it works</a></li>
-      <li><a href="/testimonials">Testimonials</a></li>
-      <li><a href="/signup" class="btn btn-primary" style="padding: 0.5rem 1.125rem;">Get started</a></li>
-    </ul>
+<nav class="navbar" aria-label="Primary navigation">
+  <div class="container nav-flex">
+    <a class="navbar-brand" href="/#top" aria-label="TenderBell home">
+      <img class="brand-logo-light" src="/tenderbell-wordmark-light.svg" alt="TenderBell" />
+      <img class="brand-logo-dark" src="/tenderbell-wordmark-dark.svg" alt="" aria-hidden="true" />
+    </a>
+    <div class="nav-links">
+      <a href="/#top" class="active">Home</a>
+      <a href="/#howItWorks">How it works</a>
+      <a href="/#marketInsights">Market insights</a>
+      <a href="/#testimonials">Customer stories</a>
+      <a href="/#pricing">Pricing</a>
+      <a href="/#contact">Contact</a>
+    </div>
+    <div class="nav-actions">
+      <a class="btn-warning" href="/#alertSetup"><i class="fas fa-arrow-right" aria-hidden="true"></i> Get Started</a>
+      <button class="btn-primary" type="button" data-demo-action="sign-in"><i class="fas fa-user" aria-hidden="true"></i> Sign in</button>
+    </div>
   </div>
-</header>
+</nav>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-demo-action="sign-in"]').forEach((button) => {
+    button.addEventListener("click", () => {
+      const alertSetup = document.getElementById("alertSetup");
+      if (!alertSetup) {
+        window.location.assign("/#alertSetup");
+        return;
+      }
+
+      alertSetup.scrollIntoView({ behavior: "smooth", block: "center" });
+      const status = document.getElementById("heroDemoStatus");
+      if (status) status.textContent = "Demo only—sign-in will be connected in a later step.";
+    });
+  });
+</script>

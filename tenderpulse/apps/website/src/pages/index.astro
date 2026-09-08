@@ -1,119 +1,512 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { WHATSAPP_NOTIFICATIONS_ENABLED } from "../lib/featureFlags";
 ---
 <BaseLayout
-  title="Never miss a government tender again"
-  description="TenderBell watches Zimbabwe's official government tender portal for you and alerts you the moment a tender matches your business."
+  title="Government tender alerts"
+  description="TenderBell helps Zimbabwean businesses find relevant government tenders, receive timely alerts and understand where market opportunities are growing."
 >
-  <section class="hero">
-    <div class="container">
-      <img
-        src="/tenderbell-website-logo.svg"
-        alt="TenderBell"
-        class="hero-logo"
-        width="220"
-        height="116"
-      />
-      <p class="hero-tagline">Alerts Insights and Opportunities</p>
-      <h1>Never miss a tender</h1>
-      <p class="lede">
-        TenderBell watches Zimbabwe's official government tender portal around the clock and
-        tells you the moment a tender matches what your business actually does — no more
-        refreshing a government website by hand.
-      </p>
-      <div class="hero-cta-row">
-        <a class="btn btn-accent" href="/signup">Get free alerts</a>
-        <a class="btn btn-outline" href="/how-it-works">See how it works</a>
-      </div>
+    <!-- HERO -->
+    <section class="hero">
+        <div class="container hero-grid">
+            <div class="hero-copy">
+                <h1>Find the right tenders<br /><span class="accent">before your competitors.</span></h1>
+                <div class="tagline">Get matched tender alerts—and with Max, see where <strong>government demand, spending and awards</strong> are creating new business opportunities.</div>
+                <div class="metrics-card">
+                    <div class="metrics-card-label">
+                        <div>
+                            <strong>Market Opportunity Snapshot</strong>
+                            <small>A preview from the TenderBell Market Insights Portal</small>
+                        </div>
+                        <span class="max-badge">Available with Max</span>
+                    </div>
+                    <div class="metric-cards">
+                        <div class="metric-card">
+                            <div class="metric-label">Highest-demand sector</div>
+                            <div class="metric-value">
+                                <span class="metric-icon"><i class="fas fa-chart-line"></i></span>
+                                Construction &amp; Civil Works
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Most active buyer</div>
+                            <div class="metric-value">
+                                <span class="metric-icon award-icon"><i class="fas fa-building"></i></span>
+                                Ministry of Health
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Opportunity hotspot</div>
+                            <div class="metric-value">
+                                <span class="metric-icon"><i class="fas fa-map-marker-alt"></i></span>
+                                Harare
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Most accessible sector</div>
+                            <div class="metric-value">
+                                <span class="metric-icon"><i class="fas fa-door-open"></i></span>
+                                Consulting Services
+                            </div>
+                        </div>
+                    </div>
+                    <div class="metrics-card-footer">
+                        <small>Sample insights for illustration</small>
+                        <a class="insights-link" href="#marketInsights">Explore Market Opportunity Insights <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+                    </div>
+                </div>
+            </div>
 
-      <div class="hero-icons">
-        <div class="hero-icon">
-          <span class="hero-icon-badge hero-icon-badge--primary">
-            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="10" cy="10" r="6" />
-              <line x1="15" y1="15" x2="20" y2="20" />
-            </svg>
-          </span>
-          <span class="hero-icon-label">Find</span>
-          <span class="hero-icon-subtext">Relevant Tenders</span>
-        </div>
-        <div class="hero-icon-divider" aria-hidden="true"></div>
-        <div class="hero-icon">
-          <span class="hero-icon-badge hero-icon-badge--success">
-            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <line x1="4" y1="20" x2="4" y2="14" />
-              <line x1="12" y1="20" x2="12" y2="9" />
-              <line x1="20" y1="20" x2="20" y2="4" />
-            </svg>
-          </span>
-          <span class="hero-icon-label">Gain</span>
-          <span class="hero-icon-subtext">Actionable Insights</span>
-        </div>
-        <div class="hero-icon-divider" aria-hidden="true"></div>
-        <div class="hero-icon">
-          <span class="hero-icon-badge hero-icon-badge--accent">
-            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M6 17c0-5 1.5-9 6-9s6 4 6 9" />
-              <path d="M4 17h16" />
-              <path d="M10 20a2 2 0 0 0 4 0" />
-            </svg>
-          </span>
-          <span class="hero-icon-label">Never Miss</span>
-          <span class="hero-icon-subtext">New Opportunities</span>
-        </div>
-      </div>
-    </div>
-  </section>
+            <div class="search-box" id="alertSetup">
+                <div class="search-box-header">
+                    <div>
+                        <div class="hero-eyebrow"><i class="fas fa-bolt"></i> Never miss published tenders</div>
+                        <h3>Set up your first tender alert</h3>
+                        <p>Choose a tender category and how quickly you’d like to hear about matching opportunities.</p>
+                    </div>
 
-  <section class="section section--subtle">
-    <div class="container">
-      <div class="grid grid-3">
-        <div class="card">
-          <span class="eyebrow">The problem</span>
-          <h3>Tenders are easy to miss</h3>
-          <p>
-            Zimbabwe's official government tender portal publishes new tenders continuously
-            across every sector and region. Checking manually means you either watch constantly
-            or find out too late.
-          </p>
-        </div>
-        <div class="card">
-          <span class="eyebrow">The solution</span>
-          <h3>We watch the portal for you</h3>
-          <p>
-            TenderBell fetches new tenders from Zimbabwe's official government tender portal on
-            a shared schedule and matches them against the sectors, value range, region and
-            keywords you tell us matter to your business.
-          </p>
-        </div>
-        <div class="card">
-          <span class="eyebrow">The result</span>
-          <h3>You get notified, not buried</h3>
-          <p>
-            Free plans get a daily digest of matches. Paid plans get notified as soon as a match
-            is found in each aggregation run — either way, always a link back to the official
-            government listing, never a copy.
-            {WHATSAPP_NOTIFICATIONS_ENABLED && (
-              <>
-                {" "}Paid subscribers can also opt in to receive those notifications via
-                WhatsApp.
-              </>
-            )}
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
+                </div>
+                <div class="search-row">
+                    <div class="search-group">
+                        <label for="categorySelect">Tender category</label>
+                        <select id="categorySelect">
+                            <option>choose your business category</option>
+                            <option>IT &amp; Software</option>
+                            <option>Construction &amp; Engineering</option>
+                            <option>Medical &amp; Healthcare</option>
+                            <option>Logistics &amp; Transport</option>
+                            <option>Security Services</option>
+                            <option>Consulting &amp; Professional</option>
+                        </select>
+                        <span class="helper">Select the category that matches your business</span>
+                    </div>
+                    <fieldset class="alert-frequency">
+                        <legend>How quickly should we alert you?</legend>
+                        <div class="plan-options">
+                            <label class="plan-option" for="freeAlertPlan">
+                                <input type="radio" id="freeAlertPlan" name="alertPlan" value="free" checked />
+                                <span class="plan-option-copy">
+                                    <strong>Weekly email — Free</strong>
+                                    <small>Every Monday morning · Email only</small>
+                                </span>
+                                <span class="plan-option-price">$0</span>
+                            </label>
+                            <label class="plan-option" for="proAlertPlan">
+                                <input type="radio" id="proAlertPlan" name="alertPlan" value="pro" />
+                                <span class="plan-option-copy">
+                                    <strong>Real-time alerts <span class="popular-mini">Most popular</span></strong>
+                                    <small>New tenders, reminders and awards · Email + optional WhatsApp</small>
+                                </span>
+                                <span class="plan-option-price">$5/mo</span>
+                            </label>
+                            <label class="plan-option" for="maxAlertPlan">
+                                <input type="radio" id="maxAlertPlan" name="alertPlan" value="max" />
+                                <span class="plan-option-copy">
+                                    <strong>Market intelligence — Max</strong>
+                                    <small>Unlimited categories · Real-time alerts · Market Insights Portal</small>
+                                </span>
+                                <span class="plan-option-price">$30/mo</span>
+                            </label>
+                        </div>
+                    </fieldset>
+                    <div class="search-action">
+                        <button class="btn-warning" id="heroAlertCta" type="button" aria-describedby="heroDemoStatus"><i class="fas fa-bell"></i> Start free weekly alerts</button>
+                        <p class="demo-status" id="heroDemoStatus" role="status">Demo form — no signup information will be sent.</p>
+                    </div>
+                </div>
+            </div>
 
-  <section class="section">
-    <div class="container" style="text-align:center;">
-      <h2>Set up your first alert in a couple of minutes</h2>
-      <p class="lede" style="margin-left:auto;margin-right:auto;">
-        Tell us your email, choose a plan, and start getting matched government tenders for
-        Zimbabwe — free to start, no commitment required.
-      </p>
-      <a class="btn btn-primary" href="/signup">Get started free</a>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="container how-it-works" id="howItWorks" aria-labelledby="howItWorksTitle">
+        <div class="section-title" id="howItWorksTitle">
+            <i class="fas fa-route" aria-hidden="true"></i> How TenderBell works
+        </div>
+        <div class="how-it-works-card">
+            <div class="how-step how-step-standard">
+                <div class="how-step-intro">
+                    <div class="how-step-icon"><i class="fas fa-sliders-h" aria-hidden="true"></i></div>
+                    <div>
+                        <strong>1. Choose your interests</strong>
+                        <p>Select your tender category and preferred alert frequency.</p>
+                    </div>
+                </div>
+                <div class="how-mini-visual" aria-label="Sample tender category selection">
+                    <span class="mini-field-label">Tender category</span>
+                    <div class="mini-select"><span>IT &amp; Software</span><i class="fas fa-chevron-down" aria-hidden="true"></i></div>
+                </div>
+            </div>
+            <div class="how-step how-step-standard">
+                <div class="how-step-intro">
+                    <div class="how-step-icon"><i class="fas fa-search" aria-hidden="true"></i></div>
+                    <div>
+                        <strong>2. We monitor tenders</strong>
+                        <p>TenderBell checks official sources for relevant opportunities.</p>
+                    </div>
+                </div>
+                <div class="how-mini-visual monitor-flow" aria-label="TenderBell matching an official tender to a business category">
+                    <div class="monitor-source"><i class="fas fa-landmark" aria-hidden="true"></i>Official source</div>
+                    <i class="fas fa-arrow-right monitor-arrow" aria-hidden="true"></i>
+                    <div class="monitor-match"><i class="fas fa-check-circle" aria-hidden="true"></i>Category match</div>
+                </div>
+            </div>
+            <div class="how-step how-step-with-visual">
+                <div class="how-step-intro">
+                    <div class="how-step-icon"><i class="fas fa-bell" aria-hidden="true"></i></div>
+                    <div>
+                        <strong>3. Receive matching alerts</strong>
+                        <p>Get notified by email or WhatsApp and open the official tender notice.</p>
+                    </div>
+                </div>
+                <article class="carousel-card tender-alert-card how-alert-preview" aria-label="Sample newly published tender alert">
+                    <div class="card-badge">
+                        <span class="alert-type tender"><i class="fas fa-file-signature" aria-hidden="true"></i> Newly Published Tender Alert</span>
+                        <span class="delivery-badge"><i class="fas fa-envelope" aria-hidden="true"></i> Email</span>
+                    </div>
+                    <div class="alert-category"><strong>Matched category</strong>Software Development and Computer Applications, Computer Security Systems Installation and Consultants Services</div>
+                    <div class="card-title">Provision Of Vendor Management System</div>
+                    <div class="alert-detail"><i class="fas fa-building" aria-hidden="true"></i> City Of Bulawayo</div>
+                    <div class="alert-detail"><i class="fas fa-calendar-alt" aria-hidden="true"></i> Closes 29-Sep-2026 11:45 AM</div>
+                    <div class="card-actions">
+                        <a class="btn-view-sm" href="https://egp.praz.org.zw/" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt" aria-hidden="true"></i> View Tender Details</a>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- MARKET OPPORTUNITY INSIGHTS -->
+    <section class="container market-insights-section" id="marketInsights" aria-labelledby="marketInsightsTitle">
+        <div class="market-insights-shell">
+            <div class="market-insights-copy">
+                <span class="eyebrow"><i class="fas fa-chart-pie" aria-hidden="true"></i> Included with Max</span>
+                <h2 id="marketInsightsTitle">Turn tender data into business intelligence</h2>
+                <p>See where government money is flowing, which markets are growing and where your next opportunity may be—inside the TenderBell Market Insights Portal.</p>
+                <ul class="market-audiences">
+                    <li><i class="fas fa-lightbulb" aria-hidden="true"></i><span><strong>Entrepreneurs:</strong> identify in-demand sectors with lower barriers to entry.</span></li>
+                    <li><i class="fas fa-briefcase" aria-hidden="true"></i><span><strong>Established businesses:</strong> find new markets and sharpen bidding strategies.</span></li>
+                    <li><i class="fas fa-chart-line" aria-hidden="true"></i><span><strong>Investors:</strong> follow spending patterns, regional hotspots and emerging activity.</span></li>
+                </ul>
+                <a class="btn-warning" href="/max-portal-preview.html"><i class="fas fa-desktop" aria-hidden="true"></i> Preview Max portal</a>
+            </div>
+            <div class="portal-window" aria-label="Sample TenderBell Market Insights Portal preview">
+                <div class="portal-topbar">
+                    <div class="portal-brand"><img src="/tenderbell-bell-mark.svg" alt="" aria-hidden="true" /> TenderBell Market Insights Portal</div>
+                    <div class="portal-period"><i class="far fa-calendar-alt" aria-hidden="true"></i> Last 90 days</div>
+                </div>
+                <div class="portal-content">
+                    <div class="portal-heading">
+                        <strong>Market opportunity overview</strong>
+                        <span>Sample dashboard</span>
+                    </div>
+                    <div class="portal-insight-grid">
+                        <div class="portal-insight-card">
+                            <div class="portal-label"><i class="fas fa-fire" aria-hidden="true"></i> Demand by sector</div>
+                            <strong>Construction leads published demand</strong>
+                            <div class="portal-chart" aria-hidden="true"><span style="height:42%"></span><span style="height:64%"></span><span style="height:53%"></span><span style="height:88%"></span><span style="height:72%"></span></div>
+                        </div>
+                        <div class="portal-insight-card">
+                            <div class="portal-label"><i class="fas fa-landmark" aria-hidden="true"></i> Top-spending buyer</div>
+                            <strong>Ministry of Health</strong>
+                            <small><i class="fas fa-arrow-up" aria-hidden="true"></i> Procurement activity trending up</small>
+                        </div>
+                        <div class="portal-insight-card">
+                            <div class="portal-label"><i class="fas fa-map-marked-alt" aria-hidden="true"></i> Regional hotspot</div>
+                            <strong>Harare publishes the most opportunities</strong>
+                            <small>Compare activity across regions</small>
+                        </div>
+                        <div class="portal-insight-card">
+                            <div class="portal-label"><i class="fas fa-unlock-alt" aria-hidden="true"></i> Entry opportunity</div>
+                            <strong>Consulting shows accessible award patterns</strong>
+                            <small>Based on thresholds and past awards</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TESTIMONIALS -->
+    <section class="container testimonials-section" id="testimonials" aria-labelledby="testimonialsTitle">
+        <div class="section-title" id="testimonialsTitle">
+            <i class="fas fa-quote-left"></i> Customer stories
+        </div>
+        <div class="testimonials-panel">
+            <div class="testimonial-carousel" id="testimonialCarousel" aria-label="Customer testimonials">
+                <div class="testimonial-track" id="testimonialTrack">
+                    <article class="testimonial-slide testimonials-copy">
+                        <span class="early-access-label"><i class="fas fa-quote-left" aria-hidden="true"></i> Customer feedback</span>
+                        <blockquote>“TenderBell helped us win our first government tender within 2 weeks of signing up. The real-time alerts and award insights give us an edge we never had before.”</blockquote>
+                        <div class="testimonial-attribution">
+                            <strong>L. Ndlovu</strong>
+                            <span>Manual email alerts pilot</span>
+                        </div>
+                    </article>
+                    <article class="testimonial-slide testimonials-copy">
+                        <span class="early-access-label"><i class="fas fa-quote-left" aria-hidden="true"></i> Customer feedback</span>
+                        <blockquote>“As a consultant, I need to find opportunities fast. TenderBell sends me curated alerts for exactly the categories I work in—no spam, no clutter. I've already secured 3 consulting gigs through the platform. The best part? I get notified before the competition.”</blockquote>
+                        <div class="testimonial-attribution">
+                            <strong>M. Dube</strong>
+                            <span>Manual email alerts pilot</span>
+                        </div>
+                    </article>
+                </div>
+                <div class="testimonial-controls">
+                    <button class="carousel-btn" id="testimonialPrev" type="button" aria-label="Previous testimonial"><i class="fas fa-chevron-left" aria-hidden="true"></i></button>
+                    <div class="testimonial-dots" id="testimonialDots" aria-label="Choose a testimonial"></div>
+                    <button class="carousel-btn" id="testimonialNext" type="button" aria-label="Next testimonial"><i class="fas fa-chevron-right" aria-hidden="true"></i></button>
+                </div>
+            </div>
+            <div class="testimonial-invite">
+                <i class="fas fa-comment-dots" aria-hidden="true"></i>
+                <strong>Join others and never miss a tender</strong>
+                <p>Join TenderBell, find relevant tenders sooner, and tell us how alerts helped your business.</p>
+                <button class="btn-warning" type="button" data-select-plan="free"><i class="fas fa-bell"></i> Get started free</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRICING -->
+    <div class="container" id="pricing">
+        <div class="section-title">
+            <i class="fas fa-crown"></i> Subscription plans
+        </div>
+        <div class="pricing-grid">
+            <div class="pricing-card">
+                <h3>Free</h3>
+                <div class="price">$0 <small>/mo</small></div>
+                <ul>
+                    <li><i class="fas fa-check"></i> 1 tender category match</li>
+                    <li><i class="fas fa-envelope"></i> Weekly published-tender email digest</li>
+                    <li><i class="fas fa-calendar-alt"></i> Delivered every Monday morning</li>
+                    <li><i class="fas fa-clock"></i> Open tenders with 3+ business days remaining</li>
+                    <li><i class="fas fa-check"></i> Email alerts only</li>
+                    <li class="not-included"><i class="fas fa-times"></i> No closing-soon reminders</li>
+                    <li class="not-included"><i class="fas fa-times"></i> No tender award alerts</li>
+                    <li class="not-included"><i class="fas fa-times"></i> No WhatsApp alerts</li>
+                </ul>
+                <button class="btn-primary" type="button" data-select-plan="free">Get started</button>
+            </div>
+            <div class="pricing-card popular">
+                <h3>Pro <span style="background: #f5a623; font-size: 0.7rem; padding: 2px 12px; border-radius: 40px; margin-left: 8px;">popular</span></h3>
+                <div class="price">$5 <small>/mo</small></div>
+                <ul>
+                    <li><i class="fas fa-check"></i> 1 tender category match</li>
+                    <li><i class="fas fa-bell"></i> Newly published-tender alerts in real time</li>
+                    <li><i class="fas fa-hourglass-half"></i> Closing-soon tender reminders in real time</li>
+                    <li><i class="fas fa-gavel" style="color:#1a4f8b;"></i> Tender-award notice alerts in real time</li>
+                    <li><i class="fas fa-envelope"></i> Email alert delivery</li>
+                    <li><i class="fab fa-whatsapp" style="color:#25D366;"></i> Optional WhatsApp alert delivery</li>
+                    <li class="not-included"><i class="fas fa-times"></i> No TenderBell Market Insights Portal</li>
+                    <li class="not-included"><i class="fas fa-times"></i> No Market Opportunity Insights</li>
+                </ul>
+                <button class="btn-warning" type="button" data-select-plan="pro" style="width:100%; justify-content:center;"><i class="fas fa-bolt"></i> Start Pro</button>
+            </div>
+            <div class="pricing-card">
+                <h3>Max</h3>
+                <div class="price">$30 <small>/mo</small></div>
+                <ul>
+                    <li><i class="fas fa-check"></i> Everything included in Pro</li>
+                    <li><i class="fas fa-check"></i> Unlimited tender category matches</li>
+                    <li><i class="fas fa-desktop"></i> TenderBell Market Insights Portal</li>
+                    <li><i class="fas fa-chart-line"></i> Market Opportunity Insights</li>
+                </ul>
+                <button class="btn-primary" type="button" data-select-plan="max">Get started</button>
+            </div>
+        </div>
     </div>
-  </section>
+
+    <!-- CONTACT -->
+    <section class="container contact-section" id="contact" aria-labelledby="contactTitle">
+        <div class="contact-layout">
+            <div>
+                <div class="contact-heading">
+                    <h2 id="contactTitle">Contact TenderBell</h2>
+                    <p>Ask us about subscriptions, alert delivery or partnerships.</p>
+                </div>
+                <form class="contact-form" id="contactForm">
+                    <div class="contact-form-row">
+                        <div class="contact-field">
+                            <label for="contactName">Name</label>
+                            <input id="contactName" name="name" type="text" autocomplete="name" required />
+                        </div>
+                        <div class="contact-field">
+                            <label for="contactEmail">Email address</label>
+                            <input id="contactEmail" name="email" type="email" autocomplete="email" required />
+                        </div>
+                    </div>
+                    <div class="contact-field">
+                        <label for="contactTopic">What can we help with?</label>
+                        <select id="contactTopic" name="topic" required>
+                            <option value="">Choose a topic</option>
+                            <option>Subscription help</option>
+                            <option>Tender alerts</option>
+                            <option>Billing</option>
+                            <option>Partnerships</option>
+                            <option>Feedback</option>
+                        </select>
+                    </div>
+                    <div class="contact-field">
+                        <label for="contactMessage">Message</label>
+                        <textarea id="contactMessage" name="message" required></textarea>
+                    </div>
+                    <p class="contact-privacy">We’ll use your details only to respond to this enquiry. See our <a href="/privacy">Privacy Policy</a>.</p>
+                    <button class="btn-warning" type="submit"><i class="fas fa-paper-plane" aria-hidden="true"></i> Send message</button>
+                    <div class="contact-success" id="contactSuccess" role="status" hidden>Demo only—your message was not sent.</div>
+                </form>
+            </div>
+            <aside class="contact-side" aria-label="Contact options and frequently asked questions">
+                <h3>Connect with us</h3>
+                <div class="contact-socials">
+                    <a class="contact-social-link" href="https://x.com/tenderbellzw" target="_blank" rel="noopener noreferrer"><i class="fab fa-twitter" aria-hidden="true"></i> @tenderbellzw</a>
+                    <a class="contact-social-link" href="https://www.facebook.com/profile.php?id=61594028708475" target="_blank" rel="noopener noreferrer"><i class="fab fa-facebook" aria-hidden="true"></i> Tender Bell</a>
+                </div>
+                <h3>Quick answers</h3>
+                <div class="faq-list">
+                    <details>
+                        <summary>Where do TenderBell tenders come from?</summary>
+                        <p>TenderBell monitors Zimbabwe’s official PRAZ e-GP publisher and links every alert back to the original notice.</p>
+                    </details>
+                    <details>
+                        <summary>How often will I receive alerts?</summary>
+                        <p>Free subscribers receive a Monday email digest. Paid subscribers receive alerts after each TenderBell monitoring run.</p>
+                    </details>
+                    <details>
+                        <summary>Can I receive alerts through WhatsApp?</summary>
+                        <p>Yes. Pro and Max subscribers can optionally enable WhatsApp delivery alongside email.</p>
+                    </details>
+                    <details>
+                        <summary>What is a tender category match?</summary>
+                        <p>It is a saved business category TenderBell uses to identify relevant tenders, reminders and award notices.</p>
+                    </details>
+                    <details>
+                        <summary>What is included in the Max plan?</summary>
+                        <p>Max includes everything in Pro, unlimited category matches, the TenderBell Market Insights Portal and market opportunity insights.</p>
+                    </details>
+                </div>
+            </aside>
+        </div>
+    </section>
+
+  <script>
+    function initTestimonialCarousel() {
+      const carousel = document.getElementById("testimonialCarousel");
+      const track = document.getElementById("testimonialTrack");
+      const prevBtn = document.getElementById("testimonialPrev");
+      const nextBtn = document.getElementById("testimonialNext");
+      const dotsContainer = document.getElementById("testimonialDots");
+      if (!carousel || !track || !prevBtn || !nextBtn || !dotsContainer) return;
+
+      const slides = Array.from(track.querySelectorAll<HTMLElement>(".testimonial-slide"));
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      let currentIndex = 0;
+      let autoPlayTimer: number | undefined;
+
+      slides.forEach((_slide, index) => {
+        const dot = document.createElement("button");
+        dot.type = "button";
+        dot.className = "testimonial-dot";
+        dot.setAttribute("aria-label", `Show testimonial ${index + 1}`);
+        dot.addEventListener("click", () => {
+          goToSlide(index);
+          restartAutoPlay();
+        });
+        dotsContainer.appendChild(dot);
+      });
+
+      const dots = Array.from(dotsContainer.querySelectorAll<HTMLElement>(".testimonial-dot"));
+
+      function goToSlide(index: number) {
+        currentIndex = (index + slides.length) % slides.length;
+        track!.style.transform = `translateX(-${currentIndex * 100}%)`;
+        slides.forEach((slide, slideIndex) => {
+          slide.setAttribute("aria-hidden", String(slideIndex !== currentIndex));
+        });
+        dots.forEach((dot, dotIndex) => {
+          const active = dotIndex === currentIndex;
+          dot.classList.toggle("active", active);
+          dot.setAttribute("aria-current", String(active));
+        });
+      }
+
+      function stopAutoPlay() {
+        if (autoPlayTimer !== undefined) window.clearInterval(autoPlayTimer);
+      }
+
+      function startAutoPlay() {
+        if (!reduceMotion && slides.length > 1) {
+          stopAutoPlay();
+          autoPlayTimer = window.setInterval(() => goToSlide(currentIndex + 1), 5000);
+        }
+      }
+
+      function restartAutoPlay() {
+        stopAutoPlay();
+        startAutoPlay();
+      }
+
+      prevBtn.addEventListener("click", () => {
+        goToSlide(currentIndex - 1);
+        restartAutoPlay();
+      });
+      nextBtn.addEventListener("click", () => {
+        goToSlide(currentIndex + 1);
+        restartAutoPlay();
+      });
+      carousel.addEventListener("mouseenter", stopAutoPlay);
+      carousel.addEventListener("mouseleave", startAutoPlay);
+      carousel.addEventListener("focusin", stopAutoPlay);
+      carousel.addEventListener("focusout", startAutoPlay);
+      goToSlide(0);
+      startAutoPlay();
+    }
+
+    const heroAlertCta = document.getElementById("heroAlertCta") as HTMLButtonElement | null;
+    const heroDemoStatus = document.getElementById("heroDemoStatus");
+    const planOptions = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="alertPlan"]'));
+
+    function selectDemoPlan(plan: string) {
+      const option = planOptions.find((item) => item.value === plan);
+      if (option) {
+        option.checked = true;
+        option.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+      document.getElementById("alertSetup")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    planOptions.forEach((planOption) => {
+      planOption.addEventListener("change", () => {
+        if (!heroAlertCta) return;
+        if (planOption.value === "pro") {
+          heroAlertCta.innerHTML = '<i class="fas fa-bolt" aria-hidden="true"></i> Continue with Pro — $5/month';
+        } else if (planOption.value === "max") {
+          heroAlertCta.innerHTML = '<i class="fas fa-chart-line" aria-hidden="true"></i> Continue with Max — $30/month';
+        } else {
+          heroAlertCta.innerHTML = '<i class="fas fa-bell" aria-hidden="true"></i> Start free weekly alerts';
+        }
+      });
+    });
+
+    heroAlertCta?.addEventListener("click", () => {
+      if (heroDemoStatus) {
+        heroDemoStatus.textContent = "Demo only—signup is not connected yet and no information was sent.";
+        heroDemoStatus.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    });
+
+    document.querySelectorAll<HTMLElement>("[data-select-plan]").forEach((button) => {
+      button.addEventListener("click", () => selectDemoPlan(button.dataset.selectPlan ?? "free"));
+    });
+
+    const contactForm = document.getElementById("contactForm") as HTMLFormElement | null;
+    const contactSuccess = document.getElementById("contactSuccess");
+    contactForm?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (!contactForm.reportValidity()) return;
+      if (contactSuccess) contactSuccess.hidden = false;
+    });
+
+    initTestimonialCarousel();
+  </script>
 </BaseLayout>

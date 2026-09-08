@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="440" height="100" viewBox="0 0 440 100" role="img" aria-labelledby="title desc">
+  <title id="title">TenderBell</title>
+  <desc id="desc">TenderBell bell symbol and wordmark for light backgrounds</desc>
+  <defs>
+    <linearGradient id="bell-light" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1766B2"/>
+      <stop offset="0.55" stop-color="#0B3D7A"/>
+      <stop offset="1" stop-color="#071F45"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(2 5)">
+    <path d="M18 31 Q-2 50 12 70 M25 36 Q10 50 20 65" fill="none" stroke="#F59E0B" stroke-width="4.5" stroke-linecap="round"/>
+    <path d="M72 31 Q92 50 78 70 M65 36 Q80 50 70 65" fill="none" stroke="#3B82F6" stroke-width="4.5" stroke-linecap="round"/>
+    <circle cx="45" cy="20" r="8" fill="url(#bell-light)"/>
+    <path d="M24 65 C33 54 33 35 40 27 C43 24 47 24 50 27 C57 35 57 54 66 65 Q45 76 24 65Z" fill="url(#bell-light)"/>
+    <path d="M37 68 Q45 82 53 68 Q45 64 37 68Z" fill="#F59E0B"/>
+  </g>
+  <text x="98" y="69" font-family="Inter, Arial, sans-serif" font-size="58" font-weight="800" letter-spacing="-2">
+    <tspan fill="#0B2D5B">Tender</tspan><tspan fill="#F59E0B">Bell</tspan>
+  </text>
+</svg>

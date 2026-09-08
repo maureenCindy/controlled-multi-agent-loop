@@ -1,11 +1,43 @@
 ---
 const year = new Date().getFullYear();
-// TP-069: the privacy note (TP-041) is now a real page within this site, not a static
-// resource served by the API app.
 ---
 <footer class="site-footer">
   <div class="container">
-    <span>&copy; {year} TenderBell. Built for Zimbabwean businesses tracking government tenders.</span>
-    <span><a href="/privacy">Privacy</a></span>
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <img class="footer-logo" src="/tenderbell-wordmark-dark.svg" alt="TenderBell" />
+        <p>Helping Zimbabwean businesses discover officially published government tenders and receive relevant opportunity alerts sooner.</p>
+      </div>
+      <div class="footer-column">
+        <h3>Explore</h3>
+        <ul class="footer-links">
+          <li><a href="/#howItWorks">How it works</a></li>
+          <li><a href="/#marketInsights">Market insights</a></li>
+          <li><a href="/#testimonials">Customer stories</a></li>
+        </ul>
+      </div>
+      <div class="footer-column">
+        <h3>Plans &amp; policies</h3>
+        <ul class="footer-links">
+          <li><a href="/#pricing">Subscription plans</a></li>
+          <li><a href="/#alertSetup">Get started</a></li>
+          <li><a href="/privacy">Privacy policy</a></li>
+          <li><a href="https://egp.praz.org.zw/" target="_blank" rel="noopener noreferrer">Official tender source <i class="fas fa-external-link-alt" aria-hidden="true"></i></a></li>
+        </ul>
+      </div>
+      <div class="footer-column">
+        <h3>Contact</h3>
+        <div class="footer-contact">
+          <a href="https://x.com/tenderbellzw" target="_blank" rel="noopener noreferrer"><i class="fab fa-twitter" aria-hidden="true"></i> @tenderbellzw</a>
+          <a href="https://www.facebook.com/profile.php?id=61594028708475" target="_blank" rel="noopener noreferrer"><i class="fab fa-facebook" aria-hidden="true"></i> Tender Bell on Facebook</a>
+          <span><i class="fas fa-map-marker-alt" aria-hidden="true"></i> Zimbabwe</span>
+          <span><i class="fas fa-clock" aria-hidden="true"></i> Support and enquiries via X</span>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; {year} TenderBell. All rights reserved.</span>
+      <span>Never miss a tender opportunity.</span>
+    </div>
   </div>
 </footer>

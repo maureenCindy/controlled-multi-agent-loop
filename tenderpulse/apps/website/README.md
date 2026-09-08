@@ -1,8 +1,14 @@
-# TenderPulse marketing site (TP-034)
+# TenderBell marketing site
 
-Public marketing site: Home, How it works, Testimonials (honest "early access" placeholder — no
-fabricated quotes; real ones land via #36), and Signup (Free direct, Pro via a real PayPal
-subscription). Built with [Astro](https://astro.build), static output, no framework/CMS.
+The public Astro website implements the approved TenderBell marketing mock as a responsive,
+single-page homepage. It includes the alert-plan hero, Market Opportunity Snapshot, How it works,
+Max Market Insights preview, two customer stories, Free/Pro/Max pricing, contact/FAQ content, and
+the full TenderBell footer. The static Max portal concept is available at
+`/max-portal-preview.html`.
+
+The hero signup controls and contact form are deliberately **demo-only** for TP-140. They make no
+API requests and tell visitors that nothing was sent. Their production workflows will be decided
+and implemented separately.
 
 ## Local development
 
@@ -19,10 +25,10 @@ npm run preview          # serve the built dist/ locally
 npm run test              # vitest unit tests (see "What's tested" below)
 ```
 
-The site expects the API (`tenderpulse/apps/api`) to be running and reachable at
-`PUBLIC_API_BASE_URL` (defaults to `http://localhost:8080`), and that API's
-`WEBSITE_ALLOWED_ORIGINS` env var must include this site's origin (`http://localhost:4321` in
-dev) — see `tenderpulse/apps/api/.env.example`.
+The homepage itself does not require the API. The existing `/signup` route still contains the
+earlier Free/Pro integration and expects the API (`tenderpulse/apps/api`) at
+`PUBLIC_API_BASE_URL`; it is not linked from the new demo homepage while the final form workflow
+is being decided.
 
 ## Environment variables
 
@@ -77,14 +83,16 @@ elements/events.
   - `renderPayPalSubscribeButton` against a **stubbed PayPal SDK**: the button is rendered into
     the right container, `createSubscription` requests the configured plan ID, and `onApprove`
     calls the backend with the approved subscription ID + current email and routes
-    success/failure to the right UI callback.
+  success/failure to the right UI callback.
+- Homepage contract tests verify the approved section structure, all three plans, demo-only form
+  wording, lack of API calls from the homepage, and required public brand/preview assets.
 
 **Not tested (documented limitation, not an oversight):** a real end-to-end PayPal approval —
 that requires real PayPal sandbox credentials, which have not been provided (see "PayPal setup
 required" above). The stubbed-SDK tests above are the closest feasible substitute per the issue's
 own test case 5.
 
-## Deliberately out of scope (see issue #40)
+## Deliberately out of scope for TP-140
 
-Subscriber portal/login, payment processing beyond what's described above, a pricing page beyond
-the Free/Pro choice on signup, blog/CMS, and actual hosting/deployment configuration.
+Connecting the homepage forms, subscriber portal authentication, changing backend payment logic,
+blog/CMS, and hosting/deployment configuration.
