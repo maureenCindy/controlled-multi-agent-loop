@@ -27,7 +27,10 @@ class SubscriberService(
     private val subscriberRepository: SubscriberRepository,
     private val profileRepository: InterestProfileRepository,
     private val payPalClient: PayPalClient,
-    @Value("\${paypal.plan-id:}")
+    // TP-127 (issue #127): the old single `paypal.plan-id` is replaced by `paypal.plans.pro` /
+    // `paypal.plans.max` -- this Pro-only flow (TP-042) keeps using the Pro one unchanged; the new
+    // unified com.tenderpulse.billing.BillingService reads both.
+    @Value("\${paypal.plans.pro:}")
     private val expectedPlanId: String
 ) {
 

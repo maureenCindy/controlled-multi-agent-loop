@@ -114,6 +114,8 @@ docker-compose service, so `./gradlew test` keeps working without Docker.
 | POST | `/api/v1/subscribers` | Register subscriber (FREE tier by default) |
 | POST | `/api/v1/subscribers/pro` | PayPal-verified Pro signup — see below (TP-042) |
 | POST | `/api/v1/subscribers/{id}/profiles` | Create interest profile |
+| GET | `/api/v1/billing/public-config` | Public PayPal checkout bootstrap config — see below (TP-127) |
+| POST | `/api/v1/billing/paypal/subscriptions/confirm` | Unified Pro/Max PayPal confirm — see below (TP-127) |
 | POST | `/api/v1/admin/aggregate` | Run one aggregation cycle |
 
 ### Pro (PRO tier) signup — PayPal subscription verification (TP-042)
@@ -124,20 +126,52 @@ backend never trusts that callback directly: it calls PayPal's REST API server-t
 (`GET /v1/billing/subscriptions/{id}`, authenticated via a cached `POST /v1/oauth2/token`
 client-credentials token) and only creates/upgrades the `Subscriber` to `tier = PRO` — storing
 the subscription ID on the record — if PayPal confirms the subscription is `ACTIVE` **and** its
-`plan_id` matches the configured `PAYPAL_PLAN_ID`. A subscription that doesn't exist, is for a
+`plan_id` matches the configured `PAYPAL_PRO_PLAN_ID`. A subscription that doesn't exist, is for a
 different plan, or isn't `ACTIVE` is rejected with `400`; a failed/timed-out call to PayPal itself
-returns `502` and never creates or changes a subscriber (no partial state).
+returns `502` and never creates or changes a subscriber (no partial state). This endpoint is left
+in place unchanged by TP-127 below — it is not removed, just no longer the only way to upgrade.
+
+### Unified Pro/Max PayPal confirm (TP-127, issue #127)
+
+`GET /api/v1/billing/public-config` is public (no auth) and returns display/bootstrap-only
+checkout config:
+
+```json
+{
+  "provider": "PAYPAL",
+  "clientId": "PUBLIC_PAYPAL_CLIENT_ID",
+  "currency": "USD",
+  "plans": {
+    "PRO": {"paypalPlanId": "P-...", "amount": "5.00"},
+    "MAX": {"paypalPlanId": "P-...", "amount": "30.00"}
+  }
+}
+```
+
+`POST /api/v1/billing/paypal/subscriptions/confirm` requires an authenticated subscriber bearer
+token (`Authorization: Bearer ...`, from `GET /api/v1/auth/verify`, TP-038) and accepts
+`{ "paypalSubscriptionId": "...", "requestedPlan": "PRO" | "MAX" }`. Same never-trust-the-callback
+verification as `/subscribers/pro` above (`fetchSubscription`, `ACTIVE`, matching configured plan
+id, no double-linking a subscription id to more than one subscriber), generalized to either plan —
+but the subscriber to upgrade is the **authenticated caller** (resolved from the bearer token),
+never an email in the request body, so there is no email-matching step. A retry with the same
+subscription id by the same already-linked subscriber succeeds idempotently rather than being
+rejected as a conflict.
 
 Required environment variables (see `.env.example`, never committed with real values):
 
 | Env var | Purpose | Local default |
 | ------- | ------- | -------------- |
 | `PAYPAL_BASE_URL` | `https://api-m.sandbox.paypal.com` (sandbox) or `https://api-m.paypal.com` (live) | sandbox URL |
-| `PAYPAL_CLIENT_ID` | PayPal Developer app Client ID | *(none — must be set to call PayPal)* |
-| `PAYPAL_CLIENT_SECRET` | PayPal Developer app Secret | *(none — must be set to call PayPal)* |
-| `PAYPAL_PLAN_ID` | The recurring Plan ID Pro subscriptions must match | *(none — must be set)* |
+| `PAYPAL_CLIENT_ID` | PayPal Developer app Client ID (also returned, public, by `/billing/public-config`) | *(none — must be set to call PayPal)* |
+| `PAYPAL_CLIENT_SECRET` | PayPal Developer app Secret (never exposed) | *(none — must be set to call PayPal)* |
+| `PAYPAL_PRO_PLAN_ID` | The recurring Plan ID Pro subscriptions must match | *(none — must be set)* |
+| `PAYPAL_MAX_PLAN_ID` | The recurring Plan ID Max subscriptions must match | *(none — must be set)* |
 
-Out of scope for TP-042 (tracked separately): the webhook listener for later
+Non-dev/test deployments fail to start if either plan id is blank — see
+`com.tenderpulse.paypal.PayPalPlanConfigGuard`.
+
+Out of scope for TP-042/TP-127 (tracked separately): the webhook listener for later
 cancellations/failed renewals, refunds, and plan changes/downgrades after initial signup.
 
 ## Tests
