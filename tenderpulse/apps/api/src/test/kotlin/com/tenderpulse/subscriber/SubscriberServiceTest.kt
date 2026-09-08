@@ -187,6 +187,7 @@ class SubscriberServiceTest {
     /** Test case 2: nonexistent subscription id -> rejected, no subscriber change. */
     @Test
     fun `registerPro with a nonexistent PayPal subscription id throws and saves nothing`() {
+        every { subscriberRepository.findByEmail("pro@example.com") } returns null
         every { payPalClient.fetchSubscription("I-FAKE") } returns null
 
         assertThrows(SubscriptionVerificationException::class.java) {
@@ -198,6 +199,7 @@ class SubscriberServiceTest {
     /** Test case 3: subscription exists but for a different plan -> rejected, no subscriber change. */
     @Test
     fun `registerPro with a subscription for the wrong plan throws and saves nothing`() {
+        every { subscriberRepository.findByEmail("pro@example.com") } returns null
         every { payPalClient.fetchSubscription("I-WRONGPLAN") } returns
             paypalSubscription(id = "I-WRONGPLAN", planId = "P-SOME-OTHER-PRODUCT")
 
@@ -205,12 +207,12 @@ class SubscriberServiceTest {
             service.registerPro(proRequest(subscriptionId = "I-WRONGPLAN"))
         }
         verify(exactly = 0) { subscriberRepository.save(any()) }
-        verify(exactly = 0) { subscriberRepository.findByEmail(any()) }
     }
 
     /** Test case 4: subscription exists but is not ACTIVE -> rejected, no subscriber change. */
     @Test
     fun `registerPro with a non-ACTIVE subscription throws and saves nothing`() {
+        every { subscriberRepository.findByEmail("pro@example.com") } returns null
         every { payPalClient.fetchSubscription("I-PENDING") } returns
             paypalSubscription(id = "I-PENDING", status = "APPROVAL_PENDING")
 
@@ -223,6 +225,7 @@ class SubscriberServiceTest {
     /** Test case 5: the call to PayPal itself fails -> propagates, no subscriber change. */
     @Test
     fun `registerPro propagates a PayPal API failure without saving anything`() {
+        every { subscriberRepository.findByEmail("pro@example.com") } returns null
         every { payPalClient.fetchSubscription("I-VALIDSUB123") } throws
             PayPalApiException("PayPal timed out")
 
@@ -239,6 +242,7 @@ class SubscriberServiceTest {
      */
     @Test
     fun `registerPro with a subscription whose PayPal payer email does not match the request email is rejected`() {
+        every { subscriberRepository.findByEmail("pro@example.com") } returns null
         every { payPalClient.fetchSubscription("I-VALIDSUB123") } returns
             paypalSubscription(payerEmail = "someone-else@example.com")
 
@@ -247,12 +251,12 @@ class SubscriberServiceTest {
         }
         assertTrue(ex.message!!.contains("pro@example.com"))
         verify(exactly = 0) { subscriberRepository.save(any()) }
-        verify(exactly = 0) { subscriberRepository.findByEmail(any()) }
     }
 
     /** A subscription with no payer email at all on PayPal's response is also rejected, not assumed to match. */
     @Test
     fun `registerPro with no payer email on the PayPal subscription is rejected`() {
+        every { subscriberRepository.findByEmail("pro@example.com") } returns null
         every { payPalClient.fetchSubscription("I-VALIDSUB123") } returns paypalSubscription(payerEmail = null)
 
         assertThrows(SubscriptionVerificationException::class.java) {
@@ -304,6 +308,59 @@ class SubscriberServiceTest {
 
         assertEquals(subscriberId, result.id)
         assertEquals(SubscriptionPlan.PRO, result.tier)
+    }
+
+    // ---- registerPro plan-change guard (TP-130 follow-up, issue #132) ----
+
+    /**
+     * Issue #132, test case 2: an existing PAID (non-FREE) subscriber re-calling this endpoint
+     * with a NEW, different PayPal subscription id must be rejected up front -- before PayPal is
+     * ever called or anything is persisted -- rather than silently re-linking their email to the
+     * new subscription and orphaning the original, still-active one with no cancellation. Mirrors
+     * [com.tenderpulse.billing.BillingServiceTest]'s equivalent guard test for
+     * `BillingService.confirmSubscription` (TP-130, issue #130).
+     */
+    @Test
+    fun `registerPro rejects an existing PAID subscriber re-calling with a new different PayPal subscription id`() {
+        val existingPaid = Subscriber(
+            id = subscriberId,
+            email = "pro@example.com",
+            tier = SubscriptionPlan.PRO,
+            paypalSubscriptionId = "I-ORIGINAL"
+        )
+        every { subscriberRepository.findByEmail("pro@example.com") } returns existingPaid
+
+        val ex = assertThrows(ConflictException::class.java) {
+            service.registerPro(proRequest(email = "pro@example.com", subscriptionId = "I-NEW-DIFFERENT"))
+        }
+
+        assertTrue(ex.message!!.contains("I-ORIGINAL"))
+        verify(exactly = 0) { payPalClient.fetchSubscription(any()) }
+        verify(exactly = 0) { subscriberRepository.save(any()) }
+        // The original subscriber record is untouched: it is never re-fetched by id or altered.
+        assertEquals("I-ORIGINAL", existingPaid.paypalSubscriptionId)
+        assertEquals(SubscriptionPlan.PRO, existingPaid.tier)
+    }
+
+    /**
+     * Issue #132, test case 2 (MAX variant): the same guard applies to an existing MAX
+     * subscriber, not just PRO -- the check is "non-FREE", not "not PRO".
+     */
+    @Test
+    fun `registerPro rejects an existing MAX subscriber re-calling with a new different PayPal subscription id`() {
+        val existingMax = Subscriber(
+            id = subscriberId,
+            email = "max@example.com",
+            tier = SubscriptionPlan.MAX,
+            paypalSubscriptionId = "I-ORIGINAL-MAX"
+        )
+        every { subscriberRepository.findByEmail("max@example.com") } returns existingMax
+
+        assertThrows(ConflictException::class.java) {
+            service.registerPro(proRequest(email = "max@example.com", subscriptionId = "I-NEW-DIFFERENT"))
+        }
+        verify(exactly = 0) { payPalClient.fetchSubscription(any()) }
+        verify(exactly = 0) { subscriberRepository.save(any()) }
     }
 
     // ---- createProfile ----
