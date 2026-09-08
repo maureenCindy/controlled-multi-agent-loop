@@ -83,6 +83,7 @@
             display: flex;
             align-items: center;
             min-height: 42px;
+            margin-bottom: 25px;
             padding: 0 10px;
             text-decoration: none;
         }
@@ -358,6 +359,129 @@
         .alert-meta { color: var(--muted); font-size: 0.61rem; text-align: right; }
         .alert-meta span { display: block; margin-top: 4px; color: var(--green); font-weight: 800; }
 
+        .inbox-stats .stat-card { min-height: 122px; }
+        .inbox-list { display: grid; gap: 12px; }
+        .inbox-alert {
+            position: relative;
+            overflow: hidden;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+        }
+        .inbox-alert.unread { border-left: 3px solid var(--orange); }
+        .inbox-alert[open] { border-color: color-mix(in srgb,var(--orange) 38%,var(--border)); }
+        .inbox-alert summary { display: block; padding: 18px 20px; cursor: pointer; list-style: none; }
+        .inbox-alert summary::-webkit-details-marker { display: none; }
+        .inbox-alert summary:focus-visible { outline: 3px solid rgba(245,166,35,.32); outline-offset: -3px; }
+        .alert-summary-top { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; margin-bottom: 10px; }
+        .unread-indicator { width: 7px; height: 7px; flex: 0 0 auto; background: var(--orange); border-radius: 50%; }
+        .alert-type-pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; color: var(--blue); background: rgba(37,99,166,.1); border-radius: 999px; font-size: .58rem; font-weight: 800; }
+        .alert-type-pill.closing { color: #9b6300; background: var(--orange-soft); }
+        .alert-type-pill.award { color: var(--green); background: rgba(22,132,91,.1); }
+        .read-label { color: var(--muted); font-size: .58rem; font-weight: 700; }
+        .alert-generated { margin-left: auto; color: var(--muted); font-size: .6rem; }
+        .inbox-title { margin-bottom: 7px; font-size: .92rem; line-height: 1.35; letter-spacing: -.015em; }
+        .inbox-category { display: flex; align-items: flex-start; gap: 7px; margin-bottom: 13px; color: var(--muted); font-size: .63rem; }
+        .inbox-category i { margin-top: 2px; color: var(--orange); }
+        .alert-facts { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; margin-bottom: 13px; }
+        .alert-fact { min-width: 0; padding: 9px 10px; background: var(--surface-soft); border: 1px solid var(--border); border-radius: 9px; }
+        .alert-fact span, .alert-fact strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .alert-fact span { color: var(--muted); font-size: .53rem; font-weight: 700; letter-spacing: .035em; text-transform: uppercase; }
+        .alert-fact strong { margin-top: 3px; font-size: .63rem; }
+        .alert-fact.urgent strong { color: #a96800; }
+        .alert-card-footer { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding-top: 12px; border-top: 1px solid var(--border); }
+        .delivery-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 8px; color: var(--green); background: rgba(22,132,91,.08); border-radius: 7px; font-size: .57rem; font-weight: 700; }
+        .delivery-chip.failed { color: var(--red); background: rgba(200,79,79,.09); }
+        .official-link { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; color: var(--blue); font-size: .62rem; font-weight: 800; text-decoration: none; }
+        .alert-actions { display: inline-flex; align-items: center; gap: 14px; margin-left: auto; }
+        .alert-actions .official-link, .alert-actions .expand-label { width: auto; margin-left: 0; padding-top: 0; }
+        .alert-actions .expand-label { color: var(--blue); cursor: pointer; }
+        .expand-label { display: inline-flex; align-items: center; gap: 6px; margin-left: 7px; color: var(--muted); font-size: .58rem; font-weight: 700; }
+        .expand-label-text::before { content: 'View Alert'; }
+        .inbox-alert[open] .expand-label-text::before { content: 'Hide Alert'; }
+        .expand-label i { transition: transform .2s ease; }
+        .inbox-alert[open] .expand-label i { transform: rotate(180deg); }
+        .alert-expanded { padding: 0 20px 20px; border-top: 1px solid var(--border); }
+        .match-explanation { margin-top: 14px; padding: 12px; background: var(--orange-soft); border-radius: 9px; }
+        .match-explanation strong { display: block; color: #966109; font-size: .63rem; }
+        .match-explanation p { margin-top: 4px; color: var(--muted); font-size: .59rem; line-height: 1.5; }
+        .expanded-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+        .inbox-result-count { margin-left: auto; color: var(--muted); font-size: .62rem; }
+        .notification-group { padding: 0; }
+        .notification-group .inbox-category { margin-bottom: 13px; }
+        .notification-snapshots { padding-top: 18px; }
+        .snapshot-intro { margin-bottom: 13px; color: var(--muted); font-size: .61rem; }
+        .channel-message-grid { display: grid; grid-template-columns: minmax(0,1.3fr) minmax(260px,.7fr); gap: 14px; }
+        .channel-message { overflow: hidden; background: var(--surface-soft); border: 1px solid var(--border); border-radius: 13px; }
+        .channel-message-head { display: flex; align-items: center; gap: 8px; padding: 11px 13px; background: var(--surface); border-bottom: 1px solid var(--border); }
+        .channel-message-head > i { color: var(--blue); }
+        .channel-message.whatsapp .channel-message-head > i { color: #16845b; }
+        .channel-message-head strong { font-size: .67rem; }
+        .channel-message-head small { margin-left: auto; color: var(--muted); font-size: .53rem; }
+        .channel-message-status { display: inline-flex; align-items: center; gap: 5px; padding: 4px 7px; color: var(--green); background: rgba(22,132,91,.08); border-radius: 999px; font-size: .54rem; font-weight: 800; }
+        .channel-message-status.failed { color: var(--red); background: rgba(200,79,79,.09); }
+        .email-preview-shell { padding: 16px; background: #e9eef4; }
+        .email-document { overflow: hidden; max-width: 620px; margin: 0 auto; color: #24364c; background: #fff; border: 1px solid #dce3eb; border-radius: 10px; box-shadow: 0 8px 22px rgba(26,43,76,.09); }
+        .email-brand-header { padding: 14px 18px; background: #1a2b4c; }
+        .email-brand-header img { display: block; width: 128px; height: auto; }
+        .email-content { padding: 20px; }
+        .email-content > p { margin-bottom: 12px; color: #64748b; font-size: .62rem; line-height: 1.6; }
+        .email-subject { margin-bottom: 6px; color: #c57800; font-size: .55rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+        .email-content h3 { margin-bottom: 8px; color: #1a2b4c; font-size: 1rem; line-height: 1.35; }
+        .email-match { margin: 15px 0; padding: 11px 12px; color: #5f430c; background: #fff4df; border-left: 3px solid #f5a623; border-radius: 6px; font-size: .59rem; line-height: 1.55; }
+        .email-detail-table { display: grid; border: 1px solid #e3e9f1; border-radius: 8px; }
+        .email-detail-row { display: grid; grid-template-columns: minmax(112px,.38fr) minmax(0,1fr); border-bottom: 1px solid #e3e9f1; }
+        .email-detail-row:last-child { border-bottom: 0; }
+        .email-detail-row dt, .email-detail-row dd { padding: 8px 10px; font-size: .57rem; line-height: 1.45; }
+        .email-detail-row dt { color: #64748b; background: #f8fafc; font-weight: 700; }
+        .email-detail-row dd { color: #24364c; font-weight: 600; }
+        .email-cta { display: inline-flex; margin-top: 16px; padding: 9px 13px; color: #1a2b4c; background: #f5a623; border-radius: 7px; font-size: .59rem; font-weight: 800; text-decoration: none; }
+        .email-signoff { margin-top: 16px; color: #64748b; font-size: .57rem; line-height: 1.55; }
+        .email-footer { padding: 12px 18px; color: #7b8798; background: #f8fafc; border-top: 1px solid #e3e9f1; font-size: .51rem; line-height: 1.5; text-align: center; }
+        .source-update { display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; padding: 10px 11px; color: #966109; background: var(--orange-soft); border-radius: 9px; font-size: .58rem; line-height: 1.45; }
+        .source-update i { margin-top: 2px; }
+        .whatsapp-alert-body { padding: 15px; }
+        .whatsapp-preview { overflow: hidden; background: #efeae2; border: 1px solid #d8ddd9; border-radius: 11px; box-shadow: 0 7px 18px rgba(18,74,61,.1); }
+        .whatsapp-preview-header { display: flex; align-items: center; gap: 9px; padding: 9px 11px; color: #fff; background: #075e54; }
+        .whatsapp-avatar { display: grid; place-items: center; width: 29px; height: 29px; flex: 0 0 auto; color: #173557; background: #f5a623; border-radius: 50%; font-size: .7rem; }
+        .whatsapp-contact { min-width: 0; }
+        .whatsapp-contact strong, .whatsapp-contact small { display: block; }
+        .whatsapp-contact strong { font-size: .62rem; }
+        .whatsapp-contact small { color: rgba(255,255,255,.78); font-size: .49rem; }
+        .whatsapp-preview-header > i { margin-left: auto; color: rgba(255,255,255,.85); font-size: .64rem; }
+        .whatsapp-conversation { padding: 17px 11px 19px; background-image: radial-gradient(rgba(91,105,96,.1) .7px,transparent .7px); background-size: 9px 9px; }
+        .whatsapp-bubble { position: relative; overflow: hidden; max-width: 94%; color: #26332e; background: #fff; border-radius: 3px 9px 9px 9px; font-size: .6rem; line-height: 1.5; box-shadow: 0 2px 5px rgba(24,54,45,.13); }
+        .whatsapp-bubble::before { content: ''; position: absolute; top: 0; left: -7px; border-top: 8px solid #fff; border-left: 8px solid transparent; }
+        .whatsapp-template-copy { padding: 11px 11px 7px; }
+        .whatsapp-template-copy > strong { display: block; margin-bottom: 7px; color: #122b22; font-size: .63rem; }
+        .whatsapp-template-copy > strong.closing-title { color: #9b6300; }
+        .whatsapp-template-copy > strong.award-title { color: #16845b; }
+        .whatsapp-template-copy p + p { margin-top: 7px; }
+        .whatsapp-template-copy p strong { display: block; margin-bottom: 1px; }
+        .whatsapp-message-time { display: flex; align-items: center; justify-content: flex-end; gap: 3px; margin-top: 5px; color: #7d8b85; font-size: .46rem; }
+        .whatsapp-message-time i { color: #53bdeb; font-size: .48rem; }
+        .whatsapp-template-action { display: flex; align-items: center; justify-content: center; gap: 7px; padding: 9px 10px; color: #008069; background: #fff; border-top: 1px solid #e4e8e6; font-size: .58rem; font-weight: 700; text-decoration: none; }
+        html[data-theme="dark"] .whatsapp-preview { background: #0b141a; border-color: #34434b; }
+        html[data-theme="dark"] .whatsapp-preview-header { background: #202c33; }
+        html[data-theme="dark"] .whatsapp-conversation { background-color: #0b141a; background-image: radial-gradient(rgba(255,255,255,.06) .7px,transparent .7px); }
+        html[data-theme="dark"] .whatsapp-bubble { color: #e7edef; background: #202c33; }
+        html[data-theme="dark"] .whatsapp-bubble::before { border-top-color: #202c33; }
+        html[data-theme="dark"] .whatsapp-template-copy > strong { color: #f0f4f5; }
+        html[data-theme="dark"] .whatsapp-template-copy > strong.closing-title { color: #ffc35c; }
+        html[data-theme="dark"] .whatsapp-template-copy > strong.award-title { color: #72d6ad; }
+        html[data-theme="dark"] .whatsapp-template-action { color: #00a884; background: #202c33; border-top-color: #33434b; }
+        .message-delivery-meta { display: grid; gap: 6px; margin-top: 12px; color: var(--muted); font-size: .55rem; }
+        .message-delivery-meta span { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .notification-group-footer { margin-top: 14px; color: var(--muted); font-size: .56rem; }
+        .inbox-pagination { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 18px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 13px; box-shadow: var(--shadow); }
+        .pagination-context { color: var(--muted); font-size: .61rem; }
+        .pagination-context strong { color: var(--text); }
+        .pagination-controls { display: flex; align-items: center; gap: 8px; }
+        .pagination-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 32px; padding: 6px 10px; color: var(--blue); background: var(--surface-soft); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: .6rem; font-weight: 800; }
+        .pagination-button:disabled { color: var(--muted); cursor: not-allowed; opacity: .5; }
+        .pagination-page { min-width: 74px; color: var(--muted); font-size: .59rem; font-weight: 700; text-align: center; }
+
         .deadline-list { display: grid; gap: 14px; }
         .deadline { display: grid; grid-template-columns: 42px minmax(0, 1fr); gap: 11px; align-items: center; }
         .date-tile { overflow: hidden; color: var(--navy); background: var(--orange-soft); border-radius: 9px; text-align: center; }
@@ -396,13 +520,67 @@
         .table-title { max-width: 390px; font-weight: 700; }
         .status-pill { display: inline-flex; padding: 4px 8px; color: var(--green); background: rgba(22, 132, 91, 0.1); border-radius: 999px; font-size: 0.58rem; font-weight: 800; white-space: nowrap; }
         .status-pill.closing { color: #9b6300; background: var(--orange-soft); }
-        .category-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-        .category-card { padding: 17px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; }
-        .category-card .category-icon { display: grid; place-items: center; width: 34px; height: 34px; margin-bottom: 13px; color: var(--orange); background: var(--orange-soft); border-radius: 9px; }
-        .category-card h3 { font-size: 0.78rem; }
-        .category-card p { min-height: 38px; margin: 5px 0 14px; color: var(--muted); font-size: 0.64rem; }
-        .category-footer { display: flex; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 0.61rem; }
-        .category-footer strong { color: var(--green); }
+        .category-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 13px; box-shadow: var(--shadow); }
+        .category-toolbar .top-search { width: min(360px,100%); }
+        .category-result-count { margin-left: auto; color: var(--muted); font-size: .61rem; }
+        .tracked-category-list { overflow: hidden; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); }
+        .tracked-category-row { display: grid; grid-template-columns: 38px minmax(220px,1.35fr) minmax(230px,1fr) minmax(135px,.55fr) auto; gap: 14px; align-items: center; padding: 17px 18px; border-bottom: 1px solid var(--border); }
+        .tracked-category-row:last-child { border-bottom: 0; }
+        .tracked-category-row.paused { background: var(--surface-soft); }
+        .tracked-category-icon { display: grid; place-items: center; width: 36px; height: 36px; color: var(--orange); background: var(--orange-soft); border-radius: 10px; }
+        .tracked-category-copy { min-width: 0; }
+        .tracked-category-copy h2 { font-size: .72rem; line-height: 1.4; }
+        .tracked-category-copy p { margin-top: 3px; color: var(--muted); font-size: .57rem; line-height: 1.45; }
+        .category-field-label { display: block; margin-bottom: 6px; color: var(--muted); font-size: .5rem; font-weight: 800; letter-spacing: .055em; text-transform: uppercase; }
+        .category-chip-list { display: flex; flex-wrap: wrap; gap: 5px; }
+        .category-chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 7px; color: var(--text); background: var(--surface-soft); border: 1px solid var(--border); border-radius: 999px; font-size: .51rem; font-weight: 700; }
+        .tracked-category-row.paused .category-chip { opacity: .62; }
+        .category-state { display: inline-flex; align-items: center; gap: 6px; width: fit-content; color: var(--green); font-size: .58rem; font-weight: 800; }
+        .category-state::before { content: ''; width: 7px; height: 7px; background: currentColor; border-radius: 50%; }
+        .category-state.paused { color: #9b6300; }
+        .category-actions { display: flex; align-items: center; justify-content: flex-end; gap: 7px; }
+        .category-action { min-height: 31px; padding: 6px 9px; color: var(--blue); background: transparent; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: .55rem; font-weight: 800; white-space: nowrap; }
+        .category-action.primary { color: var(--navy); background: var(--orange); border-color: var(--orange); }
+        .category-action.stop { color: var(--red); }
+        .category-help { display: flex; align-items: flex-start; gap: 8px; margin-top: 13px; padding: 11px 12px; color: var(--muted); background: var(--surface-soft); border: 1px solid var(--border); border-radius: 10px; font-size: .58rem; line-height: 1.5; }
+        .category-help i { margin-top: 2px; color: var(--blue); }
+        .whatsapp-allowance { display: grid; grid-template-columns: 38px minmax(200px,1fr) minmax(140px,.65fr) auto auto; gap: 14px; align-items: center; margin-bottom: 14px; padding: 14px 16px; color: #eaf8f2; background: linear-gradient(135deg,#075e54,#128c7e); border-radius: 14px; box-shadow: 0 12px 28px rgba(7,94,84,.16); }
+        .allowance-icon { display: grid; place-items: center; width: 38px; height: 38px; color: #075e54; background: #d9fdd3; border-radius: 10px; font-size: 1rem; }
+        .allowance-copy strong, .allowance-copy small { display: block; }
+        .allowance-copy strong { font-size: .69rem; }
+        .allowance-copy small { margin-top: 2px; color: #c9e8e1; font-size: .55rem; }
+        .allowance-meter { height: 8px; overflow: hidden; background: rgba(255,255,255,.2); border-radius: 99px; }
+        .allowance-meter span { display: block; width: 38%; height: 100%; background: #d9fdd3; border-radius: inherit; }
+        .allowance-value { text-align: right; }
+        .allowance-value strong, .allowance-value small { display: block; }
+        .allowance-value strong { font-size: .72rem; }
+        .allowance-value small { color: #c9e8e1; font-size: .52rem; }
+        .allowance-link { color: #fff; font-size: .56rem; font-weight: 800; text-decoration: none; white-space: nowrap; }
+        .category-chip.whatsapp { color: #087b65; background: rgba(18,140,126,.09); border-color: rgba(18,140,126,.2); }
+        .category-chip.email { color: var(--blue); background: rgba(37,99,166,.08); border-color: rgba(37,99,166,.16); }
+        .category-chip.off { color: var(--muted); background: var(--surface-soft); border-color: var(--border); }
+        .preference-modal[hidden] { display: none; }
+        .preference-modal { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 18px; background: rgba(8,18,34,.62); backdrop-filter: blur(4px); }
+        .preference-dialog { width: min(560px,100%); max-height: calc(100vh - 36px); overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 17px; box-shadow: 0 24px 70px rgba(0,0,0,.28); }
+        .preference-dialog-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 19px 20px 15px; border-bottom: 1px solid var(--border); }
+        .preference-dialog-head h2 { font-size: .9rem; }
+        .preference-dialog-head p { margin-top: 3px; color: var(--muted); font-size: .59rem; line-height: 1.45; }
+        .dialog-close { display: grid; place-items: center; width: 30px; height: 30px; flex: 0 0 auto; color: var(--muted); background: var(--surface-soft); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
+        .preference-dialog-body { padding: 18px 20px; }
+        .email-default-note { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 14px; padding: 10px 11px; color: var(--blue); background: rgba(37,99,166,.08); border-radius: 9px; font-size: .57rem; line-height: 1.5; }
+        .whatsapp-type-list { display: grid; gap: 0; border: 1px solid var(--border); border-radius: 11px; }
+        .whatsapp-type-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px; border-bottom: 1px solid var(--border); }
+        .whatsapp-type-row:last-child { border-bottom: 0; }
+        .whatsapp-type-row strong, .whatsapp-type-row small { display: block; }
+        .whatsapp-type-row strong { font-size: .65rem; }
+        .whatsapp-type-row small { margin-top: 2px; color: var(--muted); font-size: .54rem; }
+        .preference-dialog-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--border); }
+        .quota-card .allowance-meter { margin: 12px 0 7px; background: var(--border); }
+        .quota-card .allowance-meter span { background: linear-gradient(90deg,#128c7e,#25d366); }
+        .quota-numbers { display: flex; justify-content: space-between; gap: 10px; color: var(--muted); font-size: .56rem; }
+        .quota-numbers strong { color: var(--text); }
+        .preference-section { margin-top: 18px; }
+        .preference-actions { display: flex; justify-content: flex-end; margin-top: 14px; }
         .empty-category { display: grid; place-items: center; min-height: 174px; border: 1px dashed #b9c4d3; cursor: pointer; text-align: center; }
         .empty-category i { margin-bottom: 8px; color: var(--orange); font-size: 1.2rem; }
 
@@ -415,6 +593,120 @@
         .rank-row small { color: var(--muted); font-size: 0.59rem; }
         .rank-value { color: var(--green); font-size: 0.65rem; font-weight: 800; }
 
+        .briefing-card {
+            position: relative;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: minmax(0, 1.5fr) minmax(240px, 0.5fr);
+            gap: 26px;
+            align-items: center;
+            margin-bottom: 18px;
+            padding: 25px 27px;
+            color: #fff;
+            background:
+                radial-gradient(circle at 92% 18%, rgba(245,166,35,.2), transparent 28%),
+                linear-gradient(135deg, var(--navy), #315685);
+            border-radius: 18px;
+            box-shadow: 0 16px 36px rgba(26,43,76,.18);
+        }
+        .briefing-card::after { content: ''; position: absolute; right: -78px; bottom: -115px; width: 250px; height: 250px; border: 32px solid rgba(255,255,255,.035); border-radius: 50%; }
+        .briefing-content, .briefing-side { position: relative; z-index: 1; }
+        .briefing-label { display: inline-flex; align-items: center; gap: 7px; margin-bottom: 10px; color: #ffe0a3; font-size: .65rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+        .briefing-card h2 { max-width: 680px; font-size: clamp(1.2rem,2.3vw,1.7rem); line-height: 1.22; letter-spacing: -.03em; }
+        .briefing-card p { max-width: 730px; margin-top: 9px; color: #d4deec; font-size: .76rem; line-height: 1.65; }
+        .briefing-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 17px; }
+        .briefing-secondary { color: #fff; background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.22); }
+        .briefing-side { padding: 17px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.13); border-radius: 14px; backdrop-filter: blur(6px); }
+        .briefing-side > span { color: #aebdd1; font-size: .6rem; font-weight: 700; text-transform: uppercase; }
+        .briefing-side strong { display: block; margin: 6px 0 2px; font-size: 1.55rem; letter-spacing: -.04em; }
+        .briefing-side p { margin: 0; color: #d7dfeb; font-size: .64rem; line-height: 1.45; }
+        .briefing-side .confidence { display: flex; align-items: center; gap: 6px; margin-top: 12px; color: #bfe6d4; font-size: .6rem; font-weight: 700; }
+
+        .filter-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; margin-bottom: 18px; padding: 11px; background: var(--surface); border: 1px solid var(--border); border-radius: 13px; box-shadow: var(--shadow); }
+        .filter-bar .filter-label { display: inline-flex; align-items: center; gap: 7px; margin-right: 3px; color: var(--muted); font-size: .65rem; font-weight: 800; }
+        .filter-bar .select-control { min-height: 34px; padding: 6px 10px; background: var(--surface-soft); font-size: .66rem; }
+        .filter-bar .filter-reset { margin-left: auto; color: var(--blue); background: transparent; border: 0; cursor: pointer; font-size: .64rem; font-weight: 700; }
+
+        .market-snapshot { grid-template-columns: repeat(6,minmax(0,1fr)); }
+        .market-snapshot .stat-card { min-height: 128px; padding: 15px; }
+        .market-snapshot .stat-value { font-size: 1.35rem; }
+        .market-snapshot .stat-label { font-size: .62rem; }
+        .section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin: 28px 0 14px; }
+        .section-heading h2 { font-size: 1.08rem; letter-spacing: -.025em; }
+        .section-heading p { margin-top: 3px; color: var(--muted); font-size: .68rem; }
+        .coverage-note { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: .61rem; }
+        .coverage-note i { color: var(--green); }
+
+        .opportunity-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; }
+        .opportunity-card { position: relative; padding: 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); }
+        .opportunity-top { display: grid; grid-template-columns: 48px minmax(0,1fr); gap: 12px; align-items: center; }
+        .score-ring { display: grid; place-items: center; width: 48px; height: 48px; padding: 5px; background: conic-gradient(var(--green) calc(var(--score) * 1%),var(--border) 0); border-radius: 50%; }
+        .score-ring span { display: grid; place-items: center; width: 100%; height: 100%; background: var(--surface); border-radius: 50%; font-size: .68rem; font-weight: 800; }
+        .opportunity-card h3 { font-size: .78rem; }
+        .fit-label { display: block; margin-top: 2px; color: var(--green); font-size: .59rem; font-weight: 800; }
+        .opportunity-card > p { margin: 13px 0; color: var(--muted); font-size: .64rem; line-height: 1.55; }
+        .factor-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+        .factor { padding: 4px 7px; color: var(--muted); background: var(--surface-soft); border: 1px solid var(--border); border-radius: 999px; font-size: .55rem; font-weight: 700; }
+        .card-action { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 11px; border-top: 1px solid var(--border); }
+        .card-action span { color: var(--muted); font-size: .56rem; }
+
+        .insight-wide-grid { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(300px,.8fr); gap: 18px; }
+        .insight-stack { display: grid; gap: 18px; }
+        .plain-insight { padding: 14px; background: var(--surface-soft); border: 1px solid var(--border); border-left: 3px solid var(--orange); border-radius: 11px; }
+        .plain-insight strong { display: block; font-size: .72rem; }
+        .plain-insight p { margin-top: 4px; color: var(--muted); font-size: .62rem; line-height: 1.55; }
+        .plain-insight a { display: inline-block; margin-top: 8px; color: var(--blue); font-size: .6rem; font-weight: 800; text-decoration: none; }
+
+        .pipeline-list { display: grid; gap: 13px; }
+        .pipeline-row { display: grid; grid-template-columns: 68px minmax(0,1fr) auto; gap: 10px; align-items: center; }
+        .pipeline-month { color: var(--muted); font-size: .61rem; font-weight: 700; }
+        .pipeline-track { height: 9px; overflow: hidden; background: var(--surface-soft); border-radius: 99px; }
+        .pipeline-track span { display: block; height: 100%; background: linear-gradient(90deg,var(--orange),#f7c465); border-radius: inherit; }
+        .pipeline-value { min-width: 58px; color: var(--text); font-size: .62rem; font-weight: 800; text-align: right; }
+
+        .region-layout { display: grid; grid-template-columns: minmax(250px,.85fr) minmax(220px,.55fr); gap: 18px; }
+        .region-map { display: grid; grid-template-columns: repeat(4,1fr); grid-template-rows: repeat(4,52px); gap: 5px; min-height: 225px; }
+        .region-tile { display: grid; place-items: center; padding: 5px; color: var(--navy); background: color-mix(in srgb,var(--orange) var(--heat),var(--surface-soft)); border: 1px solid color-mix(in srgb,var(--orange) 32%,var(--border)); border-radius: 9px; font-size: .53rem; font-weight: 800; line-height: 1.15; text-align: center; }
+        html[data-theme="dark"] .region-tile { color: #f5f7fb; }
+        .region-tile small { display: block; margin-top: 2px; opacity: .72; font-size: .48rem; }
+        .region-tile.harare { grid-column: 3; grid-row: 2; outline: 2px solid var(--green); }
+        .region-tile.bulawayo { grid-column: 1; grid-row: 3; }
+        .region-tile.mat-north { grid-column: 1; grid-row: 1 / span 2; }
+        .region-tile.mat-south { grid-column: 1 / span 2; grid-row: 4; }
+        .region-tile.midlands { grid-column: 2; grid-row: 2 / span 2; }
+        .region-tile.masvingo { grid-column: 3; grid-row: 4; }
+        .region-tile.mash-west { grid-column: 2; grid-row: 1; }
+        .region-tile.mash-central { grid-column: 3; grid-row: 1; }
+        .region-tile.mash-east { grid-column: 4; grid-row: 1 / span 2; }
+        .region-tile.manicaland { grid-column: 4; grid-row: 3 / span 2; }
+        .region-legend { display: flex; align-items: center; gap: 6px; margin-top: 10px; color: var(--muted); font-size: .55rem; }
+        .heat-scale { width: 74px; height: 6px; background: linear-gradient(90deg,var(--surface-soft),var(--orange)); border-radius: 99px; }
+
+        .lifecycle-grid { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 9px; }
+        .lifecycle-item { padding: 13px 10px; background: var(--surface-soft); border: 1px solid var(--border); border-radius: 11px; text-align: center; }
+        .lifecycle-item strong { display: block; font-size: 1.08rem; }
+        .lifecycle-item span { color: var(--muted); font-size: .56rem; font-weight: 700; }
+        .lifecycle-item.failed strong { color: var(--red); }
+        .lifecycle-item.awarded strong { color: var(--green); }
+
+        .reason-list { display: grid; gap: 13px; }
+        .reason-row { display: grid; grid-template-columns: 135px minmax(0,1fr) 38px; gap: 10px; align-items: center; }
+        .reason-row > span { font-size: .61rem; font-weight: 700; }
+        .reason-bar { height: 8px; overflow: hidden; background: var(--surface-soft); border-radius: 99px; }
+        .reason-bar i { display: block; height: 100%; background: var(--blue); border-radius: inherit; }
+        .reason-row strong { font-size: .62rem; text-align: right; }
+
+        .plan-summary-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 14px; margin-bottom: 18px; }
+        .plan-timeline { position: relative; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; }
+        .plan-timeline::before { content: ''; position: absolute; top: 18px; left: 10%; right: 10%; height: 2px; background: var(--border); }
+        .plan-stage { position: relative; z-index: 1; text-align: center; }
+        .plan-stage-icon { display: grid; place-items: center; width: 37px; height: 37px; margin: 0 auto 9px; color: var(--navy); background: var(--orange); border: 5px solid var(--surface); border-radius: 50%; box-shadow: 0 0 0 1px var(--border); }
+        .plan-stage strong { display: block; font-size: .65rem; }
+        .plan-stage span { color: var(--muted); font-size: .55rem; }
+
+        .data-confidence { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 18px; padding: 10px 12px; color: var(--muted); background: var(--surface-soft); border: 1px solid var(--border); border-radius: 10px; font-size: .58rem; }
+        .confidence-high { color: var(--green); font-weight: 800; }
+
         .account-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 18px; }
         .settings-list { display: grid; gap: 13px; }
         .setting-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 13px; border-bottom: 1px solid var(--border); }
@@ -422,15 +714,58 @@
         .setting-row strong, .setting-row small { display: block; }
         .setting-row strong { font-size: 0.72rem; }
         .setting-row small { margin-top: 3px; color: var(--muted); font-size: 0.61rem; }
-        .toggle { position: relative; width: 38px; height: 21px; flex: 0 0 auto; background: var(--green); border: 0; border-radius: 999px; }
+        .toggle { position: relative; width: 38px; height: 21px; flex: 0 0 auto; background: var(--green); border: 0; border-radius: 999px; cursor: pointer; }
         .toggle::after { content: ''; position: absolute; top: 3px; right: 3px; width: 15px; height: 15px; background: #fff; border-radius: 50%; }
-        .plan-card { color: #fff; background: linear-gradient(145deg, var(--navy), #315282); border: 0; }
-        .plan-card .plan-pill { margin: 0 0 16px; }
-        .plan-card h2 { font-size: 1.25rem; }
-        .plan-card p { margin: 7px 0 18px; color: #cbd5e3; font-size: 0.7rem; }
-        .plan-card ul { display: grid; gap: 9px; margin-bottom: 20px; list-style: none; }
-        .plan-card li { display: flex; gap: 7px; color: #e2e8f1; font-size: 0.65rem; }
-        .plan-card li i { color: var(--orange); }
+        .toggle[aria-pressed="false"] { background: #a7b1bf; }
+        .toggle[aria-pressed="false"]::after { right: auto; left: 3px; }
+        .subscription-plan-list { display: grid; gap: 12px; }
+        .subscription-plan-option { position: relative; display: grid; grid-template-columns: 110px minmax(0,1fr) auto; gap: 16px; align-items: center; padding: 16px; background: var(--surface-soft); border: 1px solid var(--border); border-radius: 12px; }
+        .subscription-plan-option.current { background: linear-gradient(145deg,var(--navy),#315282); border-color: transparent; box-shadow: 0 10px 26px rgba(18,43,76,.18); }
+        .subscription-plan-name { align-self: start; }
+        .subscription-plan-name h3 { font-size: .84rem; }
+        .subscription-plan-price { display: block; margin-top: 5px; font-size: 1.18rem; font-weight: 850; }
+        .subscription-plan-price small { color: var(--muted); font-size: .54rem; font-weight: 700; }
+        .subscription-plan-features { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px 12px; list-style: none; }
+        .subscription-plan-features li { display: flex; gap: 7px; color: var(--muted); font-size: .58rem; line-height: 1.45; }
+        .subscription-plan-features i { margin-top: 2px; color: var(--green); }
+        .subscription-plan-action { min-width: 108px; justify-content: center; }
+        .subscription-plan-option.current h3, .subscription-plan-option.current .subscription-plan-price { color: #fff; }
+        .subscription-plan-option.current .subscription-plan-price small, .subscription-plan-option.current .subscription-plan-features li { color: #dbe5f2; }
+        .subscription-plan-option.current .subscription-plan-features i { color: var(--orange); }
+        .current-plan-label { display: inline-flex; align-items: center; gap: 5px; margin-top: 8px; padding: 4px 7px; color: var(--navy); background: var(--orange); border-radius: 999px; font-size: .48rem; font-weight: 850; text-transform: uppercase; }
+        .current-plan-renewal { display: block; margin-top: 8px; color: #dbe5f2; font-size: .52rem; font-weight: 700; line-height: 1.4; }
+        .current-plan-button { min-width: 108px; padding: 8px 10px; color: #dbe5f2; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); border-radius: 8px; font-size: .57rem; font-weight: 800; text-align: center; }
+        .settings-tabs-wrap { margin-bottom: 18px; overflow-x: auto; scrollbar-width: thin; }
+        .settings-tabs { display: flex; min-width: max-content; padding: 5px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); }
+        .settings-tab { display: inline-flex; align-items: center; gap: 7px; padding: 9px 13px; color: var(--muted); background: transparent; border: 0; border-radius: 8px; cursor: pointer; font-size: .62rem; font-weight: 800; }
+        .settings-tab.active { color: var(--navy); background: var(--orange); }
+        html[data-theme="dark"] .settings-tab.active { color: #172235; }
+        .settings-tab:focus-visible { outline: 3px solid rgba(245,166,35,.28); outline-offset: 1px; }
+        .settings-panel { display: none; }
+        .settings-panel.active { display: block; }
+        .settings-grid { display: grid; grid-template-columns: minmax(0,1fr) 340px; gap: 18px; }
+        .account-settings-grid { grid-template-columns: minmax(0,7fr) minmax(0,5fr); }
+        .profile-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+        .profile-avatar { display: grid; place-items: center; width: 48px; height: 48px; flex: 0 0 auto; color: var(--navy); background: var(--orange); border-radius: 13px; font-size: .9rem; font-weight: 800; }
+        .profile-header h2 { font-size: .85rem; }
+        .profile-header p { margin-top: 2px; color: var(--muted); font-size: .59rem; }
+        .settings-form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 13px; }
+        .settings-field { display: grid; gap: 5px; }
+        .settings-field.full { grid-column: 1 / -1; }
+        .settings-field label { color: var(--muted); font-size: .55rem; font-weight: 800; }
+        .settings-input { width: 100%; min-height: 39px; padding: 8px 10px; color: var(--text); background: var(--surface-soft); border: 1px solid var(--border); border-radius: 9px; font-size: .65rem; }
+        .settings-input:focus { outline: 3px solid rgba(245,166,35,.18); border-color: var(--orange); }
+        .settings-input[readonly] { color: var(--muted); cursor: default; }
+        .form-actions { display: flex; justify-content: flex-end; margin-top: 15px; }
+        .danger-card { margin-top: 18px; border-color: rgba(200,79,79,.28); }
+        .danger-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+        .danger-row strong { display: block; color: var(--red); font-size: .68rem; }
+        .danger-row p { margin-top: 3px; color: var(--muted); font-size: .58rem; }
+        .danger-button { padding: 7px 10px; color: var(--red); background: transparent; border: 1px solid rgba(200,79,79,.36); border-radius: 8px; cursor: pointer; font-size: .57rem; font-weight: 800; white-space: nowrap; }
+        .invoice-table .invoice-number { color: var(--blue); font-weight: 800; }
+        .invoice-status { display: inline-flex; align-items: center; gap: 5px; color: var(--green); font-size: .58rem; font-weight: 800; }
+        .invoice-action { color: var(--blue); font-size: .59rem; font-weight: 800; text-decoration: none; white-space: nowrap; }
+        .preference-choice { min-width: 170px; }
 
         .mock-notice {
             position: fixed;
@@ -454,7 +789,14 @@
             .app-shell { grid-template-columns: 218px minmax(0, 1fr); }
             .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .dashboard-grid { grid-template-columns: 1fr; }
-            .category-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .tracked-category-row { grid-template-columns: 38px minmax(180px,1fr) minmax(210px,1fr); }
+            .tracked-category-status, .category-actions { grid-column: 2 / -1; justify-content: flex-start; }
+            .whatsapp-allowance { grid-template-columns: 38px minmax(180px,1fr) auto; }
+            .allowance-meter { grid-column: 2 / -1; }
+            .allowance-value { grid-column: 2; text-align: left; }
+            .allowance-link { grid-column: 3; }
+            .market-snapshot { grid-template-columns: repeat(3,minmax(0,1fr)); }
+            .opportunity-grid { grid-template-columns: 1fr; }
         }
         @media (max-width: 760px) {
             .app-shell { display: block; }
@@ -467,7 +809,15 @@
             .workspace { padding: 24px 16px 72px; }
             .page-heading { align-items: stretch; flex-direction: column; }
             .page-heading .select-control, .page-heading .primary-button { width: 100%; }
-            .stats-grid, .category-grid, .insights-grid, .account-grid { grid-template-columns: 1fr; }
+            .stats-grid, .insights-grid, .account-grid, .briefing-card, .insight-wide-grid, .region-layout, .plan-summary-grid { grid-template-columns: 1fr; }
+            .settings-grid { grid-template-columns: 1fr; }
+            .subscription-plan-option { grid-template-columns: 100px minmax(0,1fr); }
+            .subscription-plan-action, .current-plan-button { grid-column: 1 / -1; width: 100%; }
+            .market-snapshot { grid-template-columns: repeat(2,minmax(0,1fr)); }
+            .lifecycle-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+            .plan-timeline { grid-template-columns: repeat(2,minmax(0,1fr)); row-gap: 20px; }
+            .plan-timeline::before { display: none; }
+            .alert-facts { grid-template-columns: repeat(2,minmax(0,1fr)); }
             .data-table { min-width: 650px; }
             .table-scroll { overflow-x: auto; }
             .mock-notice { right: 12px; bottom: 12px; left: 12px; justify-content: center; }
@@ -479,6 +829,28 @@
             .stat-card { padding: 15px; }
             .alert-row { grid-template-columns: 34px minmax(0, 1fr); }
             .alert-meta { grid-column: 2; text-align: left; }
+            .market-snapshot { grid-template-columns: 1fr 1fr; }
+            .filter-bar .select-control { width: 100%; }
+            .filter-bar .filter-reset { margin-left: 0; }
+            .reason-row { grid-template-columns: 105px minmax(0,1fr) 34px; }
+            .alert-generated { width: 100%; margin-left: 14px; }
+            .official-link { width: 100%; margin-left: 0; padding-top: 4px; }
+            .expand-label { margin-left: auto; }
+            .channel-message-grid { grid-template-columns: 1fr; }
+            .inbox-pagination { align-items: stretch; flex-direction: column; }
+            .pagination-controls { justify-content: space-between; }
+            .tracked-category-row { grid-template-columns: 36px minmax(0,1fr); }
+            .tracked-category-coverage, .tracked-category-status, .category-actions { grid-column: 2; }
+            .category-actions { justify-content: flex-start; flex-wrap: wrap; }
+            .category-result-count { width: 100%; margin-left: 0; }
+            .whatsapp-allowance { grid-template-columns: 38px minmax(0,1fr); }
+            .allowance-meter, .allowance-value, .allowance-link { grid-column: 2; }
+            .allowance-value { text-align: left; }
+            .settings-form-grid { grid-template-columns: 1fr; }
+            .subscription-plan-option, .subscription-plan-features { grid-template-columns: 1fr; }
+            .settings-field.full { grid-column: auto; }
+            .danger-row { align-items: flex-start; flex-direction: column; }
+            .preference-choice { width: 100%; min-width: 0; }
         }
     </style>
 </head>
@@ -488,24 +860,33 @@
             <a class="brand" href="website-mock.html" aria-label="TenderBell website">
                 <img src="brand-assets/tenderbell-wordmark-dark.svg" alt="TenderBell" />
             </a>
-            <span class="plan-pill"><i class="fas fa-crown" aria-hidden="true"></i> Max workspace</span>
-
-            <div class="nav-label">Workspace</div>
             <nav aria-label="Portal navigation">
                 <ul class="side-nav">
-                    <li><button class="nav-item active" type="button" data-view="overview"><i class="fas fa-border-all"></i> Overview</button></li>
-                    <li><button class="nav-item" type="button" data-view="alerts"><i class="fas fa-bell"></i> Tender alerts <span class="nav-badge">12</span></button></li>
-                    <li><button class="nav-item" type="button" data-view="categories"><i class="fas fa-layer-group"></i> Matched categories</button></li>
-                    <li><button class="nav-item" type="button" data-view="insights"><i class="fas fa-chart-line"></i> Market insights</button></li>
+                    <li><button class="nav-item active" type="button" data-view="overview"><i class="fas fa-border-all"></i> Dashboard</button></li>
+                </ul>
+
+                <div class="nav-label">Manage alerts</div>
+                <ul class="side-nav">
+                    <li><button class="nav-item" type="button" data-view="alerts"><i class="fas fa-inbox"></i> Alert inbox <span class="nav-badge">12</span></button></li>
+                    <li><button class="nav-item" type="button" data-view="categories"><i class="fas fa-layer-group"></i> Tracked categories</button></li>
+                    <li><button class="nav-item" type="button" data-view="preferences"><i class="fas fa-bell"></i> Delivery preferences</button></li>
+                </ul>
+
+                <div class="nav-label">Insights</div>
+                <ul class="side-nav">
+                    <li><button class="nav-item" type="button" data-view="insights"><i class="fas fa-chart-bar"></i> Market overview</button></li>
+                    <li><button class="nav-item" type="button" data-view="opportunities"><i class="fas fa-compass"></i> Opportunity finder</button></li>
+                    <li><button class="nav-item" type="button" data-view="regions"><i class="fas fa-map-marked-alt"></i> Regional opportunities</button></li>
+                    <li><button class="nav-item" type="button" data-view="plans"><i class="fas fa-calendar-check"></i> Annual procurement plans</button></li>
                     <li><button class="nav-item" type="button" data-view="awards"><i class="fas fa-gavel"></i> Award intelligence</button></li>
                 </ul>
-            </nav>
 
-            <div class="nav-label">Manage</div>
-            <ul class="side-nav">
-                <li><button class="nav-item" type="button" data-view="account"><i class="fas fa-sliders-h"></i> Alerts &amp; account</button></li>
-                <li><a class="nav-item" href="website-mock.html"><i class="fas fa-arrow-left"></i> Back to website</a></li>
-            </ul>
+                <div class="nav-label">Account</div>
+                <ul class="side-nav">
+                    <li><button class="nav-item" type="button" data-view="account"><i class="fas fa-cog"></i> Settings</button></li>
+                    <li><a class="nav-item" href="website-mock.html"><i class="fas fa-sign-out-alt"></i> Sign out</a></li>
+                </ul>
+            </nav>
 
             <div class="sidebar-footer">
                 <div class="account-mini">
@@ -533,121 +914,464 @@
             <div class="workspace">
                 <section class="view active" id="view-overview" aria-labelledby="overviewTitle">
                     <div class="page-heading">
-                        <div><span class="eyebrow">Tuesday, 8 September 2026</span><h1 id="overviewTitle">Good morning, L. Ndlovu</h1><p>Here is what is happening across your tender market today.</p></div>
-                        <select class="select-control" aria-label="Dashboard reporting period"><option>Last 90 days</option><option>Last 30 days</option><option>This year</option></select>
+                        <div><span class="eyebrow">Tuesday, 8 September 2026</span><h1 id="overviewTitle">Good morning, L. Ndlovu</h1><p>What matters today across your five tracked categories.</p></div>
+                        <a class="outline-button" href="#" data-open-view="categories"><i class="fas fa-layer-group"></i> Manage categories</a>
                     </div>
 
+                    <div class="filter-bar" aria-label="Dashboard filters">
+                        <span class="filter-label"><i class="fas fa-filter"></i> Dashboard scope</span>
+                        <select class="select-control" aria-label="Tracked category"><option>All 5 tracked categories</option><option>Software Development</option><option>Computer Equipment</option><option>Electrical Products</option><option>Consulting Services</option><option>Office Furniture</option></select>
+                        <select class="select-control" aria-label="Dashboard period"><option>This week</option><option>Last 30 days</option><option>Last 90 days</option></select>
+                        <select class="select-control" aria-label="Dashboard region"><option>All regions</option><option>Harare</option><option>Bulawayo</option><option>National</option></select>
+                        <button class="filter-reset" type="button">Reset filters</button>
+                    </div>
+
+                    <article class="briefing-card">
+                        <div class="briefing-content">
+                            <span class="briefing-label"><i class="fas fa-magic" aria-hidden="true"></i> Your opportunity briefing</span>
+                            <h2>ICT support services are leading your tracked categories this month.</h2>
+                            <p>Demand grew 19%, eight procuring entities published 12 matching tenders, and nine related requirements appear in current annual procurement plans.</p>
+                            <div class="briefing-actions">
+                                <a class="primary-button" href="#" data-open-view="opportunities"><i class="fas fa-chart-line"></i> See why this market fits</a>
+                                <a class="outline-button briefing-secondary" href="#" data-open-view="plans"><i class="far fa-calendar-alt"></i> View planned opportunities</a>
+                            </div>
+                        </div>
+                        <div class="briefing-side">
+                            <span>Across your categories</span>
+                            <strong>27 matches</strong>
+                            <p>Four require attention this week and nine planned requirements are approaching publication.</p>
+                            <div class="confidence"><i class="fas fa-check-circle"></i> High data confidence</div>
+                        </div>
+                    </article>
+
                     <div class="stats-grid">
-                        <article class="stat-card"><div class="stat-head"><span class="stat-label">Published tenders</span><span class="stat-icon"><i class="fas fa-file-signature"></i></span></div><strong class="stat-value">184</strong><span class="stat-note"><span class="trend-up">↑ 12%</span> from previous period</span></article>
-                        <article class="stat-card" style="--accent:#2563a6;--accent-soft:rgba(37,99,166,.1)"><div class="stat-head"><span class="stat-label">Matched opportunities</span><span class="stat-icon"><i class="fas fa-bullseye"></i></span></div><strong class="stat-value">27</strong><span class="stat-note">Across 6 tracked categories</span></article>
-                        <article class="stat-card" style="--accent:#b06e00"><div class="stat-head"><span class="stat-label">Closing soon</span><span class="stat-icon"><i class="fas fa-hourglass-half"></i></span></div><strong class="stat-value">8</strong><span class="stat-note">Within the next 7 days</span></article>
-                        <article class="stat-card" style="--accent:#16845b;--accent-soft:rgba(22,132,91,.1)"><div class="stat-head"><span class="stat-label">Published awards</span><span class="stat-icon"><i class="fas fa-gavel"></i></span></div><strong class="stat-value">63</strong><span class="stat-note"><span class="trend-up">↑ 8%</span> from previous period</span></article>
+                        <article class="stat-card" style="--accent:#2563a6;--accent-soft:rgba(37,99,166,.1)"><div class="stat-head"><span class="stat-label">New matching tenders</span><span class="stat-icon"><i class="fas fa-bullseye"></i></span></div><strong class="stat-value">12</strong><span class="stat-note">Published this week</span></article>
+                        <article class="stat-card" style="--accent:#b06e00"><div class="stat-head"><span class="stat-label">Closing soon</span><span class="stat-icon"><i class="fas fa-hourglass-half"></i></span></div><strong class="stat-value">4</strong><span class="stat-note">Within the next 7 days</span></article>
+                        <article class="stat-card" style="--accent:#16845b;--accent-soft:rgba(22,132,91,.1)"><div class="stat-head"><span class="stat-label">New award notices</span><span class="stat-icon"><i class="fas fa-gavel"></i></span></div><strong class="stat-value">6</strong><span class="stat-note">Matched this week</span></article>
+                        <article class="stat-card"><div class="stat-head"><span class="stat-label">Planned opportunities</span><span class="stat-icon"><i class="far fa-calendar-check"></i></span></div><strong class="stat-value">9</strong><span class="stat-note">Expected next quarter</span></article>
                     </div>
 
                     <div class="dashboard-grid">
                         <div class="stack">
                             <article class="card">
-                                <div class="card-header"><div><h2>Market activity</h2><p>Published tenders and awards over the past six months</p></div><a class="text-link" href="#" data-open-view="insights">Explore insights →</a></div>
-                                <div class="chart-wrap">
-                                    <div class="chart" aria-label="Sample market activity bar chart">
-                                        <div class="bar-group"><span class="bar" style="height:38%"></span><span class="bar awards" style="height:22%"></span><span class="bar-month">Apr</span></div>
-                                        <div class="bar-group"><span class="bar" style="height:55%"></span><span class="bar awards" style="height:32%"></span><span class="bar-month">May</span></div>
-                                        <div class="bar-group"><span class="bar" style="height:48%"></span><span class="bar awards" style="height:39%"></span><span class="bar-month">Jun</span></div>
-                                        <div class="bar-group"><span class="bar" style="height:67%"></span><span class="bar awards" style="height:44%"></span><span class="bar-month">Jul</span></div>
-                                        <div class="bar-group"><span class="bar" style="height:79%"></span><span class="bar awards" style="height:51%"></span><span class="bar-month">Aug</span></div>
-                                        <div class="bar-group"><span class="bar" style="height:91%"></span><span class="bar awards" style="height:64%"></span><span class="bar-month">Sep</span></div>
-                                    </div>
-                                    <div class="chart-legend"><span><i class="legend-dot"></i> Published tenders</span><span><i class="legend-dot awards"></i> Published awards</span></div>
+                                <div class="card-header"><div><h2>Opportunities requiring attention</h2><p>Prioritised across your tracked categories</p></div><a class="text-link" href="#" data-open-view="alerts">Open alert inbox →</a></div>
+                                <div class="alert-list">
+                                    <div class="alert-row"><span class="alert-kind closing"><i class="fas fa-hourglass-half"></i></span><div class="alert-copy"><strong>Supply and delivery of networking equipment</strong><small>Computer Equipment · Ministry of ICT</small></div><div class="alert-meta">14 Sep<span style="color:#b06e00">Closes in 6 days</span></div></div>
+                                    <div class="alert-row"><span class="alert-kind"><i class="fas fa-file-signature"></i></span><div class="alert-copy"><strong>Provision Of Vendor Management System</strong><small>Software Development · City Of Bulawayo</small></div><div class="alert-meta">12 min ago<span>94% match</span></div></div>
+                                    <div class="alert-row"><span class="alert-kind closing"><i class="fas fa-hourglass-half"></i></span><div class="alert-copy"><strong>Business process consulting services</strong><small>Consulting Services · City of Harare</small></div><div class="alert-meta">11 Sep<span style="color:#b06e00">Closes in 3 days</span></div></div>
+                                    <div class="alert-row"><span class="alert-kind award"><i class="fas fa-gavel"></i></span><div class="alert-copy"><strong>Supply of electrical cables and materials</strong><small>Electrical Products · Award notice published</small></div><div class="alert-meta">3 hrs ago<span>Review outcome</span></div></div>
                                 </div>
                             </article>
 
                             <article class="card">
-                                <div class="card-header"><div><h2>Latest matching alerts</h2><p>Your newest tender, reminder and award matches</p></div><a class="text-link" href="#" data-open-view="alerts">View all alerts →</a></div>
-                                <div class="alert-list">
-                                    <div class="alert-row"><span class="alert-kind"><i class="fas fa-file-signature"></i></span><div class="alert-copy"><strong>Provision Of Vendor Management System</strong><small>City Of Bulawayo · Software Development</small></div><div class="alert-meta">12 min ago<span>New tender</span></div></div>
-                                    <div class="alert-row"><span class="alert-kind closing"><i class="fas fa-hourglass-half"></i></span><div class="alert-copy"><strong>Supply and delivery of networking equipment</strong><small>Ministry of ICT · Computer Equipment</small></div><div class="alert-meta">1 hr ago<span style="color:#b06e00">Closes in 3 days</span></div></div>
-                                    <div class="alert-row"><span class="alert-kind award"><i class="fas fa-gavel"></i></span><div class="alert-copy"><strong>Supply of electrical cables and materials</strong><small>Awarded to Great Pack Electrical · US$145</small></div><div class="alert-meta">3 hrs ago<span>Award notice</span></div></div>
-                                </div>
+                                <div class="card-header"><div><h2>Tracked category pulse</h2><p>How your categories are performing this week</p></div><a class="text-link" href="#" data-open-view="categories">Manage categories →</a></div>
+                                <div class="table-scroll"><table class="data-table"><thead><tr><th>Tracked category</th><th>New matches</th><th>Closing soon</th><th>Demand trend</th><th>Planned</th></tr></thead><tbody><tr><td class="table-title">ICT support services</td><td><strong>12</strong></td><td>3</td><td><span class="status-pill">↑ 19%</span></td><td>9</td></tr><tr><td class="table-title">Software development</td><td><strong>8</strong></td><td>2</td><td><span class="status-pill">↑ 14%</span></td><td>6</td></tr><tr><td class="table-title">Electrical products</td><td><strong>5</strong></td><td>1</td><td><span class="status-pill">↑ 4%</span></td><td>11</td></tr><tr><td class="table-title">Consulting services</td><td><strong>4</strong></td><td>0</td><td><span class="status-pill">↑ 11%</span></td><td>7</td></tr><tr><td class="table-title">Office furniture</td><td><strong>2</strong></td><td>1</td><td><span class="status-pill closing">↓ 3%</span></td><td>4</td></tr></tbody></table></div>
+                                <div class="data-confidence"><span>One tender may appear in more than one category row; Dashboard totals count unique tenders.</span><span class="confidence-high">5 active categories</span></div>
                             </article>
                         </div>
 
                         <aside class="stack">
                             <article class="card">
-                                <div class="card-header"><div><h2>Upcoming deadlines</h2><p>Matched tenders closing soon</p></div></div>
+                                <div class="card-header"><div><h2>Upcoming planned matches</h2><p>Expected requirements in your categories</p></div><a class="text-link" href="#" data-open-view="plans">View plans →</a></div>
                                 <div class="deadline-list">
-                                    <div class="deadline"><div class="date-tile"><strong>11</strong><small>Sep</small></div><div><p>Supply of office furniture</p><span>Closes 11:00 AM · Harare</span></div></div>
-                                    <div class="deadline"><div class="date-tile"><strong>14</strong><small>Sep</small></div><div><p>ICT systems maintenance</p><span>Closes 10:00 AM · Bulawayo</span></div></div>
-                                    <div class="deadline"><div class="date-tile"><strong>16</strong><small>Sep</small></div><div><p>Consultancy services</p><span>Closes 2:30 PM · National</span></div></div>
+                                    <div class="deadline"><div class="date-tile"><strong>Sep</strong><small>Planned</small></div><div><p>Vendor-management system</p><span>City of Bulawayo · Est. US$18,000</span></div></div>
+                                    <div class="deadline"><div class="date-tile"><strong>Oct</strong><small>EOI</small></div><div><p>ICT infrastructure assessment</p><span>State university · Prequalification required</span></div></div>
+                                    <div class="deadline"><div class="date-tile"><strong>Nov</strong><small>SPOC</small></div><div><p>Network security upgrade</p><span>Ministry of ICT · Oversight indicated</span></div></div>
                                 </div>
+                                <div class="data-confidence"><span>Planned requirements are not live tenders.</span><span class="confidence-high">3 of 9 shown</span></div>
                             </article>
 
                             <article class="card">
-                                <div class="card-header"><div><h2>Demand by sector</h2><p>Share of published opportunities</p></div></div>
-                                <div class="sector-list">
-                                    <div class="sector-row"><div><div class="sector-name"><span>Construction</span><span>34%</span></div><div class="progress"><span style="width:82%"></span></div></div><span class="sector-change">+14%</span></div>
-                                    <div class="sector-row"><div><div class="sector-name"><span>ICT &amp; Software</span><span>26%</span></div><div class="progress"><span style="width:64%"></span></div></div><span class="sector-change">+9%</span></div>
-                                    <div class="sector-row"><div><div class="sector-name"><span>Medical supplies</span><span>19%</span></div><div class="progress"><span style="width:47%"></span></div></div><span class="sector-change">+6%</span></div>
-                                    <div class="sector-row"><div><div class="sector-name"><span>Consulting</span><span>14%</span></div><div class="progress"><span style="width:35%"></span></div></div><span class="sector-change">+3%</span></div>
-                                </div>
+                                <div class="card-header"><div><h2>Personal category insights</h2><p>Signals relevant to your tracked markets</p></div><a class="text-link" href="#" data-open-view="insights">Explore insights →</a></div>
+                                <div class="insight-stack"><div class="plain-insight"><strong>ICT demand is accelerating</strong><p>Activity has increased across your ICT categories for three consecutive months.</p></div><div class="plain-insight"><strong>City of Bulawayo is more active</strong><p>The buyer published opportunities in two of your tracked categories this month.</p></div><div class="plain-insight"><strong>Price leads electrical awards</strong><p>Lowest evaluated price appears in 58% of classified Electrical Products awards.</p></div></div>
                             </article>
-
-                            <article class="insight-callout"><i class="fas fa-lightbulb"></i><h3>Opportunity signal</h3><p>ICT tender activity has grown for three consecutive months, led by local authorities and state universities.</p></article>
                         </aside>
                     </div>
+
+                    <div class="section-heading"><div><h2>Latest matching alerts</h2><p>New tender, reminder and award activity across your tracked categories</p></div><a class="text-link" href="#" data-open-view="alerts">View all alerts →</a></div>
+                    <article class="card"><div class="alert-list"><div class="alert-row"><span class="alert-kind"><i class="fas fa-file-signature"></i></span><div class="alert-copy"><strong>Development of digital records platform</strong><small>Software Development · State Procurement Board</small></div><div class="alert-meta">28 min ago<span>New tender</span></div></div><div class="alert-row"><span class="alert-kind closing"><i class="fas fa-hourglass-half"></i></span><div class="alert-copy"><strong>Managed print and workstation support services</strong><small>ICT Support Services · Ministry of Education</small></div><div class="alert-meta">2 hrs ago<span style="color:#b06e00">Closing soon</span></div></div><div class="alert-row"><span class="alert-kind award"><i class="fas fa-gavel"></i></span><div class="alert-copy"><strong>Business process advisory services</strong><small>Consulting Services · Award notice published</small></div><div class="alert-meta">4 hrs ago<span>Award notice</span></div></div></div></article>
                 </section>
 
                 <section class="view" id="view-alerts" aria-labelledby="alertsTitle">
-                    <div class="page-heading"><div><span class="eyebrow">Real-time monitoring</span><h1 id="alertsTitle">Tender alerts</h1><p>Review every opportunity and award matched to your categories.</p></div><button class="outline-button"><i class="fas fa-filter"></i> Filter alerts</button></div>
-                    <article class="card table-scroll">
-                        <table class="data-table">
-                            <thead><tr><th>Alert</th><th>Procuring entity</th><th>Matched category</th><th>Date</th><th>Status</th></tr></thead>
-                            <tbody>
-                                <tr><td class="table-title">Provision Of Vendor Management System</td><td>City Of Bulawayo</td><td>Software Development</td><td>08 Sep 2026</td><td><span class="status-pill">New tender</span></td></tr>
-                                <tr><td class="table-title">Supply and delivery of networking equipment</td><td>Ministry of ICT</td><td>Computer Equipment</td><td>08 Sep 2026</td><td><span class="status-pill closing">Closing soon</span></td></tr>
-                                <tr><td class="table-title">Supply of electrical cables and materials</td><td>National Railways of Zimbabwe</td><td>Electrical Products</td><td>07 Sep 2026</td><td><span class="status-pill">Award notice</span></td></tr>
-                                <tr><td class="table-title">Development of digital records platform</td><td>State Procurement Board</td><td>Software Development</td><td>07 Sep 2026</td><td><span class="status-pill">New tender</span></td></tr>
-                                <tr><td class="table-title">Business process consulting services</td><td>City of Harare</td><td>Consulting Services</td><td>06 Sep 2026</td><td><span class="status-pill closing">Closing soon</span></td></tr>
-                            </tbody>
-                        </table>
-                    </article>
+                    <div class="page-heading"><div><span class="eyebrow">Manage alerts</span><h1 id="alertsTitle">Alert inbox</h1><p>Your tender, closing-soon and award alerts—with delivery history for every channel.</p></div><button class="outline-button"><i class="fas fa-check-double"></i> Mark all as read</button></div>
+
+                    <div class="stats-grid inbox-stats">
+                        <article class="stat-card"><div class="stat-head"><span class="stat-label">All alerts</span><span class="stat-icon"><i class="fas fa-inbox"></i></span></div><strong class="stat-value">27</strong><span class="stat-note">Across 5 tracked categories</span></article>
+                        <article class="stat-card" style="--accent:#2563a6;--accent-soft:rgba(37,99,166,.1)"><div class="stat-head"><span class="stat-label">Unread</span><span class="stat-icon"><i class="fas fa-envelope"></i></span></div><strong class="stat-value">12</strong><span class="stat-note">New activity to review</span></article>
+                        <article class="stat-card" style="--accent:#b06e00"><div class="stat-head"><span class="stat-label">Closing soon</span><span class="stat-icon"><i class="fas fa-hourglass-half"></i></span></div><strong class="stat-value">4</strong><span class="stat-note">Within the next 7 days</span></article>
+                        <article class="stat-card" style="--accent:#c84f4f;--accent-soft:rgba(200,79,79,.09)"><div class="stat-head"><span class="stat-label">Delivery issues</span><span class="stat-icon"><i class="fas fa-exclamation-circle"></i></span></div><strong class="stat-value">1</strong><span class="stat-note">Action may be required</span></article>
+                    </div>
+
+                    <div class="filter-bar" aria-label="Alert inbox filters">
+                        <label class="top-search" style="width:min(270px,100%)"><i class="fas fa-search"></i><input type="search" placeholder="Search alerts" aria-label="Search alerts" /></label>
+                        <select class="select-control" aria-label="Alert type"><option>All alert types</option><option>Newly Published Tender</option><option>Closing Soon</option><option>Award Notice</option></select>
+                        <select class="select-control" aria-label="Read status"><option>All read states</option><option>Unread</option><option>Read</option></select>
+                        <select class="select-control" aria-label="Tracked category"><option>All tracked categories</option><option>Software Development</option><option>Computer Equipment</option><option>Electrical Products</option></select>
+                        <select class="select-control" aria-label="Delivery status"><option>All delivery statuses</option><option>Read</option><option>Delivered</option><option>Sent</option><option>Pending</option><option>Failed</option></select>
+                        <select class="select-control" aria-label="Delivery channel"><option>All channels</option><option>Email</option><option>WhatsApp</option></select>
+                        <button class="filter-reset" type="button">Reset filters</button>
+                    </div>
+
+                    <div class="section-heading"><div><h2>Recent alerts</h2><p>Newest first · See what was sent and the delivery result for each channel</p></div><span class="inbox-result-count">Showing 1–3 of 27 alerts</span></div>
+                    <div class="inbox-list">
+                        <details class="inbox-alert unread notification-group">
+                            <summary>
+                                <div class="alert-summary-top"><span class="unread-indicator" aria-label="Unread"></span><span class="alert-type-pill"><i class="fas fa-file-signature"></i> Newly Published Tender Alert</span><span class="alert-generated">Alert created 19 Aug 2026 · 10:02</span></div>
+                                <h2 class="inbox-title">WEBSITE DEVELOPMENT</h2>
+                                <div class="inbox-category"><i class="fas fa-bullseye"></i><span><strong>Matched category:</strong> Telecommunication, Internet-based and Related Systems Installations &amp; Maintenance</span></div>
+                                <div class="alert-facts"><div class="alert-fact"><span>Procuring entity</span><strong>Zimbabwe Mining Development Corporation</strong></div><div class="alert-fact"><span>Published</span><strong>19 Aug 2026 · 10:00 AM</strong></div><div class="alert-fact urgent"><span>Closing date</span><strong>17 Sep 2026 · 3:00 PM</strong></div><div class="alert-fact"><span>Official source</span><strong>PRAZ e-GP</strong></div></div>
+                                <div class="alert-card-footer"><span class="delivery-chip"><i class="fas fa-envelope"></i> Email delivered · 10:04</span><span class="delivery-chip"><i class="fab fa-whatsapp"></i> WhatsApp read · 10:08</span><span class="alert-actions"><a class="official-link" href="https://egp.praz.org.zw/" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()"><i class="fas fa-external-link-alt"></i> View Tender Details</a><span class="expand-label"><span class="expand-label-text"></span> <i class="fas fa-chevron-down"></i></span></span></div>
+                            </summary>
+                            <div class="alert-expanded notification-snapshots">
+                                <p class="snapshot-intro">These snapshots reproduce the notifications TenderBell sent through each channel.</p>
+                                <div class="channel-message-grid">
+                                    <section class="channel-message" aria-labelledby="emailAlertTitle">
+                                        <div class="channel-message-head"><i class="fas fa-envelope"></i><strong id="emailAlertTitle">Email alert</strong><span class="channel-message-status"><i class="fas fa-check-circle"></i> Delivered</span><small>Sent 10:03</small></div>
+                                        <div class="email-preview-shell">
+                                            <article class="email-document" aria-label="Email notification snapshot">
+                                                <div class="email-brand-header"><img src="brand-assets/tenderbell-wordmark-dark.svg" alt="TenderBell" /></div>
+                                                <div class="email-content">
+                                                    <div class="email-subject">New tender match</div>
+                                                    <h3>WEBSITE DEVELOPMENT</h3>
+                                                    <p>Hello L. Ndlovu,</p>
+                                                    <p>A newly published tender matches one of the categories you track.</p>
+                                                    <div class="email-match"><strong>Matched category</strong><br />Telecommunication, Internet-based and Related Systems Installations &amp; Maintenance (including website development, domain registration and hosting etc.)</div>
+                                                    <dl class="email-detail-table">
+                                                        <div class="email-detail-row"><dt>Tender reference</dt><dd>WEBSITE DEVELOPMENT</dd></div>
+                                                        <div class="email-detail-row"><dt>Procuring entity</dt><dd>Zimbabwe Mining Development Corporation</dd></div>
+                                                        <div class="email-detail-row"><dt>Procurement method</dt><dd>Competitive Bidding Method</dd></div>
+                                                        <div class="email-detail-row"><dt>Class</dt><dd>Non-consultancy services</dd></div>
+                                                        <div class="email-detail-row"><dt>Project location</dt><dd>ZMDC, 6 Constantia Avenue, Harare</dd></div>
+                                                        <div class="email-detail-row"><dt>Delivery period</dt><dd>20 days</dd></div>
+                                                        <div class="email-detail-row"><dt>Funding source</dt><dd>Procuring Entity Internal Budget Funding</dd></div>
+                                                        <div class="email-detail-row"><dt>Published date</dt><dd>19 Aug 2026 · 10:00 AM</dd></div>
+                                                        <div class="email-detail-row"><dt>Closing date</dt><dd>17 Sep 2026 · 3:00 PM</dd></div>
+                                                    </dl>
+                                                    <a class="email-cta" href="https://egp.praz.org.zw/" target="_blank" rel="noopener noreferrer">View Tender Details</a>
+                                                    <div class="email-signoff">Regards,<br /><strong>The TenderBell Team</strong></div>
+                                                </div>
+                                                <div class="email-footer">You received this alert because this tender matched a category you track in TenderBell.</div>
+                                            </article>
+                                            <div class="message-delivery-meta"><span><span>Email destination</span><strong>ln***@business.co.zw</strong></span><span><span>Delivery confirmed</span><strong>19 Aug · 10:04</strong></span></div>
+                                        </div>
+                                    </section>
+                                    <section class="channel-message whatsapp" aria-labelledby="whatsappAlertTitle">
+                                        <div class="channel-message-head"><i class="fab fa-whatsapp"></i><strong id="whatsappAlertTitle">WhatsApp alert</strong><span class="channel-message-status"><i class="fas fa-check-circle"></i> Read</span><small>Sent 10:03</small></div>
+                                        <div class="whatsapp-alert-body">
+                                            <div class="whatsapp-preview" aria-label="WhatsApp template message snapshot">
+                                                <div class="whatsapp-preview-header"><span class="whatsapp-avatar"><i class="fas fa-bell"></i></span><div class="whatsapp-contact"><strong>TenderBell</strong><small>Business account</small></div><i class="fas fa-ellipsis-v" aria-hidden="true"></i></div>
+                                                <div class="whatsapp-conversation">
+                                                    <div class="whatsapp-bubble">
+                                                        <div class="whatsapp-template-copy">
+                                                            <strong>🔔 Newly Published Tender Alert</strong>
+                                                            <p>A new tender matches your tracked category:</p>
+                                                            <p><strong>WEBSITE DEVELOPMENT</strong>Zimbabwe Mining Development Corporation</p>
+                                                            <p><strong>Matched category</strong>Telecommunication, Internet-based and Related Systems Installations &amp; Maintenance</p>
+                                                            <p><strong>Closing date</strong>17 Sep 2026 · 3:00 PM</p>
+                                                            <div class="whatsapp-message-time">10:03 <i class="fas fa-check-double" aria-label="Read"></i></div>
+                                                        </div>
+                                                        <a class="whatsapp-template-action" href="https://egp.praz.org.zw/" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i> View Tender Details</a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="message-delivery-meta"><span><span>WhatsApp destination</span><strong>+263 7* *** 482</strong></span><span><span>Delivered</span><strong>19 Aug · 10:05</strong></span><span><span>Read</span><strong>19 Aug · 10:08</strong></span></div>
+                                        </div>
+                                    </section>
+                                </div>
+                                <div class="source-update"><i class="fas fa-info-circle"></i><span><strong>Current tender update—not part of the message snapshots above.</strong><br />Last updated 21 Aug 2026 · 4:39 PM · 1 addendum available</span></div>
+                                <p class="notification-group-footer">The notification snapshots remain as sent; later source changes are shown separately.</p>
+                            </div>
+                        </details>
+
+                        <details class="inbox-alert unread">
+                            <summary>
+                                <div class="alert-summary-top"><span class="unread-indicator" aria-label="Unread"></span><span class="alert-type-pill closing"><i class="fas fa-hourglass-half"></i> Published Tender Closing Soon Alert</span><span class="alert-generated">Alert created 08 Sep 2026 · 08:00</span></div>
+                                <h2 class="inbox-title">Supply and delivery of networking equipment</h2>
+                                <div class="inbox-category"><i class="fas fa-bullseye"></i><span><strong>Matched category:</strong> Computer Equipment, Accessories and Network Infrastructure</span></div>
+                                <div class="alert-facts"><div class="alert-fact"><span>Procuring entity</span><strong>Ministry of ICT</strong></div><div class="alert-fact"><span>Originally published</span><strong>01 Sep 2026</strong></div><div class="alert-fact urgent"><span>Closing date</span><strong>11 Sep 2026 · 10:00 AM</strong></div><div class="alert-fact"><span>Time remaining</span><strong>2 days, 22 hours</strong></div></div>
+                                <div class="alert-card-footer"><span class="delivery-chip"><i class="fas fa-envelope"></i> Email delivered · 08:02</span><span class="delivery-chip failed"><i class="fab fa-whatsapp"></i> WhatsApp failed · 08:03</span><span class="alert-actions"><a class="official-link" href="https://egp.praz.org.zw/" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()"><i class="fas fa-external-link-alt"></i> View Tender Details</a><span class="expand-label"><span class="expand-label-text"></span> <i class="fas fa-chevron-down"></i></span></span></div>
+                            </summary>
+                            <div class="alert-expanded notification-snapshots">
+                                <p class="snapshot-intro">These snapshots reproduce the closing-soon reminder prepared for each notification channel.</p>
+                                <div class="channel-message-grid">
+                                    <section class="channel-message" aria-labelledby="closingEmailTitle">
+                                        <div class="channel-message-head"><i class="fas fa-envelope"></i><strong id="closingEmailTitle">Email alert</strong><span class="channel-message-status"><i class="fas fa-check-circle"></i> Delivered</span><small>Sent 08:01</small></div>
+                                        <div class="email-preview-shell"><article class="email-document" aria-label="Closing-soon email notification snapshot"><div class="email-brand-header"><img src="brand-assets/tenderbell-wordmark-dark.svg" alt="TenderBell" /></div><div class="email-content"><div class="email-subject">Tender closing soon</div><h3>Supply and delivery of networking equipment</h3><p>Hello L. Ndlovu,</p><p>A tender matching your tracked category closes in less than three days.</p><div class="email-match"><strong>Matched category</strong><br />Computer Equipment, Accessories and Network Infrastructure</div><dl class="email-detail-table"><div class="email-detail-row"><dt>Tender reference</dt><dd>MICT/NET/44/2026</dd></div><div class="email-detail-row"><dt>Procuring entity</dt><dd>Ministry of ICT</dd></div><div class="email-detail-row"><dt>Published date</dt><dd>01 Sep 2026</dd></div><div class="email-detail-row"><dt>Closing date</dt><dd>11 Sep 2026 · 10:00 AM</dd></div><div class="email-detail-row"><dt>Time remaining</dt><dd>2 days, 22 hours</dd></div></dl><a class="email-cta" href="https://egp.praz.org.zw/" target="_blank" rel="noopener noreferrer">View Tender Details</a><div class="email-signoff">Regards,<br /><strong>The TenderBell Team</strong></div></div><div class="email-footer">You received this reminder because this open tender matched a category you track.</div></article><div class="message-delivery-meta"><span><span>Email destination</span><strong>ln***@business.co.zw</strong></span><span><span>Delivery confirmed</span><strong>08 Sep · 08:02</strong></span></div></div>
+                                    </section>
+                                    <section class="channel-message whatsapp" aria-labelledby="closingWhatsappTitle">
+                                        <div class="channel-message-head"><i class="fab fa-whatsapp"></i><strong id="closingWhatsappTitle">WhatsApp alert</strong><span class="channel-message-status failed"><i class="fas fa-exclamation-circle"></i> Failed</span><small>Attempted 08:01</small></div>
+                                        <div class="whatsapp-alert-body"><div class="whatsapp-preview" aria-label="Closing-soon WhatsApp template snapshot"><div class="whatsapp-preview-header"><span class="whatsapp-avatar"><i class="fas fa-bell"></i></span><div class="whatsapp-contact"><strong>TenderBell</strong><small>Business account</small></div><i class="fas fa-ellipsis-v" aria-hidden="true"></i></div><div class="whatsapp-conversation"><div class="whatsapp-bubble"><div class="whatsapp-template-copy"><strong class="closing-title">⏳ Tender Closing Soon</strong><p><strong>Supply and delivery of networking equipment</strong>Ministry of ICT</p><p><strong>Matched category</strong>Computer Equipment, Accessories and Network Infrastructure</p><p><strong>Closing date</strong>11 Sep 2026 · 10:00 AM</p><p><strong>Time remaining</strong>2 days, 22 hours</p><div class="whatsapp-message-time">08:01 <i class="fas fa-exclamation-circle" aria-label="Not delivered"></i></div></div><a class="whatsapp-template-action" href="https://egp.praz.org.zw/" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i> View Tender Details</a></div></div></div><div class="message-delivery-meta"><span><span>WhatsApp destination</span><strong>+263 7* *** 482</strong></span><span><span>Delivery result</span><strong style="color:var(--red)">Failed · 08:03</strong></span></div></div>
+                                    </section>
+                                </div>
+                                <div class="match-explanation" style="background:rgba(200,79,79,.09)"><strong style="color:var(--red)"><i class="fas fa-exclamation-circle"></i> WhatsApp delivery needs attention</strong><p>TenderBell could not deliver this reminder to the saved WhatsApp number. The Email alert was delivered successfully.</p><div class="expanded-actions"><button class="primary-button"><i class="fas fa-redo"></i> Retry WhatsApp</button><a class="outline-button" href="#" data-open-view="preferences"><i class="fas fa-phone-alt"></i> Check number</a></div></div>
+                            </div>
+                        </details>
+
+                        <details class="inbox-alert">
+                            <summary>
+                                <div class="alert-summary-top"><span class="read-label"><i class="far fa-envelope-open"></i> Read</span><span class="alert-type-pill award"><i class="fas fa-gavel"></i> Award Notice Alert</span><span class="alert-generated">Alert created 07 Sep 2026 · 14:22</span></div>
+                                <h2 class="inbox-title">Supply of electrical cables and materials</h2>
+                                <div class="inbox-category"><i class="fas fa-bullseye"></i><span><strong>Matched category:</strong> Electrical Products: Cables and Materials, Power Back-Up Equipment, Transformers, Standby Generators, Consumables &amp; Accessories</span></div>
+                                <div class="alert-facts"><div class="alert-fact"><span>Awardee</span><strong>Great Pack Electrical</strong></div><div class="alert-fact"><span>Contract amount</span><strong>US$145.00</strong></div><div class="alert-fact"><span>Award date</span><strong>07 Sep 2026</strong></div><div class="alert-fact"><span>Official source</span><strong>PRAZ e-GP</strong></div></div>
+                                <div class="alert-card-footer"><span class="delivery-chip"><i class="fas fa-envelope"></i> Email delivered · 14:24</span><span class="delivery-chip"><i class="fab fa-whatsapp"></i> WhatsApp delivered · 14:25</span><span class="alert-actions"><a class="official-link" href="https://egp.praz.org.zw/egp-SW5kZXhlcy92aWV3QXdhcmROb3RpY2UvOTAwMg==" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()"><i class="fas fa-external-link-alt"></i> View Award Details</a><span class="expand-label"><span class="expand-label-text"></span> <i class="fas fa-chevron-down"></i></span></span></div>
+                            </summary>
+                            <div class="alert-expanded notification-snapshots">
+                                <p class="snapshot-intro">These snapshots reproduce the award notice alert TenderBell sent through each channel.</p>
+                                <div class="channel-message-grid">
+                                    <section class="channel-message" aria-labelledby="awardEmailTitle">
+                                        <div class="channel-message-head"><i class="fas fa-envelope"></i><strong id="awardEmailTitle">Email alert</strong><span class="channel-message-status"><i class="fas fa-check-circle"></i> Delivered</span><small>Sent 14:23</small></div>
+                                        <div class="email-preview-shell"><article class="email-document" aria-label="Award notice email notification snapshot"><div class="email-brand-header"><img src="brand-assets/tenderbell-wordmark-dark.svg" alt="TenderBell" /></div><div class="email-content"><div class="email-subject">Award notice published</div><h3>Supply of electrical cables and materials</h3><p>Hello L. Ndlovu,</p><p>An award notice has been published for a tender in one of your tracked categories.</p><div class="email-match"><strong>Matched category</strong><br />Electrical Products: Cables and Materials, Power Back-Up Equipment, Transformers, Standby Generators, Consumables &amp; Accessories</div><dl class="email-detail-table"><div class="email-detail-row"><dt>Awardee</dt><dd>Great Pack Electrical</dd></div><div class="email-detail-row"><dt>Contract amount</dt><dd>US$145.00</dd></div><div class="email-detail-row"><dt>Reason for award</dt><dd>LOWEST BIDDER</dd></div><div class="email-detail-row"><dt>Award date</dt><dd>07 Sep 2026</dd></div><div class="email-detail-row"><dt>Published date</dt><dd>07 Sep 2026</dd></div><div class="email-detail-row"><dt>Tender reference</dt><dd>11668</dd></div><div class="email-detail-row"><dt>Procurement method</dt><dd>Request For Quotation</dd></div><div class="email-detail-row"><dt>Class</dt><dd>Goods</dd></div></dl><a class="email-cta" href="https://egp.praz.org.zw/egp-SW5kZXhlcy92aWV3QXdhcmROb3RpY2UvOTAwMg==" target="_blank" rel="noopener noreferrer">View Award Details</a><div class="email-signoff">Regards,<br /><strong>The TenderBell Team</strong></div></div><div class="email-footer">You received this alert because the award notice matched a category you track.</div></article><div class="message-delivery-meta"><span><span>Email destination</span><strong>ln***@business.co.zw</strong></span><span><span>Delivery confirmed</span><strong>07 Sep · 14:24</strong></span></div></div>
+                                    </section>
+                                    <section class="channel-message whatsapp" aria-labelledby="awardWhatsappTitle">
+                                        <div class="channel-message-head"><i class="fab fa-whatsapp"></i><strong id="awardWhatsappTitle">WhatsApp alert</strong><span class="channel-message-status"><i class="fas fa-check-circle"></i> Delivered</span><small>Sent 14:23</small></div>
+                                        <div class="whatsapp-alert-body"><div class="whatsapp-preview" aria-label="Award notice WhatsApp template snapshot"><div class="whatsapp-preview-header"><span class="whatsapp-avatar"><i class="fas fa-bell"></i></span><div class="whatsapp-contact"><strong>TenderBell</strong><small>Business account</small></div><i class="fas fa-ellipsis-v" aria-hidden="true"></i></div><div class="whatsapp-conversation"><div class="whatsapp-bubble"><div class="whatsapp-template-copy"><strong class="award-title">🏆 Award Notice Alert</strong><p><strong>Supply of electrical cables and materials</strong></p><p><strong>Awardee</strong>Great Pack Electrical</p><p><strong>Contract amount</strong>US$145.00</p><p><strong>Reason for award</strong>LOWEST BIDDER</p><p><strong>Award date</strong>07 Sep 2026</p><div class="whatsapp-message-time">14:23 <i class="fas fa-check-double" aria-label="Delivered"></i></div></div><a class="whatsapp-template-action" href="https://egp.praz.org.zw/egp-SW5kZXhlcy92aWV3QXdhcmROb3RpY2UvOTAwMg==" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i> View Award Details</a></div></div></div><div class="message-delivery-meta"><span><span>WhatsApp destination</span><strong>+263 7* *** 482</strong></span><span><span>Delivered</span><strong>07 Sep · 14:25</strong></span></div></div>
+                                    </section>
+                                </div>
+                                <p class="notification-group-footer">The notification snapshots remain exactly as they were sent.</p>
+                            </div>
+                        </details>
+                    </div>
+                    <nav class="inbox-pagination" aria-label="Alert Inbox pagination">
+                        <span class="pagination-context"><strong>1–3</strong> of 27 alerts</span>
+                        <div class="pagination-controls"><button class="pagination-button" type="button" disabled aria-label="Previous page"><i class="fas fa-chevron-left"></i> Previous</button><span class="pagination-page" aria-current="page">Page 1 of 9</span><button class="pagination-button" type="button" aria-label="Next page">Next <i class="fas fa-chevron-right"></i></button></div>
+                    </nav>
                 </section>
 
                 <section class="view" id="view-categories" aria-labelledby="categoriesTitle">
-                    <div class="page-heading"><div><span class="eyebrow">Unlimited on Max</span><h1 id="categoriesTitle">Matched categories</h1><p>Track every tender category relevant to your business.</p></div><button class="primary-button"><i class="fas fa-plus"></i> Add category</button></div>
-                    <div class="category-grid">
-                        <article class="category-card"><span class="category-icon"><i class="fas fa-laptop-code"></i></span><h3>Software Development</h3><p>Applications, systems integration and computer security consulting.</p><div class="category-footer"><span>12 alerts this month</span><strong>Active</strong></div></article>
-                        <article class="category-card"><span class="category-icon"><i class="fas fa-server"></i></span><h3>Computer Equipment</h3><p>Networking hardware, workstations, servers and accessories.</p><div class="category-footer"><span>9 alerts this month</span><strong>Active</strong></div></article>
-                        <article class="category-card"><span class="category-icon"><i class="fas fa-bolt"></i></span><h3>Electrical Products</h3><p>Cables, backup power, generators, consumables and accessories.</p><div class="category-footer"><span>18 alerts this month</span><strong>Active</strong></div></article>
-                        <article class="category-card"><span class="category-icon"><i class="fas fa-user-tie"></i></span><h3>Consulting Services</h3><p>Business, strategy, audit and professional advisory services.</p><div class="category-footer"><span>7 alerts this month</span><strong>Active</strong></div></article>
-                        <article class="category-card"><span class="category-icon"><i class="fas fa-chair"></i></span><h3>Office Furniture</h3><p>Desks, seating, storage and related workplace equipment.</p><div class="category-footer"><span>5 alerts this month</span><strong>Active</strong></div></article>
-                        <button class="category-card empty-category" type="button"><span><i class="fas fa-plus-circle"></i><strong>Add another category</strong><p>Max includes unlimited category matches.</p></span></button>
+                    <div class="page-heading"><div><h1 id="categoriesTitle">Tracked categories</h1><p>Manage the categories TenderBell uses to match your alerts. 5 categories currently tracked · Unlimited on Max.</p></div><button class="primary-button"><i class="fas fa-plus"></i> Add category</button></div>
+                    <div class="whatsapp-allowance"><span class="allowance-icon"><i class="fab fa-whatsapp"></i></span><div class="allowance-copy"><strong>WhatsApp allowance</strong><small>Shared across all active categories and WhatsApp alert types</small></div><div class="allowance-meter" aria-label="38 of 100 WhatsApp messages used"><span></span></div><div class="allowance-value"><strong>38 of 100 used</strong><small>62 remaining · Resets 01 Oct</small></div><a class="allowance-link" href="#" data-open-view="preferences">Manage delivery preferences →</a></div>
+                    <div class="category-toolbar" aria-label="Tracked category filters">
+                        <label class="top-search"><i class="fas fa-search"></i><input type="search" placeholder="Search tracked categories" aria-label="Search tracked categories" /></label>
+                        <select class="select-control" aria-label="Category alert status"><option>All statuses</option><option>Active</option><option>Paused</option></select>
+                        <span class="category-result-count">Showing all 5 categories</span>
                     </div>
+                    <div class="tracked-category-list">
+                        <article class="tracked-category-row">
+                            <span class="tracked-category-icon"><i class="fas fa-laptop-code"></i></span>
+                            <div class="tracked-category-copy"><h2>Software Development and Computer Applications, Computer Security Systems Installation and Consultants Services</h2><p>Official supplier category used to match published procurement records.</p></div>
+                            <div class="tracked-category-coverage"><span class="category-field-label">Delivery</span><div class="category-chip-list"><span class="category-chip email"><i class="fas fa-envelope"></i> Email · Default</span><span class="category-chip whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp · New tenders</span></div></div>
+                            <div class="tracked-category-status"><span class="category-field-label">Status</span><span class="category-state">Active</span></div>
+                            <div class="category-actions"><button class="category-action" type="button" data-configure-whatsapp="Software Development" data-wa-new="true" data-wa-closing="false" data-wa-award="false"><i class="fab fa-whatsapp"></i> Configure</button><button class="category-action" type="button"><i class="fas fa-pause"></i> Pause alerts</button><button class="category-action stop" type="button" onclick="window.confirm('Stop alerts for Software Development? You will no longer receive new tender, closing-soon, or award alerts for this category. Existing Alert Inbox history will remain available.')"><i class="fas fa-bell-slash"></i> Stop alerts</button></div>
+                        </article>
+                        <article class="tracked-category-row">
+                            <span class="tracked-category-icon"><i class="fas fa-server"></i></span>
+                            <div class="tracked-category-copy"><h2>Computer Equipment, Accessories and Network Infrastructure</h2><p>Hardware, networking equipment, servers, workstations and related accessories.</p></div>
+                            <div class="tracked-category-coverage"><span class="category-field-label">Delivery</span><div class="category-chip-list"><span class="category-chip email"><i class="fas fa-envelope"></i> Email · Default</span><span class="category-chip whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp · New tenders + reminders</span></div></div>
+                            <div class="tracked-category-status"><span class="category-field-label">Status</span><span class="category-state">Active</span></div>
+                            <div class="category-actions"><button class="category-action" type="button" data-configure-whatsapp="Computer Equipment" data-wa-new="true" data-wa-closing="true" data-wa-award="false"><i class="fab fa-whatsapp"></i> Configure</button><button class="category-action" type="button"><i class="fas fa-pause"></i> Pause alerts</button><button class="category-action stop" type="button" onclick="window.confirm('Stop alerts for Computer Equipment? You will no longer receive new tender, closing-soon, or award alerts for this category. Existing Alert Inbox history will remain available.')"><i class="fas fa-bell-slash"></i> Stop alerts</button></div>
+                        </article>
+                        <article class="tracked-category-row">
+                            <span class="tracked-category-icon"><i class="fas fa-bolt"></i></span>
+                            <div class="tracked-category-copy"><h2>Electrical Products: Cables and Materials, Power Back-Up Equipment, Transformers, Standby Generators, Consumables &amp; Accessories</h2><p>Official electrical goods and supporting equipment supplier category.</p></div>
+                            <div class="tracked-category-coverage"><span class="category-field-label">Delivery</span><div class="category-chip-list"><span class="category-chip email"><i class="fas fa-envelope"></i> Email · Default</span><span class="category-chip off"><i class="fab fa-whatsapp"></i> WhatsApp · Off</span></div></div>
+                            <div class="tracked-category-status"><span class="category-field-label">Status</span><span class="category-state">Active</span></div>
+                            <div class="category-actions"><button class="category-action" type="button" data-configure-whatsapp="Electrical Products" data-wa-new="false" data-wa-closing="false" data-wa-award="false"><i class="fab fa-whatsapp"></i> Configure</button><button class="category-action" type="button"><i class="fas fa-pause"></i> Pause alerts</button><button class="category-action stop" type="button" onclick="window.confirm('Stop alerts for Electrical Products? You will no longer receive new tender, closing-soon, or award alerts for this category. Existing Alert Inbox history will remain available.')"><i class="fas fa-bell-slash"></i> Stop alerts</button></div>
+                        </article>
+                        <article class="tracked-category-row">
+                            <span class="tracked-category-icon"><i class="fas fa-user-tie"></i></span>
+                            <div class="tracked-category-copy"><h2>Professional and Business Consulting Services</h2><p>Strategy, research, audit, advisory and related professional services.</p></div>
+                            <div class="tracked-category-coverage"><span class="category-field-label">Delivery</span><div class="category-chip-list"><span class="category-chip email"><i class="fas fa-envelope"></i> Email · Default</span><span class="category-chip whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp · New tenders + awards</span></div></div>
+                            <div class="tracked-category-status"><span class="category-field-label">Status</span><span class="category-state">Active</span></div>
+                            <div class="category-actions"><button class="category-action" type="button" data-configure-whatsapp="Professional Consulting" data-wa-new="true" data-wa-closing="false" data-wa-award="true"><i class="fab fa-whatsapp"></i> Configure</button><button class="category-action" type="button"><i class="fas fa-pause"></i> Pause alerts</button><button class="category-action stop" type="button" onclick="window.confirm('Stop alerts for Professional and Business Consulting Services? You will no longer receive new tender, closing-soon, or award alerts for this category. Existing Alert Inbox history will remain available.')"><i class="fas fa-bell-slash"></i> Stop alerts</button></div>
+                        </article>
+                        <article class="tracked-category-row paused">
+                            <span class="tracked-category-icon"><i class="fas fa-chair"></i></span>
+                            <div class="tracked-category-copy"><h2>Office Furniture, Fixtures and Related Workplace Equipment</h2><p>This category remains saved, but TenderBell is not currently generating alerts for it.</p></div>
+                            <div class="tracked-category-coverage"><span class="category-field-label">Saved delivery settings</span><div class="category-chip-list"><span class="category-chip email"><i class="fas fa-envelope"></i> Email · Default</span><span class="category-chip whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp · New tenders</span></div></div>
+                            <div class="tracked-category-status"><span class="category-field-label">Status</span><span class="category-state paused">Paused</span></div>
+                            <div class="category-actions"><button class="category-action primary" type="button"><i class="fas fa-play"></i> Resume alerts</button><button class="category-action stop" type="button" onclick="window.confirm('Stop alerts for Office Furniture? You will no longer receive new tender, closing-soon, or award alerts for this category. Existing Alert Inbox history will remain available.')"><i class="fas fa-bell-slash"></i> Stop alerts</button></div>
+                        </article>
+                    </div>
+                    <div class="category-help"><i class="fas fa-info-circle"></i><span><strong>Stopping alerts removes a category from future matching.</strong> Previously generated Alert Inbox records remain available. Pause a category when you may want to resume it later.</span></div>
                 </section>
 
                 <section class="view" id="view-insights" aria-labelledby="insightsTitle">
-                    <div class="page-heading"><div><span class="eyebrow">Market Opportunity Insights</span><h1 id="insightsTitle">See where demand is moving</h1><p>Turn public procurement activity into practical market intelligence.</p></div><select class="select-control"><option>Last 90 days</option><option>Last 12 months</option></select></div>
-                    <div class="insights-grid">
-                        <article class="card insight-feature"><div class="card-header"><div><h2>Fastest-growing sectors</h2><p>Change in published opportunity volume</p></div></div><div class="rank-list"><div class="rank-row"><span class="rank-number">1</span><div><p>ICT &amp; Software</p><small>42 opportunities</small></div><span class="rank-value">+28%</span></div><div class="rank-row"><span class="rank-number">2</span><div><p>Construction</p><small>56 opportunities</small></div><span class="rank-value">+21%</span></div><div class="rank-row"><span class="rank-number">3</span><div><p>Medical supplies</p><small>31 opportunities</small></div><span class="rank-value">+17%</span></div><div class="rank-row"><span class="rank-number">4</span><div><p>Professional consulting</p><small>24 opportunities</small></div><span class="rank-value">+11%</span></div></div></article>
-                        <article class="card insight-feature"><div class="card-header"><div><h2>Top-spending buyers</h2><p>Based on published contract awards</p></div></div><div class="sector-list"><div class="sector-row"><div><div class="sector-name"><span>Ministry of Health</span><span>US$2.8m</span></div><div class="progress"><span style="width:89%"></span></div></div></div><div class="sector-row"><div><div class="sector-name"><span>City of Harare</span><span>US$2.1m</span></div><div class="progress"><span style="width:71%"></span></div></div></div><div class="sector-row"><div><div class="sector-name"><span>ZESA Holdings</span><span>US$1.7m</span></div><div class="progress"><span style="width:58%"></span></div></div></div><div class="sector-row"><div><div class="sector-name"><span>State universities</span><span>US$1.2m</span></div><div class="progress"><span style="width:43%"></span></div></div></div></div></article>
-                        <article class="card insight-feature"><div class="card-header"><div><h2>Regional opportunity hotspots</h2><p>Where the most opportunities are being published</p></div></div><div class="rank-list"><div class="rank-row"><span class="rank-number"><i class="fas fa-map-marker-alt"></i></span><div><p>Harare</p><small>38% of tracked opportunities</small></div><span class="rank-value">74</span></div><div class="rank-row"><span class="rank-number"><i class="fas fa-map-marker-alt"></i></span><div><p>Bulawayo</p><small>19% of tracked opportunities</small></div><span class="rank-value">37</span></div><div class="rank-row"><span class="rank-number"><i class="fas fa-map-marker-alt"></i></span><div><p>National</p><small>17% open across Zimbabwe</small></div><span class="rank-value">33</span></div></div></article>
-                        <article class="card insight-feature"><div class="card-header"><div><h2>Accessible entry sectors</h2><p>Lower award values and broader supplier participation</p></div></div><div class="rank-list"><div class="rank-row"><span class="rank-number">A</span><div><p>Professional consulting</p><small>Median award: US$4,800</small></div><span class="status-pill">Strong fit</span></div><div class="rank-row"><span class="rank-number">B</span><div><p>Office consumables</p><small>Median award: US$3,250</small></div><span class="status-pill">Strong fit</span></div><div class="rank-row"><span class="rank-number">C</span><div><p>ICT support services</p><small>Median award: US$6,100</small></div><span class="status-pill">Good fit</span></div></div></article>
+                    <div class="page-heading"><div><span class="eyebrow">Market Opportunity Insights</span><h1 id="insightsTitle">See where demand is moving</h1><p>Clear opportunity signals backed by published tenders, awards and annual procurement plans.</p></div><button class="outline-button"><i class="fas fa-download"></i> Export summary</button></div>
+
+                    <div class="filter-bar" aria-label="Market insight filters">
+                        <span class="filter-label"><i class="fas fa-filter"></i> Filter insights</span>
+                        <select class="select-control" aria-label="Analysis period"><option>Last 90 days</option><option>Last 12 months</option><option>2026 annual plans</option></select>
+                        <select class="select-control" aria-label="Procurement category"><option>All categories</option><option>ICT &amp; Software</option><option>Professional Consulting</option><option>Construction</option></select>
+                        <select class="select-control" aria-label="Region"><option>All regions</option><option>Harare</option><option>Bulawayo</option><option>National</option></select>
+                        <select class="select-control" aria-label="Procurement class"><option>All procurement classes</option><option>Goods</option><option>Services</option><option>Works</option></select>
+                        <button class="filter-reset" type="button">Reset filters</button>
                     </div>
+
+                    <div class="section-heading"><div><h2>Overall market size &amp; scale</h2><p>A quick view of observable public procurement activity</p></div><span class="coverage-note"><i class="fas fa-check-circle"></i> Refreshed today at 06:15</span></div>
+                    <div class="stats-grid market-snapshot">
+                        <article class="stat-card"><div class="stat-head"><span class="stat-label">Active categories</span><span class="stat-icon"><i class="fas fa-layer-group"></i></span></div><strong class="stat-value">142</strong><span class="stat-note">Of 186 available categories</span></article>
+                        <article class="stat-card" style="--accent:#2563a6;--accent-soft:rgba(37,99,166,.1)"><div class="stat-head"><span class="stat-label">Procuring entities</span><span class="stat-icon"><i class="fas fa-landmark"></i></span></div><strong class="stat-value">31</strong><span class="stat-note"><span class="trend-up">↑ 4</span> active buyers</span></article>
+                        <article class="stat-card"><div class="stat-head"><span class="stat-label">Tenders published</span><span class="stat-icon"><i class="fas fa-file-signature"></i></span></div><strong class="stat-value">184</strong><span class="stat-note"><span class="trend-up">↑ 12%</span> vs prior period</span></article>
+                        <article class="stat-card" style="--accent:#16845b;--accent-soft:rgba(22,132,91,.1)"><div class="stat-head"><span class="stat-label">Awards published</span><span class="stat-icon"><i class="fas fa-gavel"></i></span></div><strong class="stat-value">63</strong><span class="stat-note"><span class="trend-up">↑ 8%</span> vs prior period</span></article>
+                        <article class="stat-card" style="--accent:#2563a6;--accent-soft:rgba(37,99,166,.1)"><div class="stat-head"><span class="stat-label">Disclosed award value</span><span class="stat-icon"><i class="fas fa-coins"></i></span></div><strong class="stat-value">$8.4m</strong><span class="stat-note">78% value coverage</span></article>
+                        <article class="stat-card" style="--accent:#b06e00"><div class="stat-head"><span class="stat-label">Planned pipeline</span><span class="stat-icon"><i class="far fa-calendar-check"></i></span></div><strong class="stat-value">$12.6m</strong><span class="stat-note">2026 estimated budgets</span></article>
+                    </div>
+
+                    <div class="section-heading"><div><h2>What is changing?</h2><p>Market movements translated into plain-language signals</p></div></div>
+                    <div class="insight-wide-grid">
+                        <article class="card">
+                            <div class="card-header"><div><h2>Demand &amp; growth</h2><p>Published tender activity by category</p></div><span class="status-pill">Last 90 days</span></div>
+                            <div class="sector-list">
+                                <div class="sector-row"><div><div class="sector-name"><span>ICT &amp; Software</span><span>42 tenders</span></div><div class="progress"><span style="width:88%"></span></div></div><span class="sector-change">+28%</span></div>
+                                <div class="sector-row"><div><div class="sector-name"><span>Construction</span><span>56 tenders</span></div><div class="progress"><span style="width:78%"></span></div></div><span class="sector-change">+21%</span></div>
+                                <div class="sector-row"><div><div class="sector-name"><span>Medical supplies</span><span>31 tenders</span></div><div class="progress"><span style="width:59%"></span></div></div><span class="sector-change">+17%</span></div>
+                                <div class="sector-row"><div><div class="sector-name"><span>Professional consulting</span><span>24 tenders</span></div><div class="progress"><span style="width:46%"></span></div></div><span class="sector-change">+11%</span></div>
+                            </div>
+                            <div class="data-confidence"><span>Based on unique published tenders. Revisions are deduplicated.</span><span class="confidence-high">High confidence</span></div>
+                        </article>
+                        <div class="insight-stack">
+                            <div class="plain-insight"><strong>ICT demand is accelerating</strong><p>Activity has grown for three consecutive months, led by local authorities and state universities.</p><a href="#">See 42 underlying tenders →</a></div>
+                            <div class="plain-insight"><strong>Construction has the largest volume</strong><p>It leads by tender count, but median disclosed award values may require greater working capital.</p><a href="#">Compare accessibility →</a></div>
+                            <div class="plain-insight"><strong>Consulting is broadly distributed</strong><p>Twelve procuring entities were active, reducing reliance on a single buyer.</p><a href="#">Explore buyers →</a></div>
+                        </div>
+                    </div>
+
+                    <div class="section-heading"><div><h2>Tender lifecycle</h2><p>What happened after opportunities were published</p></div></div>
+                    <article class="card">
+                        <div class="lifecycle-grid"><div class="lifecycle-item"><strong>42</strong><span>Open</span></div><div class="lifecycle-item"><strong>8</strong><span>Closing soon</span></div><div class="lifecycle-item"><strong>71</strong><span>Closed</span></div><div class="lifecycle-item awarded"><strong>63</strong><span>Awarded</span></div><div class="lifecycle-item failed"><strong>6</strong><span>Failed</span></div></div>
+                        <div class="data-confidence"><span>“Closing soon” is calculated by TenderBell. “Failed” and “Closed” reflect official source statuses.</span><a class="text-link" href="#">View methodology →</a></div>
+                    </article>
+                </section>
+
+                <section class="view" id="view-opportunities" aria-labelledby="opportunitiesTitle">
+                    <div class="page-heading"><div><span class="eyebrow">Guided market discovery</span><h1 id="opportunitiesTitle">Opportunity finder</h1><p>Explore markets aligned with your skills, starting capital and operating region.</p></div><button class="outline-button"><i class="fas fa-sliders-h"></i> Update business profile</button></div>
+                    <div class="filter-bar" aria-label="Opportunity finder filters"><span class="filter-label"><i class="fas fa-filter"></i> My business fit</span><select class="select-control"><option>Services &amp; consulting</option><option>Goods</option><option>Works</option></select><select class="select-control"><option>US$2,000–US$10,000</option><option>Below US$2,000</option><option>US$10,000–US$50,000</option></select><select class="select-control"><option>All regions</option><option>Harare</option><option>Bulawayo</option></select><button class="filter-reset">Reset filters</button></div>
+                    <article class="briefing-card">
+                        <div class="briefing-content"><span class="briefing-label"><i class="fas fa-compass"></i> Where should I start my business?</span><h2>ICT support services are a strong possible starting point for your profile.</h2><p>Your target contract range and technical skills align with a growing market. Demand rose 19%, eight buyers were active, and nine related requirements appear in annual plans.</p><div class="briefing-actions"><button class="primary-button"><i class="fas fa-route"></i> Explore this opportunity</button><a class="outline-button briefing-secondary" href="#" data-open-view="categories"><i class="fas fa-plus"></i> Track this category</a></div></div>
+                        <div class="briefing-side"><span>New Entrant Fit</span><strong>Strong · 84</strong><p>Good value alignment and buyer breadth. Some opportunities require prior experience.</p><div class="confidence"><i class="fas fa-check-circle"></i> High data confidence</div></div>
+                    </article>
+                    <div class="section-heading"><div><h2>Your best-fit markets</h2><p>Each score combines demand, planned pipeline, accessibility and buyer breadth</p></div><span class="coverage-note"><i class="fas fa-info-circle"></i> Scores show their contributing factors</span></div>
+                    <div class="opportunity-grid">
+                        <article class="opportunity-card"><div class="opportunity-top"><div class="score-ring" style="--score:86"><span>86</span></div><div><h3>ICT support services</h3><span class="fit-label">Strong opportunity · Strong new-entrant fit</span></div></div><p>Growing demand from diverse buyers, with nine planned requirements and contract values aligned to your range.</p><div class="factor-list"><span class="factor">Demand +19%</span><span class="factor">8 active buyers</span><span class="factor">Median $6,100</span><span class="factor">9 planned</span></div><div class="card-action"><span>High confidence · 87% coverage</span><a class="text-link" href="#">View evidence →</a></div></article>
+                        <article class="opportunity-card"><div class="opportunity-top"><div class="score-ring" style="--score:78"><span>78</span></div><div><h3>Professional consulting</h3><span class="fit-label">Good opportunity · Strong new-entrant fit</span></div></div><p>Smaller disclosed awards and broad supplier participation make this market worth investigating.</p><div class="factor-list"><span class="factor">Demand +11%</span><span class="factor">12 active buyers</span><span class="factor">Median $4,800</span><span class="factor">46% RFQ</span></div><div class="card-action"><span>Moderate confidence · 73% coverage</span><a class="text-link" href="#">View evidence →</a></div></article>
+                        <article class="opportunity-card"><div class="opportunity-top"><div class="score-ring" style="--score:72"><span>72</span></div><div><h3>Office consumables</h3><span class="fit-label">Good opportunity · Strong new-entrant fit</span></div></div><p>Consistent repeat demand and accessible award sizes, although buyer activity is concentrated in Harare.</p><div class="factor-list"><span class="factor">18 tenders</span><span class="factor">Median $3,250</span><span class="factor">Repeat demand</span><span class="factor">6 planned</span></div><div class="card-action"><span>High confidence · 82% coverage</span><a class="text-link" href="#">View evidence →</a></div></article>
+                    </div>
+                    <div class="data-confidence"><span>These are possible starting points based on published data and your selected profile—not guarantees of eligibility, profitability or tender success.</span><span class="confidence-high">Decision support</span></div>
+                </section>
+
+                <section class="view" id="view-regions" aria-labelledby="regionsTitle">
+                    <div class="page-heading"><div><span class="eyebrow">Geographic intelligence</span><h1 id="regionsTitle">Regional opportunities</h1><p>Compare where public procurement activity is concentrated and growing.</p></div><select class="select-control"><option>Published tenders</option><option>Published award value</option><option>Growth rate</option></select></div>
+                    <div class="filter-bar"><span class="filter-label"><i class="fas fa-filter"></i> Map filters</span><select class="select-control"><option>Last 90 days</option><option>Last 12 months</option></select><select class="select-control"><option>All categories</option><option>ICT &amp; Software</option><option>Construction</option></select><select class="select-control"><option>All procurement classes</option><option>Goods</option><option>Services</option><option>Works</option></select><button class="filter-reset">Reset filters</button></div>
+                    <article class="card region-layout">
+                        <div><div class="region-map" aria-label="Tile map of regional tender activity"><div class="region-tile mat-north" style="--heat:35%">Matabeleland North<small>11 opportunities</small></div><div class="region-tile mash-west" style="--heat:45%">Mashonaland West<small>16</small></div><div class="region-tile mash-central" style="--heat:38%">Mash Central<small>13</small></div><div class="region-tile mash-east" style="--heat:56%">Mashonaland East<small>21</small></div><div class="region-tile harare" style="--heat:95%">Harare<small>74 opportunities</small></div><div class="region-tile bulawayo" style="--heat:72%">Bulawayo<small>37</small></div><div class="region-tile midlands" style="--heat:52%">Midlands<small>19</small></div><div class="region-tile mat-south" style="--heat:30%">Matabeleland South<small>9</small></div><div class="region-tile masvingo" style="--heat:42%">Masvingo<small>15</small></div><div class="region-tile manicaland" style="--heat:49%">Manicaland<small>18</small></div></div><div class="region-legend"><span>Lower activity</span><i class="heat-scale"></i><span>Higher activity</span></div></div>
+                        <div class="insight-stack"><div class="plain-insight"><strong>Harare leads total activity</strong><p>It represents 38% of location-specific opportunities in the selected period.</p><a href="#">View Harare opportunities →</a></div><div class="plain-insight"><strong>Bulawayo is an emerging ICT hotspot</strong><p>ICT opportunities grew 35%. Annual plan items are excluded because they do not provide locations directly.</p><a href="#">Explore Bulawayo →</a></div><div class="data-confidence"><span>National tenders and records without a defensible location are not assigned to a province.</span><span class="confidence-high">89% location coverage</span></div></div>
+                    </article>
+                    <div class="section-heading"><div><h2>Regional comparison</h2><p>Leading locations by observable activity</p></div></div>
+                    <article class="card"><div class="sector-list"><div class="sector-row"><div><div class="sector-name"><span>Harare</span><span>74 opportunities</span></div><div class="progress"><span style="width:100%"></span></div></div><span class="sector-change">+16%</span></div><div class="sector-row"><div><div class="sector-name"><span>Bulawayo</span><span>37 opportunities</span></div><div class="progress"><span style="width:50%"></span></div></div><span class="sector-change">+22%</span></div><div class="sector-row"><div><div class="sector-name"><span>Mashonaland East</span><span>21 opportunities</span></div><div class="progress"><span style="width:28%"></span></div></div><span class="sector-change">+8%</span></div><div class="sector-row"><div><div class="sector-name"><span>Midlands</span><span>19 opportunities</span></div><div class="progress"><span style="width:26%"></span></div></div><span class="sector-change">+5%</span></div></div></article>
+                </section>
+
+                <section class="view" id="view-plans" aria-labelledby="plansTitle">
+                    <div class="page-heading"><div><span class="eyebrow">Forward procurement pipeline</span><h1 id="plansTitle">Annual procurement plans</h1><p>See what procuring entities intend to buy before tender notices are published.</p></div><select class="select-control" aria-label="Procurement plan year"><option>2026 plans</option><option>2025 plans</option></select></div>
+                    <div class="filter-bar"><span class="filter-label"><i class="fas fa-filter"></i> Plan filters</span><select class="select-control"><option>All entities</option><option>City of Bulawayo</option><option>Ministry of Health</option></select><select class="select-control"><option>All categories</option><option>ICT &amp; Software</option><option>Construction</option></select><select class="select-control"><option>All quarters</option><option>Q3 2026</option><option>Q4 2026</option></select><button class="filter-reset">Reset filters</button></div>
+                    <div class="plan-summary-grid">
+                        <article class="stat-card"><div class="stat-head"><span class="stat-label">Planned items</span><span class="stat-icon"><i class="fas fa-list"></i></span></div><strong class="stat-value">286</strong><span class="stat-note">Across 24 published plans</span></article>
+                        <article class="stat-card" style="--accent:#2563a6;--accent-soft:rgba(37,99,166,.1)"><div class="stat-head"><span class="stat-label">Estimated budgets</span><span class="stat-icon"><i class="fas fa-coins"></i></span></div><strong class="stat-value">$12.6m</strong><span class="stat-note">US$-labelled plan values</span></article>
+                        <article class="stat-card" style="--accent:#16845b;--accent-soft:rgba(22,132,91,.1)"><div class="stat-head"><span class="stat-label">Published as tenders</span><span class="stat-icon"><i class="fas fa-link"></i></span></div><strong class="stat-value">61%</strong><span class="stat-note">High-confidence plan links</span></article>
+                        <article class="stat-card" style="--accent:#b06e00"><div class="stat-head"><span class="stat-label">Upcoming this quarter</span><span class="stat-icon"><i class="far fa-calendar-alt"></i></span></div><strong class="stat-value">47</strong><span class="stat-note">9 match your categories</span></article>
+                    </div>
+                    <div class="insight-wide-grid">
+                        <article class="card"><div class="card-header"><div><h2>Planned publication pipeline</h2><p>Estimated budgets scheduled by quarter</p></div><span class="status-pill">2026</span></div><div class="pipeline-list"><div class="pipeline-row"><span class="pipeline-month">Q1 · Actual</span><div class="pipeline-track"><span style="width:62%"></span></div><span class="pipeline-value">$2.1m</span></div><div class="pipeline-row"><span class="pipeline-month">Q2 · Actual</span><div class="pipeline-track"><span style="width:79%"></span></div><span class="pipeline-value">$2.7m</span></div><div class="pipeline-row"><span class="pipeline-month">Q3 · Current</span><div class="pipeline-track"><span style="width:88%"></span></div><span class="pipeline-value">$3.1m</span></div><div class="pipeline-row"><span class="pipeline-month">Q4 · Planned</span><div class="pipeline-track"><span style="width:100%"></span></div><span class="pipeline-value">$4.7m</span></div></div><div class="data-confidence"><span>Planned budgets are intentions, not committed or awarded spend.</span><span class="confidence-high">82% budget coverage</span></div></article>
+                        <div class="insight-stack"><div class="plain-insight"><strong>US$2.4m in ICT activity is planned</strong><p>Twelve entities list 38 ICT requirements across the next two quarters; seven include an EOI or prequalification step.</p><a href="#">Review planned ICT items →</a></div><div class="plain-insight"><strong>City of Bulawayo has four upcoming matches</strong><p>A vendor-management system is scheduled for September with a planned 30-work-day tender-to-award cycle.</p><a href="#">Track this buyer →</a></div><div class="plain-insight"><strong>Publication timing signal</strong><p>Linked tenders appeared a median of 18 days after their original planned publication dates.</p><a href="#">See plan execution →</a></div></div>
+                    </div>
+                    <div class="section-heading"><div><h2>From plan to opportunity</h2><p>How TenderBell connects intended procurement to published outcomes</p></div></div>
+                    <article class="card"><div class="plan-timeline"><div class="plan-stage"><span class="plan-stage-icon"><i class="far fa-calendar"></i></span><strong>Annual plan</strong><span>286 planned items</span></div><div class="plan-stage"><span class="plan-stage-icon"><i class="fas fa-file-signature"></i></span><strong>Tender published</strong><span>174 linked notices</span></div><div class="plan-stage"><span class="plan-stage-icon"><i class="fas fa-hourglass-half"></i></span><strong>Tender closed</strong><span>132 closed tenders</span></div><div class="plan-stage"><span class="plan-stage-icon"><i class="fas fa-gavel"></i></span><strong>Award published</strong><span>89 linked awards</span></div></div><div class="data-confidence"><span>Counts use reviewed or high-confidence record links. Supplementary plans remain versioned separately.</span><span class="confidence-high">High confidence</span></div></article>
                 </section>
 
                 <section class="view" id="view-awards" aria-labelledby="awardsTitle">
                     <div class="page-heading"><div><span class="eyebrow">Competitive intelligence</span><h1 id="awardsTitle">Award intelligence</h1><p>Understand who is winning, what buyers spend and how awards are decided.</p></div><button class="outline-button"><i class="fas fa-download"></i> Export report</button></div>
-                    <article class="card table-scroll"><table class="data-table"><thead><tr><th>Awardee</th><th>Procuring entity</th><th>Category</th><th>Contract amount</th><th>Award date</th></tr></thead><tbody><tr><td class="table-title">Great Pack Electrical</td><td>National Railways of Zimbabwe</td><td>Electrical Products</td><td><strong>US$145.00</strong></td><td>07 Sep 2026</td></tr><tr><td class="table-title">TechBridge Solutions</td><td>City of Bulawayo</td><td>Software Development</td><td><strong>US$18,750.00</strong></td><td>05 Sep 2026</td></tr><tr><td class="table-title">Matobo Office Supplies</td><td>Ministry of Education</td><td>Office Consumables</td><td><strong>US$7,230.00</strong></td><td>03 Sep 2026</td></tr><tr><td class="table-title">Northern Advisory</td><td>Zimbabwe Tourism Authority</td><td>Consulting Services</td><td><strong>US$12,400.00</strong></td><td>01 Sep 2026</td></tr></tbody></table></article>
+                    <div class="filter-bar"><span class="filter-label"><i class="fas fa-filter"></i> Award filters</span><select class="select-control"><option>Last 90 days</option><option>Last 12 months</option></select><select class="select-control"><option>All categories</option><option>ICT &amp; Software</option><option>Electrical Products</option></select><select class="select-control"><option>All procuring entities</option><option>City of Bulawayo</option><option>Ministry of Health</option></select><button class="filter-reset">Reset filters</button></div>
+                    <div class="insight-wide-grid" style="margin-bottom:18px">
+                        <article class="card"><div class="card-header"><div><h2>Award reason analysis</h2><p>Normalised from the exact reasons published in award notices</p></div><span class="coverage-note"><i class="fas fa-check-circle"></i> 76% reason coverage</span></div><div class="reason-list"><div class="reason-row"><span>Lowest evaluated price</span><div class="reason-bar"><i style="width:64%"></i></div><strong>64%</strong></div><div class="reason-row"><span>Technical compliance</span><div class="reason-bar"><i style="width:17%"></i></div><strong>17%</strong></div><div class="reason-row"><span>Best evaluated bid</span><div class="reason-bar"><i style="width:11%"></i></div><strong>11%</strong></div><div class="reason-row"><span>Only responsive bid</span><div class="reason-bar"><i style="width:8%"></i></div><strong>8%</strong></div></div><div class="data-confidence"><span>Original source wording is preserved. Select a reason to view its notices.</span><span class="confidence-high">High confidence</span></div></article>
+                        <div class="insight-stack"><div class="plain-insight"><strong>Price leads published decisions</strong><p>Lowest evaluated price is the most common stated reason, especially for goods procured through RFQs.</p><a href="#">Compare by procurement method →</a></div><div class="plain-insight"><strong>Technical compliance matters more in ICT</strong><p>Twenty-nine percent of classified ICT awards reference technical compliance or evaluation quality.</p><a href="#">Explore ICT awards →</a></div><div class="plain-insight"><strong>Reason not published for 15 awards</strong><p>Missing reasons are excluded from the percentage distribution rather than treated as “Other”.</p><a href="#">View coverage details →</a></div></div>
+                    </div>
+                    <div class="section-heading"><div><h2>Recently published awards</h2><p>Exact award records supporting the analysis above</p></div></div>
+                    <article class="card table-scroll"><table class="data-table"><thead><tr><th>Awardee</th><th>Procuring entity</th><th>Category</th><th>Contract amount</th><th>Reason for award</th><th>Award date</th></tr></thead><tbody><tr><td class="table-title">Great Pack Electrical</td><td>National Railways of Zimbabwe</td><td>Electrical Products</td><td><strong>US$145.00</strong></td><td>Lowest bidder</td><td>07 Sep 2026</td></tr><tr><td class="table-title">TechBridge Solutions</td><td>City of Bulawayo</td><td>Software Development</td><td><strong>US$18,750.00</strong></td><td>Technical compliance</td><td>05 Sep 2026</td></tr><tr><td class="table-title">Matobo Office Supplies</td><td>Ministry of Education</td><td>Office Consumables</td><td><strong>US$7,230.00</strong></td><td>Lowest evaluated price</td><td>03 Sep 2026</td></tr><tr><td class="table-title">Northern Advisory</td><td>Zimbabwe Tourism Authority</td><td>Consulting Services</td><td><strong>US$12,400.00</strong></td><td>Best evaluated bid</td><td>01 Sep 2026</td></tr></tbody></table></article>
+                </section>
+
+                <section class="view" id="view-preferences" aria-labelledby="preferencesTitle">
+                    <div class="page-heading"><div><span class="eyebrow">Manage alerts</span><h1 id="preferencesTitle">Delivery preferences</h1><p>Manage account-level delivery, WhatsApp allowance and defaults for newly tracked categories. Changes on this page save automatically.</p></div></div>
+                    <div class="account-grid">
+                        <article class="card"><div class="card-header"><div><h2>Notification channels</h2><p>Account-level delivery controls for your active categories</p></div></div><div class="settings-list"><div class="setting-row"><div><strong>Email alerts</strong><small>On by default for new tenders, closing reminders and award notices in every active category.</small></div><button class="toggle" type="button" aria-pressed="true" aria-label="Email alerts enabled"></button></div><div class="setting-row"><div><strong>WhatsApp alerts</strong><small>Master control. Category-level WhatsApp choices apply only while this is enabled.</small></div><button class="toggle" type="button" aria-pressed="true" aria-label="WhatsApp alerts enabled"></button></div></div><div class="category-help"><i class="fas fa-envelope"></i><span>Email remains the default delivery channel. Subscribers can disable it here or through the unsubscribe and preference links included in email.</span></div></article>
+                        <aside class="card quota-card"><div class="card-header"><div><h2>WhatsApp allowance</h2><p>Shared across every tracked category</p></div><span class="status-pill">Max</span></div><strong style="font-size:1.45rem">38 of 100</strong><span style="display:block;color:var(--muted);font-size:.6rem">messages used this billing cycle</span><div class="allowance-meter" aria-label="38 percent of WhatsApp allowance used"><span></span></div><div class="quota-numbers"><span><strong>62 messages remaining</strong></span><span>Resets 01 Oct 2026</span></div><div class="settings-list" style="margin-top:18px"><div class="setting-row"><div><strong>+263 7* *** 482</strong><small>WhatsApp destination · Verified</small></div><button class="outline-button">Manage</button></div><div class="setting-row"><div><strong>ln***@business.co.zw</strong><small>Primary email · Verified</small></div><button class="outline-button">Manage</button></div><div class="setting-row"><div><strong>Africa/Johannesburg</strong><small>Reminder and billing-cycle timezone</small></div><button class="outline-button">Edit</button></div></div></aside>
+                    </div>
+                    <div class="preference-section"><div class="section-heading"><div><h2>Defaults for newly tracked categories</h2><p>These choices apply when you add a category; existing categories keep their current settings</p></div></div><article class="card"><div class="settings-list"><div class="setting-row"><div><strong>Newly published tender WhatsApp alerts</strong><small>Recommended · Receive the earliest signal for a new matching opportunity.</small></div><button class="toggle" type="button" aria-pressed="true" aria-label="New tender WhatsApp default enabled"></button></div><div class="setting-row"><div><strong>Closing-soon WhatsApp reminders</strong><small>Email reminders continue by default; enable WhatsApp only where urgency justifies allowance use.</small></div><button class="toggle" type="button" aria-pressed="false" aria-label="Closing reminder WhatsApp default disabled"></button></div><div class="setting-row"><div><strong>Award notice WhatsApp alerts</strong><small>Email award alerts continue by default and do not consume the WhatsApp allowance.</small></div><button class="toggle" type="button" aria-pressed="false" aria-label="Award notice WhatsApp default disabled"></button></div></div><div class="preference-actions"><button class="outline-button" type="button">Apply defaults to all active categories</button></div></article></div>
+                    <div class="category-help"><i class="fas fa-info-circle"></i><span>At 100 messages, WhatsApp pauses until the next billing cycle while Email continues. Suppressed WhatsApp alerts are not delivered later because the opportunity may be stale.</span></div>
                 </section>
 
                 <section class="view" id="view-account" aria-labelledby="accountTitle">
-                    <div class="page-heading"><div><span class="eyebrow">Preferences &amp; billing</span><h1 id="accountTitle">Alerts &amp; account</h1><p>Control delivery channels and manage your Max subscription.</p></div></div>
-                    <div class="account-grid">
-                        <article class="card"><div class="card-header"><div><h2>Notification preferences</h2><p>Choose how TenderBell keeps you informed</p></div></div><div class="settings-list"><div class="setting-row"><div><strong>Real-time email alerts</strong><small>New matching tenders are sent as soon as they are published.</small></div><button class="toggle" aria-label="Real-time email alerts enabled"></button></div><div class="setting-row"><div><strong>WhatsApp alerts</strong><small>Receive instant tender matches on your verified number.</small></div><button class="toggle" aria-label="WhatsApp alerts enabled"></button></div><div class="setting-row"><div><strong>Closing-soon reminders</strong><small>Get reminded before matching tender deadlines.</small></div><button class="toggle" aria-label="Closing reminders enabled"></button></div><div class="setting-row"><div><strong>Award notice alerts</strong><small>Follow award outcomes in your selected categories.</small></div><button class="toggle" aria-label="Award alerts enabled"></button></div></div></article>
-                        <article class="card plan-card"><span class="plan-pill"><i class="fas fa-crown"></i> Current plan</span><h2>TenderBell Max</h2><p>US$30 per month · Next billing date 01 Oct 2026</p><ul><li><i class="fas fa-check"></i> Everything included in Pro</li><li><i class="fas fa-check"></i> Unlimited category matches</li><li><i class="fas fa-check"></i> Market Opportunity Insights</li><li><i class="fas fa-check"></i> Full web admin access</li></ul><button class="primary-button" style="width:100%">Manage subscription</button></article>
+                    <div class="page-heading"><div><span class="eyebrow">Account centre</span><h1 id="accountTitle">Settings</h1><p>Manage your account, Max subscription, payment history and portal preferences.</p></div></div>
+                    <div class="settings-tabs-wrap">
+                        <div class="settings-tabs" role="tablist" aria-label="Settings sections">
+                            <button class="settings-tab active" id="settingsTabAccount" type="button" role="tab" aria-selected="true" aria-controls="settingsPanelAccount" data-settings-tab="account-info"><i class="fas fa-user"></i> Account</button>
+                            <button class="settings-tab" id="settingsTabSubscription" type="button" role="tab" aria-selected="false" aria-controls="settingsPanelSubscription" data-settings-tab="subscription"><i class="fas fa-crown"></i> Subscription</button>
+                            <button class="settings-tab" id="settingsTabInvoices" type="button" role="tab" aria-selected="false" aria-controls="settingsPanelInvoices" data-settings-tab="invoices"><i class="fas fa-file-invoice-dollar"></i> Invoices</button>
+                            <button class="settings-tab" id="settingsTabPreferences" type="button" role="tab" aria-selected="false" aria-controls="settingsPanelPreferences" data-settings-tab="app-preferences"><i class="fas fa-sliders-h"></i> Preferences</button>
+                        </div>
                     </div>
+
+                    <section class="settings-panel active" id="settingsPanelAccount" role="tabpanel" aria-labelledby="settingsTabAccount" data-settings-panel="account-info">
+                        <div class="settings-grid account-settings-grid">
+                            <article class="card"><div class="profile-header"><span class="profile-avatar">LN</span><div><h2>L. Ndlovu</h2><p>Max subscriber · Account created 14 August 2026</p></div></div><div class="settings-form-grid"><div class="settings-field"><label for="accountName">Full name</label><input class="settings-input" id="accountName" value="L. Ndlovu" /></div><div class="settings-field"><label for="businessName">Business name</label><input class="settings-input" id="businessName" value="Ndlovu Technologies" /></div><div class="settings-field"><label for="accountEmail">Login email</label><input class="settings-input" id="accountEmail" type="email" value="ln@business.co.zw" /></div><div class="settings-field"><label for="accountPhone">Contact number</label><input class="settings-input" id="accountPhone" value="+263 7* *** 482" /></div><div class="settings-field full"><label for="businessRole">Primary business role</label><select class="settings-input" id="businessRole"><option>Established business</option><option>Business starter</option><option>Consultant</option><option>Investor</option></select></div></div><div class="form-actions"><button class="primary-button" type="button"><i class="fas fa-check"></i> Save account info</button></div></article>
+                            <aside class="card"><div class="card-header"><div><h2>Sign-in &amp; security</h2><p>Passwordless account access</p></div></div><div class="settings-list"><div class="setting-row"><div><strong>Email sign-in link</strong><small>Sent to ln***@business.co.zw</small></div><span class="status-pill">Verified</span></div><div class="setting-row"><div><strong>Current session</strong><small>Chrome · Harare · Active now</small></div><i class="fas fa-shield-alt" style="color:var(--green)"></i></div><div class="setting-row"><div><strong>Other sessions</strong><small>Sign out everywhere except this device</small></div><button class="outline-button" type="button">Sign out others</button></div></div></aside>
+                        </div>
+                        <article class="card danger-card"><div class="danger-row"><div><strong>Close TenderBell account</strong><p>Permanently close the account after active billing is resolved and the retention process is confirmed.</p></div><button class="danger-button" type="button">Close account</button></div></article>
+                    </section>
+
+                    <section class="settings-panel" id="settingsPanelSubscription" role="tabpanel" aria-labelledby="settingsTabSubscription" data-settings-panel="subscription" hidden>
+                        <div class="settings-grid">
+                            <article class="card">
+                                <div class="card-header"><div><h2>Choose your TenderBell plan</h2><p>Compare all plans and change the level of alerts and insight you receive.</p></div></div>
+                                <div class="subscription-plan-list">
+                                    <section class="subscription-plan-option" aria-label="Free plan">
+                                        <div class="subscription-plan-name"><h3>Free</h3><span class="subscription-plan-price">US$0 <small>/month</small></span></div>
+                                        <ul class="subscription-plan-features"><li><i class="fas fa-check"></i> 1 tender category match</li><li><i class="fas fa-envelope"></i> Monday email digest</li><li><i class="fas fa-calendar-alt"></i> Open tenders with 3+ business days remaining</li><li><i class="fas fa-times"></i> No reminders, awards or WhatsApp alerts</li></ul>
+                                        <button class="outline-button subscription-plan-action" type="button">Switch to Free</button>
+                                    </section>
+                                    <section class="subscription-plan-option" aria-label="Pro plan">
+                                        <div class="subscription-plan-name"><h3>Pro</h3><span class="subscription-plan-price">US$5 <small>/month</small></span></div>
+                                        <ul class="subscription-plan-features"><li><i class="fas fa-check"></i> 1 tender category match</li><li><i class="fas fa-bell"></i> Real-time tender alerts</li><li><i class="fas fa-hourglass-half"></i> Closing-soon reminders</li><li><i class="fas fa-gavel"></i> Award notices by Email and optional WhatsApp</li></ul>
+                                        <button class="primary-button subscription-plan-action" type="button">Switch to Pro</button>
+                                    </section>
+                                    <section class="subscription-plan-option current" aria-label="Max plan, current plan">
+                                        <div class="subscription-plan-name"><h3>Max</h3><span class="subscription-plan-price">US$30 <small>/month</small></span><span class="current-plan-label"><i class="fas fa-check-circle"></i> Current plan</span><span class="current-plan-renewal">Renews 01 Oct 2026</span></div>
+                                        <ul class="subscription-plan-features"><li><i class="fas fa-check"></i> Everything included in Pro</li><li><i class="fas fa-check"></i> Unlimited category matches</li><li><i class="fas fa-desktop"></i> TenderBell Market Insights Portal</li><li><i class="fas fa-chart-line"></i> Market Opportunity Insights</li></ul>
+                                        <span class="current-plan-button"><i class="fas fa-check"></i> Active plan</span>
+                                    </section>
+                                </div>
+                            </article>
+                        </div>
+                        <article class="card danger-card"><div class="danger-row"><div><strong>Cancel Max subscription</strong><p>Cancel future renewals. Max remains active until the end of the paid period on 01 October 2026.</p></div><button class="danger-button" type="button">Cancel subscription</button></div></article>
+                    </section>
+
+                    <section class="settings-panel" id="settingsPanelInvoices" role="tabpanel" aria-labelledby="settingsTabInvoices" data-settings-panel="invoices" hidden>
+                        <article class="card"><div class="card-header"><div><h2>Invoices &amp; receipts</h2><p>Your TenderBell Max payment history</p></div><button class="outline-button" type="button"><i class="fas fa-download"></i> Download all</button></div><div class="table-scroll"><table class="data-table invoice-table"><thead><tr><th>Invoice</th><th>Date</th><th>Plan</th><th>Amount</th><th>Status</th><th>Receipt</th></tr></thead><tbody><tr><td class="invoice-number">TB-2026-0003</td><td>01 Sep 2026</td><td>Max monthly</td><td><strong>US$30.00</strong></td><td><span class="invoice-status"><i class="fas fa-check-circle"></i> Paid</span></td><td><a class="invoice-action" href="#"><i class="fas fa-download"></i> PDF</a></td></tr><tr><td class="invoice-number">TB-2026-0002</td><td>01 Aug 2026</td><td>Max monthly</td><td><strong>US$30.00</strong></td><td><span class="invoice-status"><i class="fas fa-check-circle"></i> Paid</span></td><td><a class="invoice-action" href="#"><i class="fas fa-download"></i> PDF</a></td></tr><tr><td class="invoice-number">TB-2026-0001</td><td>01 Jul 2026</td><td>Max monthly</td><td><strong>US$30.00</strong></td><td><span class="invoice-status"><i class="fas fa-check-circle"></i> Paid</span></td><td><a class="invoice-action" href="#"><i class="fas fa-download"></i> PDF</a></td></tr></tbody></table></div><div class="category-help"><i class="fab fa-paypal"></i><span>Payment confirmations are reconciled from PayPal. TenderBell receipts reference the corresponding PayPal transaction.</span></div></article>
+                    </section>
+
+                    <section class="settings-panel" id="settingsPanelPreferences" role="tabpanel" aria-labelledby="settingsTabPreferences" data-settings-panel="app-preferences" hidden>
+                        <div class="settings-grid">
+                            <article class="card"><div class="card-header"><div><h2>Display &amp; localisation</h2><p>How the Market Insights Portal appears to you</p></div></div><div class="settings-list"><div class="setting-row"><div><strong>Colour theme</strong><small>Follow your device or choose a fixed appearance</small></div><select class="select-control preference-choice"><option>Use system setting</option><option>Light</option><option>Dark</option></select></div><div class="setting-row"><div><strong>Timezone</strong><small>Used for tender deadlines and reminder times</small></div><select class="select-control preference-choice"><option>Africa/Johannesburg</option><option>Africa/Harare</option><option>UTC</option></select></div><div class="setting-row"><div><strong>Date format</strong><small>Used throughout tables, alerts and reports</small></div><select class="select-control preference-choice"><option>08 Sep 2026</option><option>08/09/2026</option><option>2026-09-08</option></select></div></div></article>
+                        </div>
+                        <div class="category-help"><i class="fas fa-check-circle"></i><span>Preference changes save automatically. Alert delivery remains managed separately under Delivery preferences.</span></div>
+                    </section>
                 </section>
             </div>
         </main>
+    </div>
+
+    <div class="preference-modal" id="whatsappCategoryModal" role="dialog" aria-modal="true" aria-labelledby="whatsappCategoryTitle" hidden>
+        <div class="preference-dialog">
+            <div class="preference-dialog-head"><div><h2 id="whatsappCategoryTitle">WhatsApp alerts</h2><p>Choose which alerts may use your shared monthly WhatsApp allowance.</p></div><button class="dialog-close" type="button" data-close-whatsapp aria-label="Close WhatsApp settings"><i class="fas fa-times"></i></button></div>
+            <div class="preference-dialog-body">
+                <div class="email-default-note"><i class="fas fa-envelope"></i><span><strong>Email delivery remains on by default.</strong><br />These switches affect WhatsApp only and use the Max plan’s shared allowance of 100 messages per billing cycle.</span></div>
+                <div class="whatsapp-type-list">
+                    <div class="whatsapp-type-row"><div><strong>Newly published tenders</strong><small>Recommended · Get the earliest matching-opportunity signal.</small></div><button class="toggle" type="button" data-alert-type="new" aria-pressed="true" aria-label="New tender WhatsApp alerts enabled"></button></div>
+                    <div class="whatsapp-type-row"><div><strong>Closing-soon reminders</strong><small>Uses one message for each eligible reminder.</small></div><button class="toggle" type="button" data-alert-type="closing" aria-pressed="false" aria-label="Closing-soon WhatsApp reminders disabled"></button></div>
+                    <div class="whatsapp-type-row"><div><strong>Award notices</strong><small>Follow award outcomes through WhatsApp as well as Email.</small></div><button class="toggle" type="button" data-alert-type="award" aria-pressed="false" aria-label="Award notice WhatsApp alerts disabled"></button></div>
+                </div>
+                <div class="category-help"><i class="fas fa-shield-alt"></i><span>A tender matching more than one category generates one WhatsApp message. If the allowance is exhausted, Email continues and WhatsApp is not backfilled later.</span></div>
+            </div>
+            <div class="preference-dialog-actions"><button class="outline-button" type="button" data-close-whatsapp>Cancel</button><button class="primary-button" type="button" data-save-whatsapp><i class="fas fa-check"></i> Save WhatsApp settings</button></div>
+        </div>
     </div>
 
     <div class="mock-notice"><i class="fas fa-flask" aria-hidden="true"></i> Interactive concept mock · Sample data only</div>
@@ -692,6 +1416,98 @@
             localStorage.setItem('tenderbell-portal-theme', next);
             updateThemeIcon();
         });
+
+        const settingsTabs = [...document.querySelectorAll('[data-settings-tab]')];
+        const settingsPanels = [...document.querySelectorAll('[data-settings-panel]')];
+
+        function openSettingsTab(tabName, updateUrl = true) {
+            const activeTab = settingsTabs.find(tab => tab.dataset.settingsTab === tabName);
+            if (!activeTab) return;
+            settingsTabs.forEach(tab => {
+                const active = tab === activeTab;
+                tab.classList.toggle('active', active);
+                tab.setAttribute('aria-selected', String(active));
+                tab.tabIndex = active ? 0 : -1;
+            });
+            settingsPanels.forEach(panel => {
+                const active = panel.dataset.settingsPanel === tabName;
+                panel.classList.toggle('active', active);
+                panel.hidden = !active;
+            });
+            if (updateUrl) history.replaceState(null, '', `#settings/${tabName}`);
+        }
+
+        settingsTabs.forEach((tab, index) => {
+            tab.addEventListener('click', () => openSettingsTab(tab.dataset.settingsTab));
+            tab.addEventListener('keydown', event => {
+                if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+                event.preventDefault();
+                let nextIndex = index;
+                if (event.key === 'ArrowLeft') nextIndex = (index - 1 + settingsTabs.length) % settingsTabs.length;
+                if (event.key === 'ArrowRight') nextIndex = (index + 1) % settingsTabs.length;
+                if (event.key === 'Home') nextIndex = 0;
+                if (event.key === 'End') nextIndex = settingsTabs.length - 1;
+                settingsTabs[nextIndex].focus();
+                openSettingsTab(settingsTabs[nextIndex].dataset.settingsTab);
+            });
+        });
+
+        const initialSettingsTab = window.location.hash.match(/^#settings\/(account-info|subscription|invoices|app-preferences)$/)?.[1];
+        if (initialSettingsTab) {
+            openView('account');
+            openSettingsTab(initialSettingsTab, false);
+        }
+
+        const whatsappModal = document.getElementById('whatsappCategoryModal');
+        const whatsappModalTitle = document.getElementById('whatsappCategoryTitle');
+        let whatsappModalTrigger = null;
+
+        document.querySelectorAll('[data-configure-whatsapp]').forEach(button => button.addEventListener('click', () => {
+            whatsappModalTrigger = button;
+            whatsappModalTitle.textContent = `WhatsApp alerts · ${button.dataset.configureWhatsapp}`;
+            whatsappModal.querySelectorAll('[data-alert-type]').forEach(toggle => {
+                const enabled = button.dataset[`wa${toggle.dataset.alertType[0].toUpperCase()}${toggle.dataset.alertType.slice(1)}`] === 'true';
+                toggle.setAttribute('aria-pressed', String(enabled));
+            });
+            whatsappModal.hidden = false;
+            body.style.overflow = 'hidden';
+            whatsappModal.querySelector('.dialog-close').focus();
+        }));
+
+        function closeWhatsAppModal() {
+            whatsappModal.hidden = true;
+            body.style.overflow = '';
+            whatsappModalTrigger?.focus();
+        }
+
+        document.querySelectorAll('[data-close-whatsapp]').forEach(button => button.addEventListener('click', closeWhatsAppModal));
+        document.querySelector('[data-save-whatsapp]').addEventListener('click', () => {
+            const enabledLabels = [];
+            whatsappModal.querySelectorAll('[data-alert-type]').forEach(toggle => {
+                const type = toggle.dataset.alertType;
+                const enabled = toggle.getAttribute('aria-pressed') === 'true';
+                whatsappModalTrigger.dataset[`wa${type[0].toUpperCase()}${type.slice(1)}`] = String(enabled);
+                if (enabled) enabledLabels.push({ new: 'New tenders', closing: 'reminders', award: 'awards' }[type]);
+            });
+            const chip = whatsappModalTrigger.closest('.tracked-category-row').querySelector('.category-chip.whatsapp, .category-chip.off');
+            chip.classList.toggle('whatsapp', enabledLabels.length > 0);
+            chip.classList.toggle('off', enabledLabels.length === 0);
+            chip.innerHTML = `<i class="fab fa-whatsapp"></i> WhatsApp · ${enabledLabels.length ? enabledLabels.join(' + ') : 'Off'}`;
+            closeWhatsAppModal();
+        });
+        whatsappModal.addEventListener('click', event => {
+            if (event.target === whatsappModal) closeWhatsAppModal();
+        });
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && !whatsappModal.hidden) closeWhatsAppModal();
+        });
+
+        document.querySelectorAll('.toggle').forEach(toggle => toggle.addEventListener('click', () => {
+            const enabled = toggle.getAttribute('aria-pressed') !== 'true';
+            toggle.setAttribute('aria-pressed', String(enabled));
+            const label = toggle.closest('.setting-row, .whatsapp-type-row')?.querySelector('strong')?.textContent?.trim();
+            if (label) toggle.setAttribute('aria-label', `${label} ${enabled ? 'enabled' : 'disabled'}`);
+        }));
     </script>
 </body>
 </html>
