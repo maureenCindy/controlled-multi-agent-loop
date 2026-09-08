@@ -4,7 +4,7 @@ import com.tenderpulse.auth.AdminKeyAuthFilter
 import com.tenderpulse.auth.BearerTokenService
 import com.tenderpulse.domain.Subscriber
 import com.tenderpulse.domain.SubscriberRepository
-import com.tenderpulse.domain.SubscriptionTier
+import com.tenderpulse.domain.SubscriptionPlan
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -73,16 +73,16 @@ class AdminApiSecurityIntegrationTest {
 
     @Test
     fun `PUT admin subscriber tier without an admin key is rejected and does not change the tier`() {
-        val subscriber = subscriberRepository.save(Subscriber(email = "untouched@example.com", tier = SubscriptionTier.FREE))
+        val subscriber = subscriberRepository.save(Subscriber(email = "untouched@example.com", tier = SubscriptionPlan.FREE))
 
         mockMvc.perform(
             put("/api/v1/admin/subscribers/${subscriber.id}/tier")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"tier":"PAID"}""")
+                .content("""{"tier":"PRO"}""")
         ).andExpect(status().is4xxClientError)
 
         val reloaded = subscriberRepository.findById(subscriber.id).orElseThrow()
-        assertEquals(SubscriptionTier.FREE, reloaded.tier)
+        assertEquals(SubscriptionPlan.FREE, reloaded.tier)
     }
 
     @Test
@@ -128,7 +128,7 @@ class AdminApiSecurityIntegrationTest {
     @Test
     fun `listing subscribers with the admin key returns full tier and status, and a tier override is visible on the next list call`() {
         val subscriber = subscriberRepository.save(
-            Subscriber(email = "override-me@example.com", tier = SubscriptionTier.FREE, active = true)
+            Subscriber(email = "override-me@example.com", tier = SubscriptionPlan.FREE, active = true)
         )
 
         val listBefore = mockMvc.perform(
@@ -141,16 +141,16 @@ class AdminApiSecurityIntegrationTest {
             put("/api/v1/admin/subscribers/${subscriber.id}/tier")
                 .header(validAdminKeyHeader.first, validAdminKeyHeader.second)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"tier":"PAID"}""")
+                .content("""{"tier":"PRO"}""")
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.tier").value("PAID"))
+            .andExpect(jsonPath("$.tier").value("PRO"))
 
         val listAfter = mockMvc.perform(
             get("/api/v1/admin/subscribers").header(validAdminKeyHeader.first, validAdminKeyHeader.second)
         ).andExpect(status().isOk).andReturn().response.contentAsString
         assert(listAfter.contains("\"email\":\"override-me@example.com\""))
-        assert(listAfter.contains("\"tier\":\"PAID\""))
+        assert(listAfter.contains("\"tier\":\"PRO\""))
     }
 
     companion object {

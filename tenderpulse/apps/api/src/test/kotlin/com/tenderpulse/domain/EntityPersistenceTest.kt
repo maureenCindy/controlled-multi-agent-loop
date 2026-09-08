@@ -58,7 +58,7 @@ class EntityPersistenceTest {
     @Test
     fun `Subscriber save-read round trip against a real JPA context`() {
         val saved = subscriberRepository.save(
-            Subscriber(email = "subscriber-roundtrip@example.co.zw", tier = SubscriptionTier.PAID)
+            Subscriber(email = "subscriber-roundtrip@example.co.zw", tier = SubscriptionPlan.PRO)
         )
         entityManager.flush()
         entityManager.clear()
@@ -66,7 +66,7 @@ class EntityPersistenceTest {
         val reloaded = subscriberRepository.findById(saved.id).orElseThrow()
 
         assertEquals("subscriber-roundtrip@example.co.zw", reloaded.email)
-        assertEquals(SubscriptionTier.PAID, reloaded.tier)
+        assertEquals(SubscriptionPlan.PRO, reloaded.tier)
         assertEquals(true, reloaded.active)
     }
 
@@ -90,7 +90,7 @@ class EntityPersistenceTest {
         val saved = subscriberRepository.save(
             Subscriber(
                 email = "pro-subscriber-roundtrip@example.co.zw",
-                tier = SubscriptionTier.PAID,
+                tier = SubscriptionPlan.PRO,
                 paypalSubscriptionId = "I-VALIDSUB123"
             )
         )
@@ -100,6 +100,53 @@ class EntityPersistenceTest {
         val reloaded = subscriberRepository.findById(saved.id).orElseThrow()
 
         assertEquals("I-VALIDSUB123", reloaded.paypalSubscriptionId)
+    }
+
+    /**
+     * TP-121 (issue #121): the new subscribers columns (plan/alert_status/email_enabled/
+     * email_consent_at/alerts_paused_until/updated_at, spec §7.1) round-trip through a real JPA
+     * context backed by the actual V10 migration -- not just compiling against the entity.
+     * `MAX` is used deliberately (not `FREE`/`PRO`) so this also proves the new enum value itself
+     * persists and reloads correctly against the renamed `plan` column.
+     */
+    @Test
+    fun `Subscriber new TP-121 columns round trip against a real JPA context`() {
+        val consentAt = java.time.Instant.now().minusSeconds(3600)
+        val pausedUntil = java.time.Instant.now().plusSeconds(3600)
+        val saved = subscriberRepository.save(
+            Subscriber(
+                email = "max-subscriber-roundtrip@example.co.zw",
+                tier = SubscriptionPlan.MAX,
+                alertStatus = AlertStatus.PAUSED,
+                emailEnabled = false,
+                emailConsentAt = consentAt,
+                alertsPausedUntil = pausedUntil
+            )
+        )
+        entityManager.flush()
+        entityManager.clear()
+
+        val reloaded = subscriberRepository.findById(saved.id).orElseThrow()
+
+        assertEquals(SubscriptionPlan.MAX, reloaded.tier)
+        assertEquals(AlertStatus.PAUSED, reloaded.alertStatus)
+        assertEquals(false, reloaded.emailEnabled)
+        assertEquals(consentAt, reloaded.emailConsentAt)
+        assertEquals(pausedUntil, reloaded.alertsPausedUntil)
+        assertNotNull(reloaded.updatedAt)
+    }
+
+    /** A freshly-created Subscriber gets the documented backfill-safe defaults for the new columns. */
+    @Test
+    fun `Subscriber new TP-121 columns default to ACTIVE alertStatus and emailEnabled true`() {
+        val saved = subscriberRepository.save(Subscriber(email = "default-columns@example.co.zw"))
+        entityManager.flush()
+        entityManager.clear()
+
+        val reloaded = subscriberRepository.findById(saved.id).orElseThrow()
+
+        assertEquals(AlertStatus.ACTIVE, reloaded.alertStatus)
+        assertEquals(true, reloaded.emailEnabled)
     }
 
     @Test

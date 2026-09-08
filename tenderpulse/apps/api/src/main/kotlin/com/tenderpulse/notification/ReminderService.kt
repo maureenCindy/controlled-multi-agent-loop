@@ -6,7 +6,7 @@ import com.tenderpulse.domain.DigestQueueEntry
 import com.tenderpulse.domain.DigestQueueEntryRepository
 import com.tenderpulse.domain.InterestProfileRepository
 import com.tenderpulse.domain.NotificationRecordRepository
-import com.tenderpulse.domain.SubscriptionTier
+import com.tenderpulse.domain.SubscriptionPlan
 import com.tenderpulse.domain.Tender
 import com.tenderpulse.domain.TenderRepository
 import org.slf4j.LoggerFactory
@@ -98,7 +98,7 @@ class ReminderService(
             .distinctBy { it.subscriber.id }
             .associateBy { it.subscriber.id }
 
-        // NotificationRecord rows only ever exist for PAID sends and DigestQueueEntry rows only
+        // NotificationRecord rows only ever exist for PRO sends and DigestQueueEntry rows only
         // for FREE queues (see NotificationService.notifyMatchingSubscribers), so in practice
         // these two sets are disjoint by subscriber id — union defensively rather than assume it.
         //
@@ -126,7 +126,10 @@ class ReminderService(
                 }
 
                 when (subscriber.tier) {
-                    SubscriptionTier.PAID -> {
+                    // TP-121 (issue #121): MAX behaves identically to PRO in this phase -- no
+                    // MAX-exclusive dispatch behavior yet (later phase in the subscription-tiers
+                    // milestone).
+                    SubscriptionPlan.PRO, SubscriptionPlan.MAX -> {
                         val profile = freeQueueEntriesBySubscriberId[subscriber.id]?.profile
                             ?: profileRepository.findBySubscriberIdAndActiveTrue(subscriber.id).firstOrNull()
                         if (profile == null) {
@@ -153,7 +156,7 @@ class ReminderService(
                             )
                         }
                     }
-                    SubscriptionTier.FREE -> {
+                    SubscriptionPlan.FREE -> {
                         val profile = freeQueueEntriesBySubscriberId[subscriber.id]?.profile
                             ?: profileRepository.findBySubscriberIdAndActiveTrue(subscriber.id).firstOrNull()
                         if (profile == null) {

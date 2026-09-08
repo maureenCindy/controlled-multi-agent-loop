@@ -41,7 +41,7 @@ class MatchingServiceTest {
         active: Boolean = true,
         name: String = "Test Profile"
     ): InterestProfile {
-        val sub = Subscriber(email = "test@example.com", tier = SubscriptionTier.PAID)
+        val sub = Subscriber(email = "test@example.com", tier = SubscriptionPlan.PRO)
         return InterestProfile(
             subscriber = sub,
             name = name,
