@@ -72,12 +72,38 @@ class SubscriberService(
      * An existing FREE subscriber with this email is upgraded in place (their [Subscriber.id] is
      * preserved); a first-time Pro signup creates a new subscriber.
      *
+     * Mirrors [com.tenderpulse.billing.BillingService.confirmSubscription]'s plan-change guard
+     * (TP-130, issue #130): if an existing subscriber matched by [ProSubscribeRequest.email]
+     * already has a non-`FREE` tier *and* an existing [Subscriber.paypalSubscriptionId] that
+     * differs from [ProSubscribeRequest.paypalSubscriptionId], this is rejected up front — before
+     * ever calling PayPal or persisting anything — rather than silently re-linking the email to
+     * the new subscription and orphaning the original, still-active one with no cancellation. A
+     * retry with the *same* subscription id is exempted (idempotent), same as the existing
+     * [SubscriberRepository.findByPaypalSubscriptionId] check further below.
+     *
+     * @throws com.tenderpulse.domain.ConflictException if an existing non-`FREE` subscriber with
+     *   this email already has a *different* PayPal subscription id linked — no PayPal call is
+     *   made and no subscriber is changed.
      * @throws SubscriptionVerificationException if the subscription doesn't exist, is for the
      *   wrong plan, isn't ACTIVE, doesn't belong to the requested email, or is already linked to a
      *   different subscriber — no subscriber is created or changed in any of those cases.
      * @throws com.tenderpulse.domain.PayPalApiException if the call to PayPal itself fails.
      */
     fun registerPro(req: ProSubscribeRequest): Subscriber {
+        val existing = subscriberRepository.findByEmail(req.email)
+
+        if (existing != null &&
+            existing.tier != SubscriptionPlan.FREE &&
+            existing.paypalSubscriptionId != null &&
+            existing.paypalSubscriptionId != req.paypalSubscriptionId
+        ) {
+            throw ConflictException(
+                "Email '${req.email}' already has an active ${existing.tier} subscription " +
+                    "(PayPal subscription '${existing.paypalSubscriptionId}'); switching to a different " +
+                    "subscription '${req.paypalSubscriptionId}' via this endpoint is not supported"
+            )
+        }
+
         val subscription = payPalClient.fetchSubscription(req.paypalSubscriptionId)
             ?: throw SubscriptionVerificationException(
                 "PayPal subscription '${req.paypalSubscriptionId}' was not found"
@@ -100,7 +126,6 @@ class SubscriberService(
             )
         }
 
-        val existing = subscriberRepository.findByEmail(req.email)
         val linkedElsewhere = subscriberRepository.findByPaypalSubscriptionId(req.paypalSubscriptionId)
         if (linkedElsewhere != null && linkedElsewhere.id != existing?.id) {
             throw SubscriptionVerificationException(
