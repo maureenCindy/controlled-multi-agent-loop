@@ -33,7 +33,7 @@ class NotificationServiceTest {
         sourceName = "test-source"
     )
 
-    private fun subscriber(tier: SubscriptionTier) = Subscriber(
+    private fun subscriber(tier: SubscriptionPlan) = Subscriber(
         email = "sub-${tier.name.lowercase()}@example.com",
         tier = tier
     )
@@ -66,7 +66,7 @@ class NotificationServiceTest {
     @Test
     fun `FREE match queues a digest entry without sending or creating a notification record`() {
         val t = tender()
-        val sub = subscriber(SubscriptionTier.FREE)
+        val sub = subscriber(SubscriptionPlan.FREE)
         val prof = profile(sub)
 
         every { profileRepository.findAllActiveWithSubscriber() } returns listOf(prof)
@@ -89,9 +89,40 @@ class NotificationServiceTest {
     }
 
     @Test
-    fun `PAID match invokes email sender immediately and records success`() {
+    fun `PRO match invokes email sender immediately and records success`() {
         val t = tender()
-        val sub = subscriber(SubscriptionTier.PAID)
+        val sub = subscriber(SubscriptionPlan.PRO)
+        val prof = profile(sub)
+
+        every { profileRepository.findAllActiveWithSubscriber() } returns listOf(prof)
+        every { matchingService.matches(t, prof) } returns true
+        every { emailSender.send(sub, t, prof) } returns SendResult(success = true)
+
+        val recordSlot = slot<NotificationRecord>()
+        every { notificationRecordRepository.save(capture(recordSlot)) } answers { it.invocation.args[0] as NotificationRecord }
+
+        val sent = notificationService.notifyMatchingSubscribers(t)
+
+        assertEquals(1, sent)
+        verify(exactly = 1) { emailSender.send(sub, t, prof) }
+        verify(exactly = 1) { notificationRecordRepository.save(any()) }
+        verify(exactly = 0) { digestQueueEntryRepository.save(any()) }
+
+        assertEquals(sub, recordSlot.captured.subscriber)
+        assertEquals(t, recordSlot.captured.tender)
+        assertEquals(NotificationChannel.EMAIL, recordSlot.captured.channel)
+        assertTrue(recordSlot.captured.success)
+        assertNull(recordSlot.captured.errorMessage)
+    }
+
+    /**
+     * TP-121 (issue #121, test case 3): MAX must behave identically to PRO in this phase --
+     * receiving an immediate notification, not routed to the FREE digest path.
+     */
+    @Test
+    fun `MAX match invokes email sender immediately and records success, identically to PRO`() {
+        val t = tender()
+        val sub = subscriber(SubscriptionPlan.MAX)
         val prof = profile(sub)
 
         every { profileRepository.findAllActiveWithSubscriber() } returns listOf(prof)
@@ -118,7 +149,7 @@ class NotificationServiceTest {
     @Test
     fun `non-matching profile triggers neither path and does not affect return value`() {
         val t = tender()
-        val sub = subscriber(SubscriptionTier.PAID)
+        val sub = subscriber(SubscriptionPlan.PRO)
         val prof = profile(sub)
 
         every { profileRepository.findAllActiveWithSubscriber() } returns listOf(prof)
@@ -133,10 +164,10 @@ class NotificationServiceTest {
     }
 
     @Test
-    fun `FREE and PAID profiles matching the same tender are handled independently`() {
+    fun `FREE and PRO profiles matching the same tender are handled independently`() {
         val t = tender()
-        val freeSub = subscriber(SubscriptionTier.FREE)
-        val paidSub = subscriber(SubscriptionTier.PAID)
+        val freeSub = subscriber(SubscriptionPlan.FREE)
+        val paidSub = subscriber(SubscriptionPlan.PRO)
         val freeProfile = profile(freeSub)
         val paidProfile = profile(paidSub)
 
@@ -162,7 +193,7 @@ class NotificationServiceTest {
     @Test
     fun `a tender matching only one of a subscriber's two profiles sends one notification attributed to that profile`() {
         val t = tender()
-        val sub = subscriber(SubscriptionTier.PAID)
+        val sub = subscriber(SubscriptionPlan.PRO)
         val profileA = profile(sub, name = "Profile A")
         val profileB = profile(sub, name = "Profile B")
 
@@ -189,7 +220,7 @@ class NotificationServiceTest {
     @Test
     fun `a tender matching both of a subscriber's profiles sends two independently-attributed notifications`() {
         val t = tender()
-        val sub = subscriber(SubscriptionTier.PAID)
+        val sub = subscriber(SubscriptionPlan.PRO)
         val profileA = profile(sub, name = "Profile A")
         val profileB = profile(sub, name = "Profile B")
 
@@ -209,9 +240,9 @@ class NotificationServiceTest {
     }
 
     @Test
-    fun `PAID match with failed send still records failure and does not increment sent count`() {
+    fun `PRO match with failed send still records failure and does not increment sent count`() {
         val t = tender()
-        val sub = subscriber(SubscriptionTier.PAID)
+        val sub = subscriber(SubscriptionPlan.PRO)
         val prof = profile(sub)
 
         every { profileRepository.findAllActiveWithSubscriber() } returns listOf(prof)

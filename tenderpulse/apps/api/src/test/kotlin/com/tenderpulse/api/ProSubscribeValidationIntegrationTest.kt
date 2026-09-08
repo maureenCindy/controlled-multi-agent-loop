@@ -137,7 +137,7 @@ class ProSubscribeValidationIntegrationTest {
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.paypalSubscriptionId").value("I-VALIDSUB123"))
-            .andExpect(jsonPath("$.tier").value("PAID"))
+            .andExpect(jsonPath("$.tier").value("PRO"))
 
         Mockito.verify(payPalClient).fetchSubscription("I-VALIDSUB123")
     }

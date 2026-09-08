@@ -9,7 +9,7 @@ import com.tenderpulse.domain.PayPalApiException
 import com.tenderpulse.domain.Sector
 import com.tenderpulse.domain.Subscriber
 import com.tenderpulse.domain.SubscriberRepository
-import com.tenderpulse.domain.SubscriptionTier
+import com.tenderpulse.domain.SubscriptionPlan
 import com.tenderpulse.domain.SubscriptionVerificationException
 import com.tenderpulse.domain.TierRestrictionException
 import com.tenderpulse.paypal.PayPalClient
@@ -53,10 +53,10 @@ class SubscriberServiceTest {
         val saved = slot<Subscriber>()
         every { subscriberRepository.save(capture(saved)) } answers { saved.captured }
 
-        val result = service.register(RegisterRequest(email = "new@example.com", tier = SubscriptionTier.PAID))
+        val result = service.register(RegisterRequest(email = "new@example.com", tier = SubscriptionPlan.PRO))
 
         assertEquals("new@example.com", result.email)
-        assertEquals(SubscriptionTier.PAID, result.tier)
+        assertEquals(SubscriptionPlan.PRO, result.tier)
     }
 
     @Test
@@ -66,7 +66,7 @@ class SubscriberServiceTest {
 
         val result = service.register(RegisterRequest(email = "new@example.com"))
 
-        assertEquals(SubscriptionTier.FREE, result.tier)
+        assertEquals(SubscriptionPlan.FREE, result.tier)
     }
 
     @Test
@@ -98,9 +98,9 @@ class SubscriberServiceTest {
         subscriber = payerEmail?.let { PayPalSubscriberInfo(emailAddress = it) }
     )
 
-    /** Test case 1: valid, active, matching-plan subscription -> subscriber created as PAID. */
+    /** Test case 1: valid, active, matching-plan subscription -> subscriber created as PRO. */
     @Test
-    fun `registerPro creates a new PAID subscriber for a valid active matching-plan subscription`() {
+    fun `registerPro creates a new PRO subscriber for a valid active matching-plan subscription`() {
         every { payPalClient.fetchSubscription("I-VALIDSUB123") } returns paypalSubscription()
         every { subscriberRepository.findByEmail("pro@example.com") } returns null
         every { subscriberRepository.findByPaypalSubscriptionId("I-VALIDSUB123") } returns null
@@ -110,7 +110,7 @@ class SubscriberServiceTest {
         val result = service.registerPro(proRequest())
 
         assertEquals("pro@example.com", result.email)
-        assertEquals(SubscriptionTier.PAID, result.tier)
+        assertEquals(SubscriptionPlan.PRO, result.tier)
         assertEquals("I-VALIDSUB123", result.paypalSubscriptionId)
     }
 
@@ -125,13 +125,13 @@ class SubscriberServiceTest {
 
         val result = service.registerPro(proRequest())
 
-        assertEquals(SubscriptionTier.PAID, result.tier)
+        assertEquals(SubscriptionPlan.PRO, result.tier)
     }
 
     /** Test case 1 (upgrade variant): an existing FREE subscriber is upgraded in place, not duplicated. */
     @Test
-    fun `registerPro upgrades an existing FREE subscriber to PAID, preserving their id`() {
-        val freeSubscriber = Subscriber(id = subscriberId, email = "pro@example.com", tier = SubscriptionTier.FREE)
+    fun `registerPro upgrades an existing FREE subscriber to PRO, preserving their id`() {
+        val freeSubscriber = Subscriber(id = subscriberId, email = "pro@example.com", tier = SubscriptionPlan.FREE)
         every { payPalClient.fetchSubscription("I-VALIDSUB123") } returns paypalSubscription()
         every { subscriberRepository.findByEmail("pro@example.com") } returns freeSubscriber
         every { subscriberRepository.findByPaypalSubscriptionId("I-VALIDSUB123") } returns null
@@ -141,7 +141,7 @@ class SubscriberServiceTest {
         val result = service.registerPro(proRequest())
 
         assertEquals(subscriberId, result.id)
-        assertEquals(SubscriptionTier.PAID, result.tier)
+        assertEquals(SubscriptionPlan.PRO, result.tier)
         assertEquals("I-VALIDSUB123", result.paypalSubscriptionId)
     }
 
@@ -233,7 +233,7 @@ class SubscriberServiceTest {
         val firstSubscriber = Subscriber(
             id = UUID.randomUUID(),
             email = "first@example.com",
-            tier = SubscriptionTier.PAID,
+            tier = SubscriptionPlan.PRO,
             paypalSubscriptionId = "I-VALIDSUB123"
         )
         every { payPalClient.fetchSubscription("I-VALIDSUB123") } returns
@@ -253,7 +253,7 @@ class SubscriberServiceTest {
         val existingPaid = Subscriber(
             id = subscriberId,
             email = "pro@example.com",
-            tier = SubscriptionTier.PAID,
+            tier = SubscriptionPlan.PRO,
             paypalSubscriptionId = "I-VALIDSUB123"
         )
         every { payPalClient.fetchSubscription("I-VALIDSUB123") } returns paypalSubscription()
@@ -264,7 +264,7 @@ class SubscriberServiceTest {
         val result = service.registerPro(proRequest())
 
         assertEquals(subscriberId, result.id)
-        assertEquals(SubscriptionTier.PAID, result.tier)
+        assertEquals(SubscriptionPlan.PRO, result.tier)
     }
 
     // ---- createProfile ----
@@ -465,7 +465,7 @@ class SubscriberServiceTest {
     /** Test case 1: a Paid subscriber's valid number + explicit consent stores both fields. */
     @Test
     fun `setWhatsAppOptIn stores the number and true optIn for a Paid subscriber with explicit consent`() {
-        val paidSubscriber = subscriber.copy(tier = SubscriptionTier.PAID)
+        val paidSubscriber = subscriber.copy(tier = SubscriptionPlan.PRO)
         every { subscriberRepository.findById(subscriberId) } returns Optional.of(paidSubscriber)
         every { subscriberRepository.save(any()) } answers { firstArg() }
 
@@ -481,7 +481,7 @@ class SubscriberServiceTest {
     /** Test case 2: consent omitted (defaults false) stores the number but never sets optIn true. */
     @Test
     fun `setWhatsAppOptIn stores the number but leaves optIn false when consentGiven is not given`() {
-        val paidSubscriber = subscriber.copy(tier = SubscriptionTier.PAID)
+        val paidSubscriber = subscriber.copy(tier = SubscriptionPlan.PRO)
         every { subscriberRepository.findById(subscriberId) } returns Optional.of(paidSubscriber)
         every { subscriberRepository.save(any()) } answers { firstArg() }
 
@@ -499,7 +499,7 @@ class SubscriberServiceTest {
     @Test
     fun `setWhatsAppOptIn revokes a previously-true optIn when consentGiven is now false`() {
         val previouslyOptedIn = subscriber.copy(
-            tier = SubscriptionTier.PAID,
+            tier = SubscriptionPlan.PRO,
             whatsappNumber = "+263771234567",
             whatsappOptIn = true
         )
@@ -517,13 +517,32 @@ class SubscriberServiceTest {
     /** Test case 4: a Free-tier subscriber is rejected, no save attempted. */
     @Test
     fun `setWhatsAppOptIn rejects a Free-tier subscriber and saves nothing`() {
-        val freeSubscriber = subscriber.copy(tier = SubscriptionTier.FREE)
+        val freeSubscriber = subscriber.copy(tier = SubscriptionPlan.FREE)
         every { subscriberRepository.findById(subscriberId) } returns Optional.of(freeSubscriber)
 
         assertThrows(TierRestrictionException::class.java) {
             service.setWhatsAppOptIn(subscriberId, WhatsAppOptInRequest(number = "+263771234567", consentGiven = true))
         }
         verify(exactly = 0) { subscriberRepository.save(any()) }
+    }
+
+    /**
+     * TP-121 (issue #121): MAX must behave identically to PRO here -- no MAX-exclusive behavior
+     * yet, and MAX must not be mistakenly caught by a check written as "not PRO".
+     */
+    @Test
+    fun `setWhatsAppOptIn stores the number and true optIn for a MAX subscriber, identically to PRO`() {
+        val maxSubscriber = subscriber.copy(tier = SubscriptionPlan.MAX)
+        every { subscriberRepository.findById(subscriberId) } returns Optional.of(maxSubscriber)
+        every { subscriberRepository.save(any()) } answers { firstArg() }
+
+        val result = service.setWhatsAppOptIn(
+            subscriberId,
+            WhatsAppOptInRequest(number = "+263771234567", consentGiven = true)
+        )
+
+        assertEquals("+263771234567", result.whatsappNumber)
+        assertTrue(result.whatsappOptIn)
     }
 
     @Test

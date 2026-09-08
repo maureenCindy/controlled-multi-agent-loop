@@ -5,7 +5,7 @@ import com.tenderpulse.domain.PayPalApiException
 import com.tenderpulse.domain.PayPalPlanPricingException
 import com.tenderpulse.domain.Subscriber
 import com.tenderpulse.domain.SubscriberRepository
-import com.tenderpulse.domain.SubscriptionTier
+import com.tenderpulse.domain.SubscriptionPlan
 import com.tenderpulse.paypal.PayPalClient
 import io.mockk.every
 import io.mockk.mockk
@@ -36,8 +36,8 @@ class AdminServiceTest {
 
     @Test
     fun `listSubscribers returns the full page with tier and status for every subscriber`() {
-        val active = Subscriber(email = "active@example.com", tier = SubscriptionTier.PAID, active = true)
-        val inactive = Subscriber(email = "inactive@example.com", tier = SubscriptionTier.FREE, active = false)
+        val active = Subscriber(email = "active@example.com", tier = SubscriptionPlan.PRO, active = true)
+        val inactive = Subscriber(email = "inactive@example.com", tier = SubscriptionPlan.FREE, active = false)
         val pageableSlot = slot<Pageable>()
         every { subscriberRepository.findAll(capture(pageableSlot)) } returns
             PageImpl(listOf(active, inactive), PageRequest.of(0, 20), 2)
@@ -67,16 +67,16 @@ class AdminServiceTest {
     @Test
     fun `updateSubscriberTier persists the new tier and returns the updated subscriber`() {
         val id = UUID.randomUUID()
-        val existing = Subscriber(id = id, email = "sub@example.com", tier = SubscriptionTier.FREE)
+        val existing = Subscriber(id = id, email = "sub@example.com", tier = SubscriptionPlan.FREE)
         every { subscriberRepository.findById(id) } returns Optional.of(existing)
         val saved = slot<Subscriber>()
         every { subscriberRepository.save(capture(saved)) } answers { saved.captured }
 
-        val result = service.updateSubscriberTier(id, SubscriptionTier.PAID)
+        val result = service.updateSubscriberTier(id, SubscriptionPlan.PRO)
 
-        assertEquals(SubscriptionTier.PAID, result.tier)
+        assertEquals(SubscriptionPlan.PRO, result.tier)
         assertEquals(id, result.id)
-        assertEquals(SubscriptionTier.PAID, saved.captured.tier)
+        assertEquals(SubscriptionPlan.PRO, saved.captured.tier)
     }
 
     @Test
@@ -85,7 +85,7 @@ class AdminServiceTest {
         every { subscriberRepository.findById(id) } returns Optional.empty()
 
         assertThrows(NotFoundException::class.java) {
-            service.updateSubscriberTier(id, SubscriptionTier.PAID)
+            service.updateSubscriberTier(id, SubscriptionPlan.PRO)
         }
         verify(exactly = 0) { subscriberRepository.save(any()) }
     }
@@ -93,11 +93,11 @@ class AdminServiceTest {
     @Test
     fun `updateSubscriberTier does not call PayPal - it is a deliberate bypass`() {
         val id = UUID.randomUUID()
-        val existing = Subscriber(id = id, email = "sub@example.com", tier = SubscriptionTier.FREE)
+        val existing = Subscriber(id = id, email = "sub@example.com", tier = SubscriptionPlan.FREE)
         every { subscriberRepository.findById(id) } returns Optional.of(existing)
         every { subscriberRepository.save(any()) } answers { firstArg() }
 
-        service.updateSubscriberTier(id, SubscriptionTier.PAID)
+        service.updateSubscriberTier(id, SubscriptionPlan.PRO)
 
         verify(exactly = 0) { payPalClient.fetchSubscription(any()) }
     }

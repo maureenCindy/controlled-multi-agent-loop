@@ -3,7 +3,7 @@ package com.tenderpulse.admin
 import com.tenderpulse.domain.NotFoundException
 import com.tenderpulse.domain.Subscriber
 import com.tenderpulse.domain.SubscriberRepository
-import com.tenderpulse.domain.SubscriptionTier
+import com.tenderpulse.domain.SubscriptionPlan
 import com.tenderpulse.paypal.PayPalClient
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
@@ -36,7 +36,7 @@ class AdminService(
      *
      * @throws NotFoundException if no subscriber exists with that id
      */
-    fun updateSubscriberTier(id: UUID, tier: SubscriptionTier): Subscriber {
+    fun updateSubscriberTier(id: UUID, tier: SubscriptionPlan): Subscriber {
         val subscriber = subscriberRepository.findById(id).orElseThrow { NotFoundException("Subscriber $id") }
         return subscriberRepository.save(subscriber.copy(tier = tier))
     }

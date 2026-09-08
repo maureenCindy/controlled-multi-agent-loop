@@ -55,11 +55,11 @@ unaffected. See `.env.example` for the exact setup steps.
   subscription ID; the page POSTs `{ email, paypalSubscriptionId }` to
   `POST /api/v1/subscribers/pro`. **The tier is never set client-side** — that endpoint
   independently verifies the subscription against PayPal's own API before upgrading anyone to
-  PAID (see `tenderpulse/apps/api`'s `SubscriberService.registerPro`, TP-042).
+  PRO (see `tenderpulse/apps/api`'s `SubscriberService.registerPro`, TP-042).
 
   **Known limitation (deliberate MVP trade-off, tracked — not silently accepted as solved):**
   there is no webhook listener yet, so if a PayPal subscription is later cancelled or a renewal
-  fails on PayPal's side, the subscriber is **not** automatically downgraded from PAID. See the
+  fails on PayPal's side, the subscriber is **not** automatically downgraded from PRO. See the
   comment near the signup code in `src/pages/signup.astro` and `src/lib/paypal.ts`.
 
 Logic lives in `src/lib/signup.ts` (email validation, POST calls) and `src/lib/paypal.ts` (PayPal

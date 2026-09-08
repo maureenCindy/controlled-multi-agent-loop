@@ -116,13 +116,13 @@ docker-compose service, so `./gradlew test` keeps working without Docker.
 | POST | `/api/v1/subscribers/{id}/profiles` | Create interest profile |
 | POST | `/api/v1/admin/aggregate` | Run one aggregation cycle |
 
-### Pro (PAID tier) signup — PayPal subscription verification (TP-042)
+### Pro (PRO tier) signup — PayPal subscription verification (TP-042)
 
 `POST /api/v1/subscribers/pro` accepts `{ "email": "...", "paypalSubscriptionId": "..." }` — the
 subscription ID PayPal's frontend SDK returns to the `onApprove` callback after checkout. The
 backend never trusts that callback directly: it calls PayPal's REST API server-to-server
 (`GET /v1/billing/subscriptions/{id}`, authenticated via a cached `POST /v1/oauth2/token`
-client-credentials token) and only creates/upgrades the `Subscriber` to `tier = PAID` — storing
+client-credentials token) and only creates/upgrades the `Subscriber` to `tier = PRO` — storing
 the subscription ID on the record — if PayPal confirms the subscription is `ACTIVE` **and** its
 `plan_id` matches the configured `PAYPAL_PLAN_ID`. A subscription that doesn't exist, is for a
 different plan, or isn't `ACTIVE` is rejected with `400`; a failed/timed-out call to PayPal itself
@@ -155,6 +155,6 @@ Matching rules are covered by unit tests under `src/test/kotlin/.../MatchingServ
 - Daily digest job for FREE tier
 - Auth (JWT / OAuth2)
 - Real email (SES / SendGrid) and SMS (Twilio) providers
-- Analytics & history endpoints for PAID tier
+- Analytics & history endpoints for PRO/MAX tiers
 
 This scaffold is intentionally minimal so it can be used as a concrete target for the multi-agent build–check loop in the parent repository.

@@ -52,7 +52,7 @@ class SubscriberUniquenessConstraintTest {
         subscriberRepository.saveAndFlush(
             Subscriber(
                 email = "first-payer@example.co.zw",
-                tier = SubscriptionTier.PAID,
+                tier = SubscriptionPlan.PRO,
                 paypalSubscriptionId = "I-DUPLICATE-SUB-ID"
             )
         )
@@ -62,7 +62,7 @@ class SubscriberUniquenessConstraintTest {
             subscriberRepository.saveAndFlush(
                 Subscriber(
                     email = "second-payer@example.co.zw",
-                    tier = SubscriptionTier.PAID,
+                    tier = SubscriptionPlan.PRO,
                     paypalSubscriptionId = "I-DUPLICATE-SUB-ID"
                 )
             )

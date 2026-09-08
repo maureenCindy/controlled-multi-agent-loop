@@ -14,9 +14,55 @@ enum class NotificationChannel {
     EMAIL, SMS, IN_APP
 }
 
-enum class SubscriptionTier {
-    FREE,      // daily digest
-    PAID       // real-time, advanced filters, history, analytics
+/**
+ * TP-121 (issue #121): the subscription plan a [Subscriber] holds, per
+ * `tenderpulse/docs/specs/subscription-lifecycle-paypal.md` §6.1. Deliberately three explicit
+ * values rather than a generic `PAID` value (the two-value model this replaced) -- `PAID` could
+ * not distinguish Pro entitlements from Max entitlements, which the later phases of that spec's
+ * milestone need to.
+ *
+ * Phase 1 (this task) treats [MAX] identically to [PRO] everywhere -- every tier-gated code path
+ * (WhatsApp opt-in eligibility, [com.tenderpulse.notification.NotificationService] dispatch,
+ * [com.tenderpulse.notification.ReminderService] dispatch) branches on "[FREE] vs. not [FREE]",
+ * not on [PRO] vs [MAX] specifically. Max-exclusive behavior (the Market Insights Portal, uncapped
+ * category matching) is explicitly out of scope until a later phase in that milestone.
+ */
+enum class SubscriptionPlan {
+    FREE,   // Weekly digest, one category
+    PRO,    // Real-time alerts, deadline reminders, WhatsApp, one category
+    MAX     // Same delivery as PRO plus Market Insights Portal access (later phase) and unlimited categories (later phase)
+}
+
+/**
+ * TP-121 (issue #121): TenderBell's view of a subscriber's PayPal billing state, per spec §6.2.
+ * Not yet stored anywhere or wired into any behavior in this phase -- it exists so the
+ * `billing_subscriptions` table (added by this same task, see the V11 Flyway migration) and later
+ * phases (PayPal webhook/checkout handling) have the enum to build on.
+ */
+enum class BillingStatus {
+    NONE,                 // Free or never entered PayPal checkout
+    APPROVAL_PENDING,     // PayPal subscription created but not active
+    ACTIVE,
+    PAYMENT_FAILED,
+    SUSPENDED,
+    CANCELLATION_PENDING, // TenderBell is resolving cancellation state
+    CANCELLED,
+    EXPIRED
+}
+
+/**
+ * TP-121 (issue #121): whether a subscriber's alert delivery is currently active, per spec §6.3.
+ * Stored on [Subscriber.alertStatus] starting this phase, but not yet read by any alert-eligibility
+ * check -- [com.tenderpulse.notification.NotificationService] and
+ * [com.tenderpulse.notification.ReminderService] still gate solely on the pre-existing
+ * [Subscriber.active] / [Subscriber.emailOptOut] flags (the "TP-041 consent guarantee"). Wiring
+ * pause/resume/unsubscribe logic through this field is explicitly a later phase (self-service
+ * preferences, spec §18 Phase 4), not this task.
+ */
+enum class AlertStatus {
+    ACTIVE,
+    PAUSED,
+    UNSUBSCRIBED
 }
 
 @Entity
@@ -71,8 +117,18 @@ data class Subscriber(
 
     val phone: String? = null,
 
+    /**
+     * TP-121 (issue #121): kept as a Kotlin property named `tier` for minimal blast radius (every
+     * existing call site, DTO, and test that reads/writes `subscriber.tier` keeps compiling
+     * unchanged), but the underlying **column** is `plan` per
+     * `tenderpulse/docs/specs/subscription-lifecycle-paypal.md` §7.1 -- `@Column(name = "plan")`
+     * below is what makes that true. The V10 migration renames the old `tier` column to `plan` and
+     * migrates existing `PAID` rows to `PRO` (see that migration's header for the empirical
+     * verification against a populated Postgres container).
+     */
     @Enumerated(EnumType.STRING)
-    val tier: SubscriptionTier = SubscriptionTier.FREE,
+    @Column(name = "plan")
+    val tier: SubscriptionPlan = SubscriptionPlan.FREE,
 
     val active: Boolean = true,
 
@@ -90,7 +146,7 @@ data class Subscriber(
     val createdAt: Instant = Instant.now(),
 
     /**
-     * PayPal subscription ID for a PAID-tier signup (TP-042), stored only after the backend has
+     * PayPal subscription ID for a PRO-tier signup (TP-042), stored only after the backend has
      * independently verified the subscription with PayPal's API (never trusted from the client).
      * Null for FREE subscribers and any subscriber that has never completed Pro checkout.
      *
@@ -127,7 +183,48 @@ data class Subscriber(
      */
     @Column(nullable = false)
     @ColumnDefault("false")
-    val whatsappOptIn: Boolean = false
+    val whatsappOptIn: Boolean = false,
+
+    /**
+     * TP-121 (issue #121, spec §7.1/§6.3): whether this subscriber's alert delivery is currently
+     * active. Added this phase as schema-only groundwork -- **not yet wired into any alert-
+     * eligibility check** (see [AlertStatus]'s kdoc). `@ColumnDefault` mirrors [whatsappOptIn]'s
+     * reasoning: the V10 migration adds this as a `NOT NULL` column against an already-populated
+     * `subscribers` table, so every existing row needs a real default (`ACTIVE` is correct here --
+     * every current subscriber's alerts are, in fact, active).
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @ColumnDefault("'ACTIVE'")
+    val alertStatus: AlertStatus = AlertStatus.ACTIVE,
+
+    /**
+     * TP-121 (issue #121, spec §7.1): whether alert emails may be delivered. Added this phase as
+     * schema-only groundwork -- deliberately **not** used by any alert-dispatch code yet; the
+     * pre-existing [emailOptOut] flag remains the sole enforced consent gate in this phase (see
+     * `tenderpulse/docs/specs/privacy-note.md`'s "consent guarantee"). Defaults `true` on the same
+     * backfill reasoning as [alertStatus]: every existing subscriber has been receiving email, so
+     * `true` is the correct historical value, not just a placeholder.
+     */
+    @Column(nullable = false)
+    @ColumnDefault("true")
+    val emailEnabled: Boolean = true,
+
+    /** TP-121 (issue #121, spec §7.1): evidence of opt-in/resubscription. Nullable -- schema-only this phase, not yet set by any code path. */
+    val emailConsentAt: Instant? = null,
+
+    /** TP-121 (issue #121, spec §7.1): optional automatic alert-resumption time. Nullable -- schema-only this phase, not yet set by any code path. */
+    val alertsPausedUntil: Instant? = null,
+
+    /**
+     * TP-121 (issue #121, spec §7.1): audit-support timestamp for the last local change to this
+     * row. `@ColumnDefault` follows the same populated-table backfill reasoning as [alertStatus] /
+     * [emailEnabled] -- `CURRENT_TIMESTAMP` at migration time is a defensible "last known change"
+     * value for pre-existing rows since no more precise historical value is recoverable.
+     */
+    @Column(nullable = false)
+    @ColumnDefault("CURRENT_TIMESTAMP")
+    val updatedAt: Instant = Instant.now()
 )
 
 @Entity

@@ -4,7 +4,7 @@ import com.tenderpulse.domain.InterestProfile
 import com.tenderpulse.domain.NotificationChannel
 import com.tenderpulse.domain.Sector
 import com.tenderpulse.domain.Subscriber
-import com.tenderpulse.domain.SubscriptionTier
+import com.tenderpulse.domain.SubscriptionPlan
 import jakarta.validation.constraints.AssertTrue
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
@@ -16,7 +16,7 @@ import java.util.UUID
 data class RegisterRequest(
     @field:Email @field:NotBlank val email: String,
     val phone: String? = null,
-    val tier: SubscriptionTier? = null
+    val tier: SubscriptionPlan? = null
 )
 
 /**
@@ -105,7 +105,7 @@ data class SubscriberResponse(
     val id: UUID,
     val email: String,
     val phone: String?,
-    val tier: SubscriptionTier,
+    val tier: SubscriptionPlan,
     val active: Boolean,
     val createdAt: Instant,
     val paypalSubscriptionId: String? = null,

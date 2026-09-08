@@ -6,7 +6,7 @@ import com.tenderpulse.domain.InterestProfileRepository
 import com.tenderpulse.domain.Sector
 import com.tenderpulse.domain.Subscriber
 import com.tenderpulse.domain.SubscriberRepository
-import com.tenderpulse.domain.SubscriptionTier
+import com.tenderpulse.domain.SubscriptionPlan
 import com.tenderpulse.domain.Tender
 import com.tenderpulse.domain.TenderRepository
 import com.tenderpulse.notification.NotificationService
@@ -59,7 +59,7 @@ class UnsubscribeIntegrationTest {
     @MockitoBean
     private lateinit var javaMailSender: JavaMailSender
 
-    private fun createSubscriber(email: String, tier: SubscriptionTier = SubscriptionTier.PAID): Subscriber =
+    private fun createSubscriber(email: String, tier: SubscriptionPlan = SubscriptionPlan.PRO): Subscriber =
         subscriberRepository.save(Subscriber(email = email, tier = tier))
 
     // ---- Test case 1: click unsubscribe link from a real email -> opted out, no login required ----
