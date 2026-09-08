@@ -111,8 +111,15 @@ class EntityPersistenceTest {
      */
     @Test
     fun `Subscriber new TP-121 columns round trip against a real JPA context`() {
-        val consentAt = java.time.Instant.now().minusSeconds(3600)
-        val pausedUntil = java.time.Instant.now().plusSeconds(3600)
+        // TP-121 (issue #121, Checker follow-up): the emailConsentAt/alertsPausedUntil columns are
+        // `timestamp(6)` (microsecond precision, matching V10's schema and real Postgres), but
+        // `Instant.now()` has genuine sub-microsecond (nanosecond) precision on Linux JVMs -- unlike
+        // macOS, where `Instant.now()`'s effective resolution happens to already be microsecond or
+        // coarser, which is why this passed locally but failed deterministically on Linux CI.
+        // Truncating the *expected* value to MICROS before asserting matches the precision the
+        // column (and therefore the round-tripped value) actually has, on every platform.
+        val consentAt = java.time.Instant.now().minusSeconds(3600).truncatedTo(java.time.temporal.ChronoUnit.MICROS)
+        val pausedUntil = java.time.Instant.now().plusSeconds(3600).truncatedTo(java.time.temporal.ChronoUnit.MICROS)
         val saved = subscriberRepository.save(
             Subscriber(
                 email = "max-subscriber-roundtrip@example.co.zw",
