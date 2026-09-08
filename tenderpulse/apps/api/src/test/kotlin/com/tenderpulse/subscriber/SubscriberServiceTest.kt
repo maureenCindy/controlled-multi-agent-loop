@@ -47,8 +47,18 @@ class SubscriberServiceTest {
 
     // ---- register ----
 
+    /**
+     * Security fix (issue #123): `register()` is the public, unauthenticated signup path and must
+     * never trust a client-supplied `tier` -- there is no PayPal verification or admin gate on
+     * this endpoint to justify granting anything above `FREE`. This test previously asserted the
+     * opposite (that a client-requested `PRO` tier was honored verbatim), which was the exact
+     * vulnerability reported in #123: `POST /api/v1/subscribers {"tier": "MAX"}` minted a full
+     * MAX-tier subscriber for free. Correcting this test to assert the fixed behavior -- rather
+     * than leaving it encoding the vulnerability -- is the AC's explicit requirement, not a
+     * weakening of coverage.
+     */
     @Test
-    fun `register saves a new subscriber with the requested tier`() {
+    fun `register ignores a client-supplied tier and always creates a FREE subscriber`() {
         every { subscriberRepository.findByEmail("new@example.com") } returns null
         val saved = slot<Subscriber>()
         every { subscriberRepository.save(capture(saved)) } answers { saved.captured }
@@ -56,7 +66,7 @@ class SubscriberServiceTest {
         val result = service.register(RegisterRequest(email = "new@example.com", tier = SubscriptionPlan.PRO))
 
         assertEquals("new@example.com", result.email)
-        assertEquals(SubscriptionPlan.PRO, result.tier)
+        assertEquals(SubscriptionPlan.FREE, result.tier)
     }
 
     @Test
@@ -67,6 +77,35 @@ class SubscriberServiceTest {
         val result = service.register(RegisterRequest(email = "new@example.com"))
 
         assertEquals(SubscriptionPlan.FREE, result.tier)
+    }
+
+    /**
+     * Issue #123, test case 2 (the actual regression-proof case): a client claiming the highest
+     * tier via the public signup endpoint must still only ever get FREE.
+     */
+    @Test
+    fun `register creates a FREE subscriber even when the client requests MAX tier`() {
+        every { subscriberRepository.findByEmail("attacker@example.com") } returns null
+        val saved = slot<Subscriber>()
+        every { subscriberRepository.save(capture(saved)) } answers { saved.captured }
+
+        val result = service.register(RegisterRequest(email = "attacker@example.com", tier = SubscriptionPlan.MAX))
+
+        assertEquals(SubscriptionPlan.FREE, result.tier)
+        assertEquals(SubscriptionPlan.FREE, saved.captured.tier)
+    }
+
+    /** Issue #123, test case 3: same self-escalation attempt, but for PRO instead of MAX. */
+    @Test
+    fun `register creates a FREE subscriber even when the client requests PRO tier`() {
+        every { subscriberRepository.findByEmail("attacker2@example.com") } returns null
+        val saved = slot<Subscriber>()
+        every { subscriberRepository.save(capture(saved)) } answers { saved.captured }
+
+        val result = service.register(RegisterRequest(email = "attacker2@example.com", tier = SubscriptionPlan.PRO))
+
+        assertEquals(SubscriptionPlan.FREE, result.tier)
+        assertEquals(SubscriptionPlan.FREE, saved.captured.tier)
     }
 
     @Test

@@ -31,11 +31,20 @@ class SubscriberService(
     private val expectedPlanId: String
 ) {
 
+    /**
+     * Public, unauthenticated signup (TP-037). Always creates a `FREE`-tier subscriber (issue
+     * #123): [RegisterRequest.tier] is intentionally ignored here, not merely defaulted, so a
+     * caller cannot self-escalate by supplying `tier: "PRO"` / `"MAX"` on this endpoint — there is
+     * no server-side verification available at this call site to justify trusting any tier other
+     * than `FREE` (unlike [registerPro], which independently confirms a PayPal subscription before
+     * ever granting `PRO`, or the admin override, which is gated on the operator key). A verified
+     * upgrade must go through one of those two paths instead.
+     */
     fun register(req: RegisterRequest): Subscriber {
         val existing = subscriberRepository.findByEmail(req.email)
         if (existing != null) throw ConflictException("Email already registered")
         return subscriberRepository.save(
-            Subscriber(email = req.email, phone = req.phone, tier = req.tier ?: SubscriptionPlan.FREE)
+            Subscriber(email = req.email, phone = req.phone, tier = SubscriptionPlan.FREE)
         )
     }
 
