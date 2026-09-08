@@ -9,7 +9,7 @@ import com.tenderpulse.domain.NotFoundException
 import com.tenderpulse.domain.PayPalApiException
 import com.tenderpulse.domain.Sector
 import com.tenderpulse.domain.Subscriber
-import com.tenderpulse.domain.SubscriptionTier
+import com.tenderpulse.domain.SubscriptionPlan
 import com.tenderpulse.domain.SubscriptionVerificationException
 import com.tenderpulse.domain.TierRestrictionException
 import com.tenderpulse.subscriber.SubscriberService
@@ -87,7 +87,7 @@ class SubscriberControllerTest {
     @Test
     fun `register returns 201 with a subscriber response DTO, not the raw entity`() {
         every { subscriberService.register(any()) } returns
-            Subscriber(email = "new@example.com", tier = SubscriptionTier.FREE)
+            Subscriber(email = "new@example.com", tier = SubscriptionPlan.FREE)
 
         mockMvc.perform(
             post("/api/v1/subscribers")
@@ -154,7 +154,7 @@ class SubscriberControllerTest {
     fun `registerPro returns 200 with the upgraded subscriber DTO, including the stored subscription id`() {
         every { subscriberService.registerPro(any()) } returns Subscriber(
             email = "pro@example.com",
-            tier = SubscriptionTier.PAID,
+            tier = SubscriptionPlan.PRO,
             paypalSubscriptionId = "I-VALIDSUB123"
         )
 
@@ -165,7 +165,7 @@ class SubscriberControllerTest {
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.email").value("pro@example.com"))
-            .andExpect(jsonPath("$.tier").value("PAID"))
+            .andExpect(jsonPath("$.tier").value("PRO"))
             .andExpect(jsonPath("$.paypalSubscriptionId").value("I-VALIDSUB123"))
     }
 

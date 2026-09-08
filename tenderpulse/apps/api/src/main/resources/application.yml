@@ -112,11 +112,30 @@ tenderpulse:
   website:
     allowed-origins: ${WEBSITE_ALLOWED_ORIGINS:}
 
-# TP-042: PayPal Client ID/Secret/Plan ID are credentials — loaded from env vars only, never
-# committed. Empty defaults let the app boot without them; POST /api/v1/subscribers/pro will fail
-# verification (as PayPalApiException) until they're set. See apps/api/.env.example.
+# TP-042/TP-127: PayPal Client ID/Secret/Plan IDs are credentials — loaded from env vars only,
+# never committed. Empty defaults let the app boot without them (in dev/test profiles only — see
+# com.tenderpulse.paypal.PayPalPlanConfigGuard, which refuses to start in any other profile if
+# either plan id is blank); POST /api/v1/subscribers/pro and
+# POST /api/v1/billing/paypal/subscriptions/confirm will fail verification (as
+# PayPalApiException/SubscriptionVerificationException) until they're set. See apps/api/.env.example.
+#
+# TP-127 (issue #127): the single `plan-id` (Pro-only) is replaced by `plans.pro` / `plans.max`
+# per tenderpulse/docs/specs/subscription-lifecycle-paypal.md §9.1 — both Pro and Max now go
+# through the same PayPal client/config, distinguished by which configured plan id a confirmed
+# subscription's own plan_id matches.
 paypal:
   base-url: ${PAYPAL_BASE_URL:https://api-m.sandbox.paypal.com}
   client-id: ${PAYPAL_CLIENT_ID:}
   client-secret: ${PAYPAL_CLIENT_SECRET:}
-  plan-id: ${PAYPAL_PLAN_ID:}
+  # ISO 4217 currency code shown in GET /api/v1/billing/public-config (display/bootstrap only —
+  # see com.tenderpulse.billing.BillingService).
+  currency: USD
+  plans:
+    pro: ${PAYPAL_PRO_PLAN_ID:}
+    max: ${PAYPAL_MAX_PLAN_ID:}
+  # Display-only monthly prices (spec §3/§8.4/§8.5) surfaced by GET /api/v1/billing/public-config.
+  # Never used for entitlement decisions — POST /api/v1/billing/paypal/subscriptions/confirm only
+  # ever trusts the plan id PayPal itself returns for a fetched subscription, never a price.
+  amounts:
+    pro: "5.00"
+    max: "30.00"

@@ -69,8 +69,8 @@ class SubscriberController(
         SubscriberResponse.from(subscriberService.register(req))
 
     /**
-     * PayPal-verified Pro (PAID tier) signup (TP-042). Creates or upgrades the subscriber to
-     * PAID only after [SubscriberService.registerPro] has independently confirmed the given
+     * PayPal-verified Pro (PRO tier) signup (TP-042). Creates or upgrades the subscriber to
+     * PRO only after [SubscriberService.registerPro] has independently confirmed the given
      * PayPal subscription ID with PayPal's API (active, matching plan) — a 200 rather than 201
      * because this may upgrade an existing FREE subscriber in place rather than create a new one.
      * Verification failures (not found / wrong plan / not active) surface as 400 via

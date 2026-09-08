@@ -7,7 +7,7 @@ import com.tenderpulse.domain.InterestProfileRepository
 import com.tenderpulse.domain.NotificationRecordRepository
 import com.tenderpulse.domain.Subscriber
 import com.tenderpulse.domain.SubscriberRepository
-import com.tenderpulse.domain.SubscriptionTier
+import com.tenderpulse.domain.SubscriptionPlan
 import com.tenderpulse.domain.Tender
 import com.tenderpulse.domain.TenderRepository
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -68,7 +68,7 @@ class UnsubscribeLinkTransactionIsolationTest {
     private lateinit var javaMailSender: JavaMailSender
 
     private fun paidSubscriber(email: String): Subscriber =
-        subscriberRepository.save(Subscriber(email = email, tier = SubscriptionTier.PAID))
+        subscriberRepository.save(Subscriber(email = email, tier = SubscriptionPlan.PRO))
 
     /**
      * The (real, H2) DB and Spring context are shared across the whole test suite

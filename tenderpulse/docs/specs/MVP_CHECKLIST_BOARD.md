@@ -283,18 +283,18 @@
 
 **Epic:** Notifications | **Priority:** P0 | **Estimate:** M  
 
-**Goal:** FREE digests; PAID immediate email (SMS/in-app remain stubs).
+**Goal:** FREE digests; PRO/MAX immediate email (SMS/in-app remain stubs).
 
 **Acceptance criteria**  
 - [ ] FREE matches queued for digest  
-- [ ] PAID triggers email sender immediately  
+- [ ] PRO/MAX triggers email sender immediately  
 - [ ] Notification records for both paths  
 
 **Test cases**  
 | # | Scenario | Expected |
 |---|----------|----------|
 | 1 | FREE match | Digest queue entry; no immediate email required |
-| 2 | PAID match | Email sender invoked; success recorded |
+| 2 | PRO/MAX match | Email sender invoked; success recorded |
 
 **Dependencies:** TP-011  
 
@@ -331,7 +331,7 @@ Track B (Growth):      TP-020 → TP-030 → TP-041
 ## Definition of “MVP ready for first conversations”
 
 - [ ] At least one ZW source adapter works in a full aggregate cycle  
-- [ ] Matching + FREE/PAID notification behaviour verified by tests  
+- [ ] Matching + FREE/PRO/MAX notification behaviour verified by tests  
 - [ ] Waitlist live and collecting sector + province  
 - [ ] ≥30 businesses on outreach list; first messages sendable  
 - [ ] Privacy line on landing; source links on alerts  

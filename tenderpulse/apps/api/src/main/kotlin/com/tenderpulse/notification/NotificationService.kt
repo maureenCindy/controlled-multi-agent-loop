@@ -44,7 +44,7 @@ class NotificationService(
             val subscriber = profile.subscriber
 
             when (subscriber.tier) {
-                SubscriptionTier.FREE -> {
+                SubscriptionPlan.FREE -> {
                     digestQueueEntryRepository.save(
                         DigestQueueEntry(
                             subscriber = subscriber,
@@ -53,7 +53,10 @@ class NotificationService(
                         )
                     )
                 }
-                SubscriptionTier.PAID -> {
+                // TP-121 (issue #121): MAX behaves identically to PRO in this phase -- no
+                // MAX-exclusive dispatch behavior yet (later phase in the subscription-tiers
+                // milestone).
+                SubscriptionPlan.PRO, SubscriptionPlan.MAX -> {
                     val channelsToUse = profile.preferredChannels.ifEmpty {
                         setOf(NotificationChannel.EMAIL)
                     }

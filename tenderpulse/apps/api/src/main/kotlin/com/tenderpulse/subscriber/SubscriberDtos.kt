@@ -4,7 +4,7 @@ import com.tenderpulse.domain.InterestProfile
 import com.tenderpulse.domain.NotificationChannel
 import com.tenderpulse.domain.Sector
 import com.tenderpulse.domain.Subscriber
-import com.tenderpulse.domain.SubscriptionTier
+import com.tenderpulse.domain.SubscriptionPlan
 import jakarta.validation.constraints.AssertTrue
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
@@ -13,10 +13,21 @@ import java.math.BigDecimal
 import java.time.Instant
 import java.util.UUID
 
+/**
+ * Request body for `POST /api/v1/subscribers` -- the public, unauthenticated signup endpoint.
+ *
+ * [tier] is intentionally never trusted (issue #123): this field is retained only for backward
+ * wire-compatibility with any existing caller that sends it, but
+ * [com.tenderpulse.subscriber.SubscriberService.register] ignores it unconditionally and always
+ * creates the new subscriber as `FREE`. There is no verification available on this endpoint (no
+ * auth, no PayPal check) to justify granting anything higher; verified upgrades must go through
+ * [com.tenderpulse.subscriber.SubscriberService.registerPro] (PayPal-verified) or the operator-key
+ * gated admin override ([com.tenderpulse.admin.AdminService.updateSubscriberTier]) instead.
+ */
 data class RegisterRequest(
     @field:Email @field:NotBlank val email: String,
     val phone: String? = null,
-    val tier: SubscriptionTier? = null
+    val tier: SubscriptionPlan? = null
 )
 
 /**
@@ -105,7 +116,7 @@ data class SubscriberResponse(
     val id: UUID,
     val email: String,
     val phone: String?,
-    val tier: SubscriptionTier,
+    val tier: SubscriptionPlan,
     val active: Boolean,
     val createdAt: Instant,
     val paypalSubscriptionId: String? = null,

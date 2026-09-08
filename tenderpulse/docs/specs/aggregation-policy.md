@@ -48,15 +48,15 @@ Frequency must be **config-driven** (not hard-coded) so it can change without a 
 After each aggregation run:
   match new tenders against active profiles
        │
-       ├─ PAID  → send channel notification immediately (email first)
+       ├─ PRO/MAX → send channel notification immediately (email first)
        │
-       └─ FREE  → enqueue match for daily digest only
+       └─ FREE    → enqueue match for daily digest only
 ```
 
 | Tier | When the user is notified | Channel (MVP) |
 |------|---------------------------|---------------|
 | **FREE** | **Once per day** — digest of matches since last digest | Email |
-| **PAID** | **After each aggregation** that produces a new match (up to 3×/day) | Email (SMS/in-app later) |
+| **PRO/MAX** | **After each aggregation** that produces a new match (up to 3×/day) | Email (SMS/in-app later) |
 
 ### Free digest
 
@@ -100,7 +100,7 @@ Avoid promising “instant” or “real-time” until frequency or push channel
 |------|----------------|
 | **TP-003** | Adapter; fixtures; no live dependency in CI |
 | **TP-004** | Full cycle job; cron 3×/day (configurable); counts in response |
-| **TP-012** | FREE → digest queue; PAID → immediate send path |
+| **TP-012** | FREE → digest queue; PRO/MAX → immediate send path |
 | **TP-013** | Daily digest job for FREE only |
 
 ---

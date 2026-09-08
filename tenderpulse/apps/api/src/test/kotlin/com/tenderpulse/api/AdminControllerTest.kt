@@ -11,7 +11,7 @@ import com.tenderpulse.domain.NotFoundException
 import com.tenderpulse.domain.PayPalApiException
 import com.tenderpulse.domain.PayPalPlanPricingException
 import com.tenderpulse.domain.Subscriber
-import com.tenderpulse.domain.SubscriptionTier
+import com.tenderpulse.domain.SubscriptionPlan
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -74,8 +74,8 @@ class AdminControllerTest {
 
     @Test
     fun `listSubscribers returns tier and status for every subscriber`() {
-        val paid = Subscriber(email = "paid@example.com", tier = SubscriptionTier.PAID, active = true)
-        val free = Subscriber(email = "free@example.com", tier = SubscriptionTier.FREE, active = false)
+        val paid = Subscriber(email = "paid@example.com", tier = SubscriptionPlan.PRO, active = true)
+        val free = Subscriber(email = "free@example.com", tier = SubscriptionPlan.FREE, active = false)
         every { adminService.listSubscribers(0, 20) } returns
             PageImpl(listOf(paid, free), PageRequest.of(0, 20), 2)
 
@@ -83,7 +83,7 @@ class AdminControllerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.content.length()").value(2))
             .andExpect(jsonPath("$.content[0].email").value("paid@example.com"))
-            .andExpect(jsonPath("$.content[0].tier").value("PAID"))
+            .andExpect(jsonPath("$.content[0].tier").value("PRO"))
             .andExpect(jsonPath("$.content[0].status").value("ACTIVE"))
             .andExpect(jsonPath("$.content[1].email").value("free@example.com"))
             .andExpect(jsonPath("$.content[1].tier").value("FREE"))
@@ -106,29 +106,29 @@ class AdminControllerTest {
     @Test
     fun `updateSubscriberTier returns the updated subscriber DTO`() {
         val id = UUID.randomUUID()
-        every { adminService.updateSubscriberTier(id, SubscriptionTier.PAID) } returns
-            Subscriber(id = id, email = "sub@example.com", tier = SubscriptionTier.PAID)
+        every { adminService.updateSubscriberTier(id, SubscriptionPlan.PRO) } returns
+            Subscriber(id = id, email = "sub@example.com", tier = SubscriptionPlan.PRO)
 
         mockMvc.perform(
             put("/api/v1/admin/subscribers/$id/tier")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"tier":"PAID"}""")
+                .content("""{"tier":"PRO"}""")
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.tier").value("PAID"))
+            .andExpect(jsonPath("$.tier").value("PRO"))
             .andExpect(jsonPath("$.id").value(id.toString()))
     }
 
     @Test
     fun `updateSubscriberTier for an unknown subscriber returns 404`() {
         val id = UUID.randomUUID()
-        every { adminService.updateSubscriberTier(id, SubscriptionTier.PAID) } throws
+        every { adminService.updateSubscriberTier(id, SubscriptionPlan.PRO) } throws
             NotFoundException("Subscriber $id")
 
         mockMvc.perform(
             put("/api/v1/admin/subscribers/$id/tier")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"tier":"PAID"}""")
+                .content("""{"tier":"PRO"}""")
         ).andExpect(status().isNotFound)
     }
 

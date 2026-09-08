@@ -10,7 +10,7 @@ import com.tenderpulse.domain.NotificationRecord
 import com.tenderpulse.domain.NotificationRecordRepository
 import com.tenderpulse.domain.NotificationChannel
 import com.tenderpulse.domain.Subscriber
-import com.tenderpulse.domain.SubscriptionTier
+import com.tenderpulse.domain.SubscriptionPlan
 import com.tenderpulse.domain.Tender
 import com.tenderpulse.domain.TenderRepository
 import io.mockk.every
@@ -49,7 +49,7 @@ class ReminderServiceTest {
         deadline = deadline
     )
 
-    private fun subscriber(tier: SubscriptionTier) = Subscriber(
+    private fun subscriber(tier: SubscriptionPlan) = Subscriber(
         email = "sub-${tier.name.lowercase()}@example.com",
         tier = tier
     )
@@ -85,7 +85,39 @@ class ReminderServiceTest {
     @Test
     fun `Paid subscriber previously notified receives an immediate reminder email and a tracking record is created`() {
         val t = tender(Instant.now().plus(Duration.ofDays(2)))
-        val sub = subscriber(SubscriptionTier.PAID)
+        val sub = subscriber(SubscriptionPlan.PRO)
+        val prof = profile(sub)
+
+        every { tenderRepository.findByDeadlineBetween(any(), any()) } returns listOf(t)
+        every { notificationRecordRepository.findByTenderIdAndSuccessTrue(t.id) } returns listOf(
+            NotificationRecord(subscriber = sub, tender = t, channel = NotificationChannel.EMAIL, success = true)
+        )
+        every { digestQueueEntryRepository.findByTenderId(t.id) } returns emptyList()
+        every { deadlineReminderRecordRepository.existsBySubscriberIdAndTenderId(sub.id, t.id) } returns false
+        every { profileRepository.findBySubscriberIdAndActiveTrue(sub.id) } returns listOf(prof)
+        every { emailNotificationSender.send(sub, t, prof) } returns SendResult(success = true)
+
+        val recordSlot = slot<DeadlineReminderRecord>()
+        every { deadlineReminderRecordRepository.save(capture(recordSlot)) } answers { it.invocation.args[0] as DeadlineReminderRecord }
+
+        val result = reminderService.runReminderCycle()
+
+        assertEquals(1, result.remindersSent)
+        assertEquals(0, result.digestEntriesQueued)
+        verify(exactly = 1) { emailNotificationSender.send(sub, t, prof) }
+        verify(exactly = 1) { deadlineReminderRecordRepository.save(any()) }
+        assertEquals(sub, recordSlot.captured.subscriber)
+        assertEquals(t, recordSlot.captured.tender)
+    }
+
+    /**
+     * TP-121 (issue #121): MAX must behave identically to PRO here -- an immediate reminder email,
+     * not the FREE digest-queue path.
+     */
+    @Test
+    fun `MAX subscriber previously notified receives an immediate reminder email, identically to PRO`() {
+        val t = tender(Instant.now().plus(Duration.ofDays(2)))
+        val sub = subscriber(SubscriptionPlan.MAX)
         val prof = profile(sub)
 
         every { tenderRepository.findByDeadlineBetween(any(), any()) } returns listOf(t)
@@ -123,7 +155,7 @@ class ReminderServiceTest {
     @Test
     fun `no duplicate reminder is sent when a tracking record already exists`() {
         val t = tender(Instant.now().plus(Duration.ofDays(2)))
-        val sub = subscriber(SubscriptionTier.PAID)
+        val sub = subscriber(SubscriptionPlan.PRO)
         val prof = profile(sub)
 
         every { tenderRepository.findByDeadlineBetween(any(), any()) } returns listOf(t)
@@ -149,7 +181,7 @@ class ReminderServiceTest {
     @Test
     fun `Free subscriber previously notified via digest gets a new digest queue entry`() {
         val t = tender(Instant.now().plus(Duration.ofDays(2)))
-        val sub = subscriber(SubscriptionTier.FREE)
+        val sub = subscriber(SubscriptionPlan.FREE)
         val prof = profile(sub)
         val originalEntry = DigestQueueEntry(subscriber = sub, tender = t, profile = prof, digestedAt = Instant.now())
 
@@ -215,7 +247,7 @@ class ReminderServiceTest {
     @Test
     fun `a Paid subscriber who has since opted out does not receive a reminder`() {
         val t = tender(Instant.now().plus(Duration.ofDays(2)))
-        val sub = subscriber(SubscriptionTier.PAID).copy(emailOptOut = true)
+        val sub = subscriber(SubscriptionPlan.PRO).copy(emailOptOut = true)
         val prof = profile(sub)
 
         every { tenderRepository.findByDeadlineBetween(any(), any()) } returns listOf(t)
@@ -249,7 +281,7 @@ class ReminderServiceTest {
     @Test
     fun `a Free subscriber who has since been deactivated does not receive a reminder digest entry`() {
         val t = tender(Instant.now().plus(Duration.ofDays(2)))
-        val sub = subscriber(SubscriptionTier.FREE).copy(active = false)
+        val sub = subscriber(SubscriptionPlan.FREE).copy(active = false)
         val prof = profile(sub)
         val originalEntry = DigestQueueEntry(subscriber = sub, tender = t, profile = prof, digestedAt = Instant.now())
 

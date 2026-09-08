@@ -7,7 +7,7 @@ import com.tenderpulse.domain.NotFoundException
 import com.tenderpulse.domain.NotificationChannel
 import com.tenderpulse.domain.Subscriber
 import com.tenderpulse.domain.SubscriberRepository
-import com.tenderpulse.domain.SubscriptionTier
+import com.tenderpulse.domain.SubscriptionPlan
 import com.tenderpulse.domain.SubscriptionVerificationException
 import com.tenderpulse.domain.TierRestrictionException
 import com.tenderpulse.paypal.PayPalClient
@@ -17,7 +17,7 @@ import java.util.UUID
 
 /**
  * Business logic for subscriber registration and interest-profile management (TP-037), including
- * PayPal-verified Pro (PAID tier) signup (TP-042).
+ * PayPal-verified Pro (PRO tier) signup (TP-042).
  *
  * Owns every repository call this domain needs; [com.tenderpulse.api.SubscriberController]
  * only validates input, delegates here, and maps the returned entity to a response DTO.
@@ -27,21 +27,33 @@ class SubscriberService(
     private val subscriberRepository: SubscriberRepository,
     private val profileRepository: InterestProfileRepository,
     private val payPalClient: PayPalClient,
-    @Value("\${paypal.plan-id:}")
+    // TP-127 (issue #127): the old single `paypal.plan-id` is replaced by `paypal.plans.pro` /
+    // `paypal.plans.max` -- this Pro-only flow (TP-042) keeps using the Pro one unchanged; the new
+    // unified com.tenderpulse.billing.BillingService reads both.
+    @Value("\${paypal.plans.pro:}")
     private val expectedPlanId: String
 ) {
 
+    /**
+     * Public, unauthenticated signup (TP-037). Always creates a `FREE`-tier subscriber (issue
+     * #123): [RegisterRequest.tier] is intentionally ignored here, not merely defaulted, so a
+     * caller cannot self-escalate by supplying `tier: "PRO"` / `"MAX"` on this endpoint — there is
+     * no server-side verification available at this call site to justify trusting any tier other
+     * than `FREE` (unlike [registerPro], which independently confirms a PayPal subscription before
+     * ever granting `PRO`, or the admin override, which is gated on the operator key). A verified
+     * upgrade must go through one of those two paths instead.
+     */
     fun register(req: RegisterRequest): Subscriber {
         val existing = subscriberRepository.findByEmail(req.email)
         if (existing != null) throw ConflictException("Email already registered")
         return subscriberRepository.save(
-            Subscriber(email = req.email, phone = req.phone, tier = req.tier ?: SubscriptionTier.FREE)
+            Subscriber(email = req.email, phone = req.phone, tier = SubscriptionPlan.FREE)
         )
     }
 
     /**
      * Verifies a PayPal subscription server-side (TP-042) and, only on success, creates or
-     * upgrades the matching [Subscriber] to `tier = PAID`, storing the PayPal subscription ID.
+     * upgrades the matching [Subscriber] to `tier = PRO`, storing the PayPal subscription ID.
      *
      * The client's claim that checkout succeeded is never trusted directly: this fetches the
      * subscription from PayPal by ID and confirms all of the following before touching any
@@ -60,12 +72,38 @@ class SubscriberService(
      * An existing FREE subscriber with this email is upgraded in place (their [Subscriber.id] is
      * preserved); a first-time Pro signup creates a new subscriber.
      *
+     * Mirrors [com.tenderpulse.billing.BillingService.confirmSubscription]'s plan-change guard
+     * (TP-130, issue #130): if an existing subscriber matched by [ProSubscribeRequest.email]
+     * already has a non-`FREE` tier *and* an existing [Subscriber.paypalSubscriptionId] that
+     * differs from [ProSubscribeRequest.paypalSubscriptionId], this is rejected up front — before
+     * ever calling PayPal or persisting anything — rather than silently re-linking the email to
+     * the new subscription and orphaning the original, still-active one with no cancellation. A
+     * retry with the *same* subscription id is exempted (idempotent), same as the existing
+     * [SubscriberRepository.findByPaypalSubscriptionId] check further below.
+     *
+     * @throws com.tenderpulse.domain.ConflictException if an existing non-`FREE` subscriber with
+     *   this email already has a *different* PayPal subscription id linked — no PayPal call is
+     *   made and no subscriber is changed.
      * @throws SubscriptionVerificationException if the subscription doesn't exist, is for the
      *   wrong plan, isn't ACTIVE, doesn't belong to the requested email, or is already linked to a
      *   different subscriber — no subscriber is created or changed in any of those cases.
      * @throws com.tenderpulse.domain.PayPalApiException if the call to PayPal itself fails.
      */
     fun registerPro(req: ProSubscribeRequest): Subscriber {
+        val existing = subscriberRepository.findByEmail(req.email)
+
+        if (existing != null &&
+            existing.tier != SubscriptionPlan.FREE &&
+            existing.paypalSubscriptionId != null &&
+            existing.paypalSubscriptionId != req.paypalSubscriptionId
+        ) {
+            throw ConflictException(
+                "Email '${req.email}' already has an active ${existing.tier} subscription " +
+                    "(PayPal subscription '${existing.paypalSubscriptionId}'); switching to a different " +
+                    "subscription '${req.paypalSubscriptionId}' via this endpoint is not supported"
+            )
+        }
+
         val subscription = payPalClient.fetchSubscription(req.paypalSubscriptionId)
             ?: throw SubscriptionVerificationException(
                 "PayPal subscription '${req.paypalSubscriptionId}' was not found"
@@ -88,7 +126,6 @@ class SubscriberService(
             )
         }
 
-        val existing = subscriberRepository.findByEmail(req.email)
         val linkedElsewhere = subscriberRepository.findByPaypalSubscriptionId(req.paypalSubscriptionId)
         if (linkedElsewhere != null && linkedElsewhere.id != existing?.id) {
             throw SubscriptionVerificationException(
@@ -97,11 +134,11 @@ class SubscriberService(
         }
 
         val toSave = existing?.copy(
-            tier = SubscriptionTier.PAID,
+            tier = SubscriptionPlan.PRO,
             paypalSubscriptionId = req.paypalSubscriptionId
         ) ?: Subscriber(
             email = req.email,
-            tier = SubscriptionTier.PAID,
+            tier = SubscriptionPlan.PRO,
             paypalSubscriptionId = req.paypalSubscriptionId
         )
         return subscriberRepository.save(toSave)
@@ -155,17 +192,18 @@ class SubscriberService(
 
     /**
      * Sets [Subscriber.whatsappNumber] and [Subscriber.whatsappOptIn] together (TP-093),
-     * Paid-tier only. [WhatsAppOptInRequest.consentGiven] is stored verbatim as
+     * Paid-tier only (PRO or MAX -- TP-121/issue #121: MAX behaves identically to PRO here, no
+     * MAX-exclusive behavior yet). [WhatsAppOptInRequest.consentGiven] is stored verbatim as
      * [Subscriber.whatsappOptIn] -- never coerced true merely because a number was submitted, and
      * never left as any prior stored value: a subscriber resubmitting with `consentGiven: false`
      * genuinely revokes consent, they don't just leave it unchanged.
      *
      * @throws NotFoundException if no subscriber exists with [subscriberId].
-     * @throws TierRestrictionException if the subscriber is not on [SubscriptionTier.PAID].
+     * @throws TierRestrictionException if the subscriber is on [SubscriptionPlan.FREE].
      */
     fun setWhatsAppOptIn(subscriberId: UUID, req: WhatsAppOptInRequest): Subscriber {
         val subscriber = findSubscriberOrThrow(subscriberId)
-        if (subscriber.tier != SubscriptionTier.PAID) {
+        if (subscriber.tier == SubscriptionPlan.FREE) {
             throw TierRestrictionException("WhatsApp opt-in is available to Paid subscribers only")
         }
         return subscriberRepository.save(

@@ -3,7 +3,7 @@ package com.tenderpulse.api
 import com.tenderpulse.auth.BearerTokenService
 import com.tenderpulse.domain.Subscriber
 import com.tenderpulse.domain.SubscriberRepository
-import com.tenderpulse.domain.SubscriptionTier
+import com.tenderpulse.domain.SubscriptionPlan
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
@@ -41,7 +41,7 @@ class WhatsAppOptInIntegrationTest {
     @Autowired
     private lateinit var bearerTokenService: BearerTokenService
 
-    private fun createSubscriber(email: String, tier: SubscriptionTier = SubscriptionTier.PAID): Subscriber =
+    private fun createSubscriber(email: String, tier: SubscriptionPlan = SubscriptionPlan.PRO): Subscriber =
         subscriberRepository.save(Subscriber(email = email, tier = tier))
 
     private fun whatsappUrl(id: java.util.UUID) = "/api/v1/subscribers/$id/whatsapp"
@@ -184,7 +184,7 @@ class WhatsAppOptInIntegrationTest {
 
     @Test
     fun `a free-tier subscriber attempting to set a WhatsApp number is rejected`() {
-        val subscriber = createSubscriber("free-tier@example.com", tier = SubscriptionTier.FREE)
+        val subscriber = createSubscriber("free-tier@example.com", tier = SubscriptionPlan.FREE)
         val token = bearerTokenService.issue(subscriber.id)
 
         mockMvc.perform(
@@ -197,6 +197,28 @@ class WhatsAppOptInIntegrationTest {
         val reloaded = subscriberRepository.findById(subscriber.id).orElseThrow()
         assertNull(reloaded.whatsappNumber)
         assertFalse(reloaded.whatsappOptIn)
+    }
+
+    // ---- TP-121 (issue #121), test case 2: MAX behaves identically to PRO ----
+
+    @Test
+    fun `a MAX-tier subscriber submitting a valid E164 number with consentGiven true succeeds identically to PRO`() {
+        val subscriber = createSubscriber("max-optin@example.com", tier = SubscriptionPlan.MAX)
+        val token = bearerTokenService.issue(subscriber.id)
+
+        mockMvc.perform(
+            patch(whatsappUrl(subscriber.id))
+                .header("Authorization", "Bearer $token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"number":"+263771234567","consentGiven":true}""")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.whatsappNumber").value("+263771234567"))
+            .andExpect(jsonPath("$.whatsappOptIn").value(true))
+
+        val reloaded = subscriberRepository.findById(subscriber.id).orElseThrow()
+        assertEquals("+263771234567", reloaded.whatsappNumber)
+        assertTrue(reloaded.whatsappOptIn)
     }
 
     // ---- AC / test case 5: ownership enforced ----

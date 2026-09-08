@@ -1,7 +1,7 @@
 package com.tenderpulse.admin
 
 import com.tenderpulse.domain.Subscriber
-import com.tenderpulse.domain.SubscriptionTier
+import com.tenderpulse.domain.SubscriptionPlan
 import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
@@ -19,7 +19,7 @@ import java.util.UUID
 data class AdminSubscriberResponse(
     val id: UUID,
     val email: String,
-    val tier: SubscriptionTier,
+    val tier: SubscriptionPlan,
     val status: String,
     val paypalSubscriptionId: String?
 ) {
@@ -59,7 +59,7 @@ data class AdminSubscriberListResponse(
  * state and TenderPulse state need to be forced back in sync manually").
  */
 data class AdminTierUpdateRequest(
-    @field:NotNull val tier: SubscriptionTier
+    @field:NotNull val tier: SubscriptionPlan
 )
 
 /**
