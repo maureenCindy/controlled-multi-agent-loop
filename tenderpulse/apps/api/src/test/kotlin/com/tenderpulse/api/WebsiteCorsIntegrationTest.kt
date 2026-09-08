@@ -215,27 +215,39 @@ class WebsiteCorsIntegrationTest {
         ).andExpect(status().isForbidden)
     }
 
+    /**
+     * Test case 4 (issue #134): an actual (non-preflight) confirm request carrying `Origin` +
+     * `Authorization` succeeds and its response carries `Access-Control-Allow-Origin` -- i.e. a
+     * real browser would both get a successful response *and* be allowed to read it.
+     *
+     * Correction after Checker review: this test (and its now-removed second, unauthenticated
+     * request) previously claimed that if CORS had "stripped/blocked" the `Authorization` header,
+     * the authenticated request below would come back 401 -- empirically false. Reverting
+     * [com.tenderpulse.auth.WebsiteCorsConfig] to its pre-fix (2-path) registration and rerunning
+     * this exact test still returns 200 for the authenticated request, only
+     * `Access-Control-Allow-Origin` is missing: Spring's CORS processing only gates/validates
+     * headers on the *preflight* (`OPTIONS`) request (see
+     * [org.springframework.web.cors.CorsProcessor]) -- for an actual/simple request it never
+     * blocks or strips inbound request headers based on `CorsConfiguration.allowedHeaders`; it
+     * only decides whether to add the `Access-Control-Allow-Origin` response header (see
+     * [org.springframework.web.filter.CorsFilter]/[org.springframework.web.cors.DefaultCorsProcessor.processResponse]).
+     * A real browser enforces the preflight-derived `Authorization` allowance *before* it will
+     * even send this actual request -- MockMvc doesn't simulate that browser-side gate. **The
+     * actual proof that `Authorization` is permitted cross-origin is the preflight assertion
+     * above** (`test case 1 - ... including the Authorization header`, which correctly fails 403
+     * under the same revert, since preflight IS where `allowedHeaders` is enforced). This test's
+     * job is narrower: confirm the *actual* request/response pair still behaves as a browser
+     * would need post-preflight -- authenticates via the header it received, and the response
+     * itself carries the CORS allow-origin header this route needs to be registered for at all.
+     */
     @Test
-    fun `test case 4 - an actual confirm request with Authorization header from the site origin authenticates, header not stripped by CORS`() {
+    fun `test case 4 - an actual confirm request succeeds when authenticated cross-origin, and its response carries the CORS allow-origin header`() {
         val subscriber = subscriberRepository.save(Subscriber(email = "cors-confirm@example.com"))
         val token = bearerTokenService.issue(subscriber.id)
         Mockito.`when`(payPalClient.fetchSubscription("I-CORS-CONFIRM")).thenReturn(
             PayPalSubscriptionResponse(id = "I-CORS-CONFIRM", status = "ACTIVE", planId = "P-CORS-CONFIRM-TEST")
         )
 
-        // Without the Authorization header, the same cross-origin request is rejected 401
-        // (unauthenticated) -- establishes the baseline this test's assertion is contrasted
-        // against.
-        mockMvc.perform(
-            post("/api/v1/billing/paypal/subscriptions/confirm")
-                .header(HttpHeaders.ORIGIN, allowedOrigin)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"paypalSubscriptionId":"I-CORS-CONFIRM","requestedPlan":"PRO"}""")
-        ).andExpect(status().isUnauthorized)
-
-        // With the Authorization header sent cross-origin, the request authenticates and
-        // succeeds -- if CORS had stripped/blocked the header, this would come back 401 same as
-        // the request above.
         mockMvc.perform(
             post("/api/v1/billing/paypal/subscriptions/confirm")
                 .header(HttpHeaders.ORIGIN, allowedOrigin)
