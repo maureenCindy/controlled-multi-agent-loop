@@ -5,7 +5,8 @@
 **Product:** TenderBell<br />
 **Backend:** Spring Boot, Kotlin, PostgreSQL, Flyway<br />
 **Frontend target:** React + TypeScript<br />
-**Payment provider:** PayPal Subscriptions
+**Payment provider:** PayPal Subscriptions<br />
+**Related specification:** `tracked-category-delivery-preferences.md`
 
 ---
 
@@ -68,6 +69,7 @@ backend reconciles the two systems through verified webhooks and scheduled provi
 | Tender-award notice alerts | No | Yes | Yes, inherited from Pro |
 | Email delivery | Yes | Yes | Yes |
 | Optional WhatsApp delivery | No | Yes | Yes |
+| Monthly WhatsApp allowance | Not applicable | Separate Pro policy to be confirmed | 100 per billing cycle |
 | TenderBell Market Insights Portal | No | No | Yes |
 | Market Opportunity Insights | No | No | Yes |
 
@@ -136,6 +138,35 @@ deep-link directly to the portal's subscription or alert-preferences screen.
 
 Portal access does not replace unsubscribe controls in the email footer. Every subscribed email
 must retain a clear preference-management and unsubscribe path.
+
+### 4.4 Max Settings information architecture
+
+The Max portal sidebar uses **Settings** rather than **Subscription & billing** because the
+destination is a broader account centre. Settings contains four deep-linkable tabs:
+
+| Tab | Responsibility |
+|---|---|
+| Account | Subscriber identity, business information, login email, contact details, sessions, and account closure |
+| Subscription | All three plans, current plan, price, renewal, entitlements, plan changes, contextual PayPal payment actions, and cancellation |
+| Invoices | TenderBell invoice/receipt history correlated with PayPal transactions |
+| Preferences | Theme, timezone, and date format |
+
+Delivery preferences remain a separate item under **Manage alerts**. They must not be duplicated in
+Preferences.
+
+Cancellation and any required payment action belong in Subscription. There is no standalone
+payment-method management tab because TenderBell uses PayPal-generated debit/credit-card
+subscription buttons at the point a subscriber starts, changes, renews, or recovers a paid plan.
+A TenderBell subscriber must not be required to own or create a PayPal account. TenderBell must
+never render its own raw card-input form, receive a full card number or security code, or imply
+that it can edit card data directly.
+
+Use **Invoices** as the plural historical collection. If TenderBell does not legally issue tax
+invoices, subscriber-facing copy must use **Receipts** or **Payment history** instead until the
+document policy is approved.
+
+Each tab is represented in the URL, supports direct entry, and follows an accessible tab pattern.
+On narrow screens the tab list scrolls horizontally rather than wrapping into uneven rows.
 
 ---
 
@@ -276,6 +307,10 @@ Create `billing_subscriptions`:
 | `updated_at` | timestamptz | Last local state change |
 | `version` | bigint | Optimistic-lock version |
 
+`payer_id` and `payer_email` are optional reconciliation attributes and must not be required for
+guest card subscribers. Never store PAN, CVV/security code, magnetic-stripe data, or unredacted
+PayPal payloads in these columns.
+
 Retain billing history. Do not overwrite an old cancelled PayPal subscription ID when a user
 subscribes again; create a new billing-subscription row and link it to the same subscriber.
 
@@ -335,11 +370,31 @@ owns schema changes.
 3. Under **Apps & Credentials**, use Sandbox first.
 4. Create a TenderBell REST application.
 5. Record the sandbox Client ID and Secret in the deployment secret manager.
-6. Use a sandbox Business account as the merchant and a sandbox Personal account as the buyer.
+6. Use a sandbox Business account as the merchant and test both a sandbox buyer and PayPal's
+   available guest debit/credit-card path.
 7. Never commit the Client Secret, webhook ID, access token, payer credentials, or live plan IDs.
 
 The browser may receive the PayPal Client ID and plan IDs. It must never receive the Client
 Secret.
+
+### 8.1.1 Guest card checkout is a launch gate
+
+TenderBell's product requirement is that Pro and Max subscribers can start and renew with a
+credit or debit card without creating a PayPal account. Confirm with PayPal that the live merchant
+account, merchant country, subscription product, buyer countries, and currencies are eligible for
+that experience. Enable guest/card checkout in the PayPal business and application settings where
+available.
+
+The selected frontend integration is the PayPal JavaScript SDK subscription flow using
+PayPal-generated debit/credit-card buttons. TenderBell supplies the relevant PayPal plan ID; the
+PayPal component collects the card and creates the provider subscription. TenderBell receives the
+resulting subscription reference and verifies it server-side before enabling paid entitlements.
+
+Guest card presentation can depend on PayPal eligibility and risk decisions. Therefore, test the
+live experience from TenderBell's target buyer countries before advertising **No PayPal account
+required**. If PayPal cannot provide that path reliably for the target market, payment-provider
+selection must be revisited; the application must not silently fall back to requiring a PayPal
+account after promising otherwise.
 
 ### 8.2 Obtain an OAuth access token
 
@@ -725,11 +780,14 @@ wait for confirmed provider state.
 /signup/paypal/return
 /manage
 /manage/alerts
-/manage/billing
 /manage/cancel
 /unsubscribe
 /resubscribe
 /portal                 # Max only
+/portal/settings/account-info
+/portal/settings/subscription
+/portal/settings/invoices
+/portal/settings/app-preferences
 ```
 
 ### 11.2 Suggested components
@@ -739,6 +797,11 @@ PlanSelector
 PayPalSubscriptionButton
 SubscriptionSummaryCard
 BillingStatusBanner
+SettingsTabs
+AccountInfoPanel
+SubscriptionPanel
+InvoiceHistoryTable
+AppPreferencesPanel
 AlertChannelControls
 CategoryProfileEditor
 PauseAlertsDialog
@@ -790,6 +853,11 @@ itself a plan.
 - Disable duplicate checkout submission while approval is in progress.
 - Display an explicit plan and price immediately above the PayPal button.
 - Show that billing is monthly and continues until cancelled.
+- Render PayPal-generated debit/credit-card subscription buttons as the primary payment path and
+  do not make PayPal-account login the only subscriber path.
+- Use PayPal-hosted or PayPal-secured fields for card capture; do not post raw card data through
+  TenderBell's React application or Spring Boot API.
+- Label the experience **Secure payments powered by PayPal**, not **Connect PayPal account**.
 - On callback failure, explain that payment may still be processing and provide a retry-status
   action rather than creating another subscription immediately.
 - Never collect PayPal credentials or card details in TenderBell forms.
@@ -813,8 +881,9 @@ Manage alerts | Pause alerts | Manage subscription
 Stop email alerts | Privacy Policy | Contact TenderBell
 ```
 
-For Free, `Manage subscription` may read `View plans`. For Pro and Max, it opens the billing
-management page.
+For Free, `Manage subscription` may read `View plans`. For Pro and Max, it opens the Subscription
+tab. When payment action is required, that tab presents the appropriate PayPal-generated
+debit/credit-card subscription button.
 
 ### 12.2 One-click unsubscribe
 
