@@ -1,5 +1,6 @@
 package com.tenderpulse.billing
 
+import com.tenderpulse.domain.ConflictException
 import com.tenderpulse.domain.NotFoundException
 import com.tenderpulse.domain.Subscriber
 import com.tenderpulse.domain.SubscriberRepository
@@ -222,6 +223,99 @@ class BillingServiceTest {
                 ConfirmSubscriptionRequest(paypalSubscriptionId = "I-VALID", requestedPlan = RequestedBillingPlan.PRO)
             )
         }
+    }
+
+    // ---- Issue #130: guard against silent plan-change double-billing ----
+
+    /**
+     * Issue test case 1: a FREE subscriber (no existing PayPal subscription) confirming a new
+     * subscription is unaffected by the new guard -- explicit regression coverage for the exact
+     * scenario the issue calls out, on top of the pre-existing "upgrades to PRO/MAX" tests above.
+     */
+    @Test
+    fun `issue 130 case 1 - a FREE subscriber with no existing subscription can still confirm normally`() {
+        val sub = subscriber(tier = SubscriptionPlan.FREE, paypalSubscriptionId = null)
+        every { subscriberRepository.findById(sub.id) } returns Optional.of(sub)
+        every { subscriberRepository.findByPaypalSubscriptionId("I-FRESH") } returns null
+        every { payPalClient.fetchSubscription("I-FRESH") } returns
+            PayPalSubscriptionResponse(id = "I-FRESH", status = "ACTIVE", planId = "P-PRO-CONFIGURED")
+        every { subscriberRepository.save(any()) } answers { firstArg() }
+
+        val result = service().confirmSubscription(
+            sub.id,
+            ConfirmSubscriptionRequest(paypalSubscriptionId = "I-FRESH", requestedPlan = RequestedBillingPlan.PRO)
+        )
+
+        assertEquals(SubscriptionPlan.PRO, result.tier)
+        assertEquals("I-FRESH", result.paypalSubscriptionId)
+    }
+
+    /** Issue test case 2: existing PRO subscriber attempts to confirm a new, different MAX subscription. */
+    @Test
+    fun `issue 130 case 2 - an existing PRO subscriber confirming a different MAX subscription is rejected, original untouched`() {
+        val sub = subscriber(tier = SubscriptionPlan.PRO, paypalSubscriptionId = "I-EXISTING-PRO")
+        every { subscriberRepository.findById(sub.id) } returns Optional.of(sub)
+
+        val ex = assertThrows(ConflictException::class.java) {
+            service().confirmSubscription(
+                sub.id,
+                ConfirmSubscriptionRequest(paypalSubscriptionId = "I-NEW-MAX", requestedPlan = RequestedBillingPlan.MAX)
+            )
+        }
+        assertTrue(ex.message!!.contains("I-EXISTING-PRO"))
+        assertTrue(ex.message!!.contains("PRO"))
+
+        // Rejected before ever calling out to PayPal or touching the repository.
+        verify(exactly = 0) { payPalClient.fetchSubscription(any()) }
+        verify(exactly = 0) { subscriberRepository.save(any()) }
+        assertEquals(SubscriptionPlan.PRO, sub.tier)
+        assertEquals("I-EXISTING-PRO", sub.paypalSubscriptionId)
+    }
+
+    /** Issue test case 3: existing MAX subscriber attempts to confirm a new, different PRO subscription. */
+    @Test
+    fun `issue 130 case 3 - an existing MAX subscriber confirming a different PRO subscription is rejected, original untouched`() {
+        val sub = subscriber(tier = SubscriptionPlan.MAX, paypalSubscriptionId = "I-EXISTING-MAX")
+        every { subscriberRepository.findById(sub.id) } returns Optional.of(sub)
+
+        val ex = assertThrows(ConflictException::class.java) {
+            service().confirmSubscription(
+                sub.id,
+                ConfirmSubscriptionRequest(paypalSubscriptionId = "I-NEW-PRO", requestedPlan = RequestedBillingPlan.PRO)
+            )
+        }
+        assertTrue(ex.message!!.contains("I-EXISTING-MAX"))
+        assertTrue(ex.message!!.contains("MAX"))
+
+        verify(exactly = 0) { payPalClient.fetchSubscription(any()) }
+        verify(exactly = 0) { subscriberRepository.save(any()) }
+        assertEquals(SubscriptionPlan.MAX, sub.tier)
+        assertEquals("I-EXISTING-MAX", sub.paypalSubscriptionId)
+    }
+
+    /**
+     * The guard must not break the pre-existing idempotent-retry behavior: a retry with the *same*
+     * subscription id by the same already-linked subscriber is exempted (already covered by
+     * `confirmSubscription is idempotent for a retry...` above); this test pins down that a
+     * *different* new subscription id from a non-FREE subscriber is what triggers the guard, not
+     * merely having an existing tier/subscription id.
+     */
+    @Test
+    fun `issue 130 - a non-FREE subscriber retrying with the same subscription id is not blocked by the guard`() {
+        val sub = subscriber(tier = SubscriptionPlan.PRO, paypalSubscriptionId = "I-SAME")
+        every { subscriberRepository.findById(sub.id) } returns Optional.of(sub)
+        every { subscriberRepository.findByPaypalSubscriptionId("I-SAME") } returns sub
+        every { payPalClient.fetchSubscription("I-SAME") } returns
+            PayPalSubscriptionResponse(id = "I-SAME", status = "ACTIVE", planId = "P-PRO-CONFIGURED")
+        every { subscriberRepository.save(any()) } answers { firstArg() }
+
+        val result = service().confirmSubscription(
+            sub.id,
+            ConfirmSubscriptionRequest(paypalSubscriptionId = "I-SAME", requestedPlan = RequestedBillingPlan.PRO)
+        )
+
+        assertEquals(SubscriptionPlan.PRO, result.tier)
+        assertEquals("I-SAME", result.paypalSubscriptionId)
     }
 
 }

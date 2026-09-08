@@ -1,5 +1,6 @@
 package com.tenderpulse.billing
 
+import com.tenderpulse.domain.ConflictException
 import com.tenderpulse.domain.NotFoundException
 import com.tenderpulse.domain.Subscriber
 import com.tenderpulse.domain.SubscriberRepository
@@ -76,8 +77,21 @@ class BillingService(
      *   after a dropped response), the save below simply re-persists the same
      *   plan/subscription-id pair rather than being rejected as a conflict.
      *
+     * Guards against a silent plan-change double-billing/orphan-subscription outcome (issue #130,
+     * raised by the #129 Reviewer): if [subscriberId] already has a non-FREE [Subscriber.tier] tied
+     * to an existing [Subscriber.paypalSubscriptionId], a confirm for a *different* PayPal
+     * subscription id is rejected outright rather than silently overwriting that field -- doing so
+     * would upgrade/change the subscriber's tier while leaving their old, still-`ACTIVE`,
+     * still-billing PayPal subscription with no local trace and no cancellation call. This is a
+     * minimal safety guard, not the real PayPal subscription *revision* flow (spec §14.1/§14.2,
+     * which needs Phase 3 webhooks/reconciliation) -- a blocked subscriber is expected to contact
+     * support for a manual plan change until that lands. A retry with the *same* subscription id
+     * (e.g. a duplicate `onApprove` callback) is explicitly exempted so idempotency is preserved.
+     *
      * @throws NotFoundException if [subscriberId] doesn't correspond to a real subscriber (should
      *   not happen for a validly issued bearer token, but the record could have been removed since).
+     * @throws com.tenderpulse.domain.ConflictException if [subscriberId] already has an active,
+     *   different PayPal subscription linked (a plan change) -- no subscriber is changed.
      * @throws SubscriptionVerificationException if the subscription doesn't exist, is for the
      *   wrong plan, isn't ACTIVE, or is already linked to a different subscriber -- no subscriber
      *   is changed in any of those cases.
@@ -86,6 +100,18 @@ class BillingService(
     fun confirmSubscription(subscriberId: UUID, req: ConfirmSubscriptionRequest): Subscriber {
         val subscriber = subscriberRepository.findById(subscriberId)
             .orElseThrow { NotFoundException("Subscriber $subscriberId") }
+
+        val currentSubscriptionId = subscriber.paypalSubscriptionId
+        if (subscriber.tier != SubscriptionPlan.FREE &&
+            currentSubscriptionId != null &&
+            currentSubscriptionId != req.paypalSubscriptionId
+        ) {
+            throw ConflictException(
+                "Subscriber $subscriberId already has an active ${subscriber.tier} subscription " +
+                    "(PayPal subscription '$currentSubscriptionId'); plan changes aren't supported " +
+                    "yet -- contact support."
+            )
+        }
 
         val expectedPlanId = expectedPlanIdFor(req.requestedPlan)
 

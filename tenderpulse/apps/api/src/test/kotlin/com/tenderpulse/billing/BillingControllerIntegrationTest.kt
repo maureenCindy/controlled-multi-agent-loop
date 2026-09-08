@@ -303,6 +303,70 @@ class BillingControllerIntegrationTest {
         verifyNoInteractions(payPalClient)
     }
 
+    // ---- Issue #130: guard against silent plan-change double-billing ----
+
+    /**
+     * Issue #130 test case 2: an existing PRO subscriber attempts to confirm a *new*, different
+     * MAX subscription. Must be rejected 409 and must leave the subscriber's original PRO
+     * tier/subscription id completely untouched -- this is the exact double-billing/orphan
+     * scenario the issue describes.
+     */
+    @Test
+    fun `issue 130 case 2 - an existing PRO subscriber confirming a new MAX subscription is rejected 409, original untouched`() {
+        val subscriber = createSubscriber("plan-change-pro-to-max@example.com")
+        val token = bearerTokenService.issue(subscriber.id)
+        Mockito.`when`(payPalClient.fetchSubscription("I-ORIGINAL-PRO")).thenReturn(
+            PayPalSubscriptionResponse(id = "I-ORIGINAL-PRO", status = "ACTIVE", planId = "P-PRO-CONFIGURED")
+        )
+        mockMvc.perform(
+            post("/api/v1/billing/paypal/subscriptions/confirm")
+                .header("Authorization", "Bearer $token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(confirmJson("I-ORIGINAL-PRO", "PRO"))
+        ).andExpect(status().isOk)
+
+        mockMvc.perform(
+            post("/api/v1/billing/paypal/subscriptions/confirm")
+                .header("Authorization", "Bearer $token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(confirmJson("I-NEW-MAX", "MAX"))
+        ).andExpect(status().isConflict)
+
+        val reloaded = subscriberRepository.findById(subscriber.id).orElseThrow()
+        assertEquals(SubscriptionPlan.PRO, reloaded.tier)
+        assertEquals("I-ORIGINAL-PRO", reloaded.paypalSubscriptionId)
+        // PayPal was never asked to verify the new MAX subscription -- rejected before that call.
+        Mockito.verify(payPalClient, Mockito.never()).fetchSubscription("I-NEW-MAX")
+    }
+
+    /** Issue #130 test case 3: same guard, MAX-to-PRO direction. */
+    @Test
+    fun `issue 130 case 3 - an existing MAX subscriber confirming a new PRO subscription is rejected 409, original untouched`() {
+        val subscriber = createSubscriber("plan-change-max-to-pro@example.com")
+        val token = bearerTokenService.issue(subscriber.id)
+        Mockito.`when`(payPalClient.fetchSubscription("I-ORIGINAL-MAX")).thenReturn(
+            PayPalSubscriptionResponse(id = "I-ORIGINAL-MAX", status = "ACTIVE", planId = "P-MAX-CONFIGURED")
+        )
+        mockMvc.perform(
+            post("/api/v1/billing/paypal/subscriptions/confirm")
+                .header("Authorization", "Bearer $token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(confirmJson("I-ORIGINAL-MAX", "MAX"))
+        ).andExpect(status().isOk)
+
+        mockMvc.perform(
+            post("/api/v1/billing/paypal/subscriptions/confirm")
+                .header("Authorization", "Bearer $token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(confirmJson("I-NEW-PRO", "PRO"))
+        ).andExpect(status().isConflict)
+
+        val reloaded = subscriberRepository.findById(subscriber.id).orElseThrow()
+        assertEquals(SubscriptionPlan.MAX, reloaded.tier)
+        assertEquals("I-ORIGINAL-MAX", reloaded.paypalSubscriptionId)
+        Mockito.verify(payPalClient, Mockito.never()).fetchSubscription("I-NEW-PRO")
+    }
+
     // ---- Test case 6: existing /subscribers/pro flow is unaffected ----
 
     @Test
