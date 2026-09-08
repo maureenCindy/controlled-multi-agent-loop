@@ -61,6 +61,17 @@ class SecurityConfig(
                     // kdoc (in SubscriberOwnershipInterceptor.kt) for why.
                     .requestMatchers(*SubscriberOwnershipPaths.PROTECTED_PATH_PATTERNS.toTypedArray())
                     .authenticated()
+                    // TP-127 (issue #127): POST /api/v1/billing/paypal/subscriptions/confirm requires an
+                    // authenticated subscriber bearer token, same as the ownership-scoped paths above, but
+                    // has no `{id}` path variable to compare against -- it acts on the authenticated
+                    // caller's own record (see com.tenderpulse.billing.BillingController), so it's a plain
+                    // `authenticated()` matcher here rather than being added to SubscriberOwnershipPaths
+                    // (whose PROTECTED_PATH_PATTERNS -- and SubscriberOwnershipPathCoverageTest -- are
+                    // specifically about /api/v1/subscribers/{id}/... routes on SubscriberController).
+                    // GET /api/v1/billing/public-config is intentionally NOT listed here -- it's
+                    // display/bootstrap-only and public, and falls through to permitAll below.
+                    .requestMatchers(HttpMethod.POST, "/api/v1/billing/paypal/subscriptions/confirm")
+                    .authenticated()
                     .anyRequest().permitAll()
             }
             .exceptionHandling { handling ->
