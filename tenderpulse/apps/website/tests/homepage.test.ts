@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -6,6 +6,13 @@ const appRoot = resolve(import.meta.dirname, "..");
 const homepage = readFileSync(resolve(appRoot, "src/pages/index.astro"), "utf8");
 
 describe("TP-140 approved homepage contract", () => {
+  it("keeps only the homepage and privacy note as Astro routes", () => {
+    expect(readdirSync(resolve(appRoot, "src/pages")).sort()).toEqual([
+      "index.astro",
+      "privacy.astro",
+    ]);
+  });
+
   it.each(["alertSetup", "howItWorks", "marketInsights", "testimonials", "pricing", "contact"])(
     "includes the %s section",
     (sectionId) => {

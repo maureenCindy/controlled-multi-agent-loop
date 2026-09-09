@@ -1923,29 +1923,12 @@ html[data-theme="dark"] .navbar-brand .brand-logo-dark { display: block; }
     }
 }
 
-/* Compatibility utilities for the existing secondary Astro pages. */
+/* Privacy-page utilities. */
 .section { padding: 72px 0; }
 .section--subtle { background: #eef3f9; }
 .grid { display: grid; gap: 24px; }
 .grid-2 { grid-template-columns: repeat(2,minmax(0,1fr)); }
-.grid-3 { grid-template-columns: repeat(3,minmax(0,1fr)); }
 .card { padding: 28px; background: #fff; border: 1px solid #e3e9f1; border-radius: 16px; box-shadow: 0 10px 28px rgba(26,43,76,.06); }
 .lede { max-width: 720px; color: #5e6e85; font-size: 1.08rem; }
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 20px; border: 1px solid transparent; border-radius: 999px; font: inherit; font-weight: 700; text-decoration: none; cursor: pointer; }
-.btn-accent { color: #1a2b4c; background: #f5a623; }
-.btn-block { width: 100%; }
-.placeholder-card { padding: 48px 28px; border: 1px dashed #cbd5e1; border-radius: 16px; text-align: center; }
-.tier-toggle { display: inline-flex; margin: 24px 0; overflow: hidden; border: 1px solid #d0d7e2; border-radius: 10px; }
-.tier-toggle button { padding: 10px 20px; color: #4a5a72; background: #fff; border: 0; cursor: pointer; }
-.tier-toggle button[aria-pressed="true"] { color: #fff; background: #1a4f8b; }
-.tier-panel[hidden], .form-status:not([data-state]) { display: none; }
-.form-field { margin-bottom: 18px; }
-.form-field label { display: block; margin-bottom: 6px; font-weight: 700; }
-.form-field input { width: 100%; padding: 12px; border: 1px solid #d0d7e2; border-radius: 9px; font: inherit; }
-.field-error { min-height: 20px; margin-top: 5px; color: #b42318; font-size: .85rem; }
-.form-status, .limitation-note { margin-top: 16px; padding: 12px; border-radius: 9px; font-size: .88rem; }
-.form-status[data-state="success"] { color: #087451; background: #e9f8f1; }
-.form-status[data-state="error"] { color: #b42318; background: #fff0ee; }
-.limitation-note { color: #5e6e85; background: #eef3f9; }
 .demo-status { margin-top: 12px; color: #6a4a0a; font-size: .78rem; font-weight: 700; }
-@media (max-width: 860px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+@media (max-width: 860px) { .grid-2 { grid-template-columns: 1fr; } }
